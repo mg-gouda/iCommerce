@@ -20,6 +20,7 @@ test-results/
 .env
 .env.*
 !.env.example
+!apps/backend/.env.test
 
 # os / editor
 .DS_Store
