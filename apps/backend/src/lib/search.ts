@@ -72,6 +72,7 @@ async function fetchProducts(container: MedusaContainer, filters: Record<string,
 }
 
 // Only published products are searchable; anything else is removed from the index.
+// ponytail: vendor/category renames do not reindex; run sync-search or wait for the next product change.
 export async function syncProduct(container: MedusaContainer, id: string) {
   const idx = await index()
   if (!idx) return

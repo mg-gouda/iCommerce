@@ -6,6 +6,7 @@ const VendorUser = model.define("vendor_user", {
   email: model.text().unique(),
   first_name: model.text().nullable(),
   last_name: model.text().nullable(),
+  // ponytail: staff invite flow deferred; only the applying owner exists until an invite route is needed.
   role: model.enum(["owner", "staff"]).default("owner"),
   vendor: model.belongsTo(() => Vendor, { mappedBy: "users" }),
 })

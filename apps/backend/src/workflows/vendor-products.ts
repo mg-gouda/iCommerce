@@ -43,6 +43,7 @@ const createProductExtraStep = createStep(
   },
 )
 
+// ponytail: admin-created products (core /admin/products) get no vendor link or extra row; upsert on first vendor edit covers extras only.
 export const createVendorProductWorkflow = createWorkflow(
   "create-vendor-product",
   (input: { vendor_id: string; product: CreateProductWorkflowInputDTO; extra: ProductExtraInput }) => {
