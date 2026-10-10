@@ -1,0 +1,39 @@
+name: icommerce
+
+services:
+  postgres:
+    image: postgres:16.15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: icommerce
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d icommerce"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4.11
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.54.3
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-master-key-change-me}
+    ports:
+      - "${MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili-data:/meili_data
+
+volumes:
+  pg-data:
+  redis-data:
+  meili-data:
