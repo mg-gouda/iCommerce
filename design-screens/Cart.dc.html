@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cart</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/icommerce/tokens.css">
+<link rel="stylesheet" href="ds/icommerce/components/bundle.css">
+<script src="ds/icommerce/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:var(--ground)}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.step{font:inherit;width:32px;height:32px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:var(--radius-md);cursor:pointer}
+.step:hover{background:var(--brand-tint)}
+.step:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+</style>
+</helmet>
+<div class="ic-root" style="min-height: 100vh; background: var(--ground); color: var(--ink); font-family: var(--font-sans);">
+  <header style="background: var(--navy); color: var(--on-navy);">
+    <div style="max-width: 1360px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+      <a href="Main.dc.html" style="font-size: 22px; font-weight: 600; color: var(--on-navy); text-decoration: none;">i<span style="color: var(--on-navy-muted);">Commerce</span></a>
+      <span style="font-size: 13px; color: var(--on-navy-muted);">Secure checkout</span>
+    </div>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
+    <section style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <h1 class="display" style="margin: 0;">Your cart</h1>
+        <span style="font-size: 14px; color: var(--ink-muted);">4 items from 3 suppliers · each supplier ships separately</span>
+      </div>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+        <div style="background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; background: var(--ground); border-bottom: 1px solid var(--line);">
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Verified supplier"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              {{g.vendor}}
+            </span>
+            <span style="font-size: 13px; color: var(--ink-muted);">{{g.ship}}</span>
+          </div>
+          <sc-for list="{{g.lines}}" as="l" hint-placeholder-count="1">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 16px;">
+              <img class="thumb" src="{{l.img}}" alt="{{l.name}}" style="width: 80px; height: 64px; object-fit: cover; border-radius: var(--radius-md); flex: none;">
+              <div style="flex: 1 1 220px; min-width: 0;">
+                <div style="font-weight: 500;">{{l.name}}</div>
+                <div style="font-size: 13px; color: var(--ink-muted);">{{l.meta}}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Quantity">
+                <button class="step" aria-label="Decrease quantity">−</button>
+                <span class="ic-num" style="min-width: 28px; text-align: center; font-weight: 600;">{{l.qty}}</span>
+                <button class="step" aria-label="Increase quantity">+</button>
+              </div>
+              <div class="ic-num" style="width: 110px; text-align: end; font-weight: 600;">USD {{l.total}}</div>
+              <button class="ic-btn ic-btn--ghost ic-btn--sm" aria-label="Remove {{l.name}}">Remove</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+
+    <aside style="flex: 1 1 360px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+      <h2 class="heading" style="margin: 0;">Order summary</h2>
+      <dl class="ic-num" style="margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; font-size: 14px;">
+        <dt style="color: var(--ink-muted);">Subtotal (4 items)</dt><dd style="margin: 0;">USD 179.90</dd>
+        <dt style="color: var(--ink-muted);">Shipping, 3 suppliers</dt><dd style="margin: 0;">USD 12.00</dd>
+        <dt style="color: var(--ink-muted);">Service fee (2%)</dt><dd style="margin: 0;">USD 3.60</dd>
+      </dl>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 14px;">
+        <span style="font-weight: 600;">Total</span>
+        <span class="ic-num" style="font-size: 24px; line-height: 30px; font-weight: 600;">USD 195.50</span>
+      </div>
+      <button class="ic-btn ic-btn--primary ic-btn--lg ic-btn--block ic-mbtn" id="checkout" data-state="idle" onClick="{{checkout}}">
+        <svg class="ic-box" viewBox="0 0 24 24" aria-hidden="true"><path class="body" d="M4 9h16v11H4z"/><path class="flap flap-l" d="M4 9 1 5"/><path class="flap flap-r" d="M20 9l3-4"/><path class="tape" d="M7 9h10"/></svg>
+        <span class="ic-mbtn__label">Checkout · USD 195.50</span>
+      </button>
+      <button class="ic-btn ic-btn--ghost ic-btn--sm" style="align-self: center;" onClick="{{reset}}">Replay animation</button>
+      <p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted);">Pay cash on delivery or by bank transfer. Company account? <a href="#">Sign in for wholesale prices and net terms.</a></p>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      checkout: function (e) {
+        if (!window.iCommerce) return;
+        window.iCommerce.checkout(e.currentTarget, { items: [].slice.call(document.querySelectorAll('.thumb')) });
+      },
+      reset: function () {
+        var b = document.getElementById('checkout');
+        b.setAttribute('data-state', 'idle');
+        b.querySelector('.ic-box').classList.remove('is-closed');
+        b.querySelector('.ic-mbtn__label').textContent = 'Checkout · USD 195.50';
+      },
+      groups: [
+        { vendor: 'Nile Flowers Handcrafts', ship: 'Standard delivery · USD 6.00 · 5–7 days', lines: [
+          { img: '/_blob/3fe982013a74a10ded89b096060efcc1', name: 'Kilim wool rug, Mamlouky NF88, 1.5 × 2 m', meta: 'Color: natural · USD 152.00 each', qty: 1, total: '152.00' } ] },
+        { vendor: 'El Sheikh Terry Weaving', ship: 'Standard delivery · USD 3.00 · 2–4 days', lines: [
+          { img: '/_blob/070559c4e410812ba520f239b7791ce8', name: 'Flat-weave kitchen towels, pack of 3', meta: 'USD 6.50 per pack', qty: 2, total: '13.00' } ] },
+        { vendor: 'Helwan Non-Ferrous Industries', ship: 'Standard delivery · USD 3.00 · 2–4 days', lines: [
+          { img: '/_blob/40873d78a68cffb7e1e1233ad1e6306a', name: 'Set of 4 Czech pots, aluminum', meta: 'Retail · USD 14.90 per set', qty: 1, total: '14.90' } ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

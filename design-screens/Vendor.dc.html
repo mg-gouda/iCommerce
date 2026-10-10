@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vendor dashboard</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/icommerce/tokens.css">
+<link rel="stylesheet" href="ds/icommerce/components/bundle.css">
+<script src="ds/icommerce/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:var(--ground)}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-md);color:var(--on-navy-muted);text-decoration:none;font-size:14px}
+.nav a:hover{background:rgba(255,255,255,0.08);color:var(--on-navy)}
+.nav a[aria-current="page"]{background:rgba(255,255,255,0.12);color:var(--on-navy);font-weight:600}
+.otable th{font-size:12px;font-weight:500;color:var(--ink-muted);text-align:start;padding:10px 16px;background:var(--ground);border-bottom:1px solid var(--line);white-space:nowrap}
+.otable td{padding:10px 16px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.otable tr:last-child td{border-bottom:0}
+</style>
+</helmet>
+<div class="ic-root" style="min-height: 100vh; display: flex; flex-wrap: wrap; background: var(--ground); color: var(--ink); font-family: var(--font-sans);">
+
+  <aside style="flex: 1 1 232px; max-width: 100%; background: var(--navy); color: var(--on-navy); padding: 20px 14px; display: flex; flex-direction: column; gap: 20px;">
+    <div style="padding: 0 10px;">
+      <div style="font-size: 20px; font-weight: 600;">i<span style="color: var(--on-navy-muted);">Commerce</span></div>
+      <div style="font-size: 12px; color: var(--on-navy-muted);">Supplier portal</div>
+    </div>
+    <nav class="nav" aria-label="Supplier portal" style="display: flex; flex-direction: column; gap: 2px;">
+      <a href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM14 3v5h7V3zM3 21h7v-5H3z"/></svg>Dashboard</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>Products</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Orders <span class="ic-badge ic-badge--sale" style="margin-inline-start: auto;">3</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Quotes <span class="ic-badge" style="margin-inline-start: auto;">5</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3v18h18M7 14l4-4 4 4 5-6"/></svg>Reports</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Payouts</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Store settings</a>
+    </nav>
+    <div style="margin-top: auto; padding: 12px; border-radius: var(--radius-md); background: rgba(255,255,255,0.08); font-size: 13px;">
+      <div style="font-weight: 600;">Business plan</div>
+      <div style="color: var(--on-navy-muted);">412 of 1,000 products · renews 1 Nov</div>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 640px; min-width: 0; padding: 24px 32px 48px; display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+      <div>
+        <h1 class="display" style="margin: 0;">Good morning, Helwan Non-Ferrous</h1>
+        <div style="font-size: 14px; color: var(--ink-muted);">3 orders to ship today · 2 quotes expire this week</div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <label for="period" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Period</label>
+        <select class="ic-input" id="period" style="width: auto;"><option>Last 12 weeks</option><option>Last 30 days</option><option>This year</option></select>
+        <a href="#" class="ic-btn ic-btn--primary" style="text-decoration: none;">Add product</a>
+      </div>
+    </div>
+
+    <section aria-label="Key figures" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+        <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: var(--ink-muted);">{{k.label}}</span>
+          <span class="ic-num" style="font-size: 24px; line-height: 30px; font-weight: 600;">{{k.value}}</span>
+          <span style="font-size: 13px; color: {{k.trendColor}};">{{k.trend}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch;">
+      <div style="flex: 999 1 520px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px;">
+          <h2 class="subheading" style="margin: 0;">Revenue by week, USD</h2>
+          <div style="display: flex; gap: 16px; font-size: 13px; color: var(--ink-muted);">
+            <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: var(--navy);"></span>Wholesale</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: var(--brand);"></span>Retail</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <div class="ic-num" style="display: flex; flex-direction: column; justify-content: space-between; height: 200px; font-size: 12px; color: var(--ink-muted); text-align: end; padding-bottom: 0;">
+            <span>30k</span><span>20k</span><span>10k</span><span>0</span>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+            <div style="position: relative; height: 200px; display: flex; align-items: flex-end; gap: 8px; border-bottom: 1px solid var(--line-strong); background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 33.333%; background-position: 0 0;">
+              <sc-for list="{{weeks}}" as="w" hint-placeholder-count="12">
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%;" title="{{w.tip}}">
+                  <div style="height: {{w.b2c}}%; background: var(--brand); border-radius: 3px 3px 0 0;"></div>
+                  <div style="height: {{w.b2b}}%; background: var(--navy);"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px; font-size: 12px; color: var(--ink-muted);">
+              <sc-for list="{{weeks}}" as="w" hint-placeholder-count="12"><span style="flex: 1; text-align: center;">{{w.label}}</span></sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 320px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 class="subheading" style="margin: 0;">Open quote requests</h2><a href="#" style="font-size: 13px;">All 5</a></div>
+        <sc-for list="{{quotes}}" as="q" hint-placeholder-count="3">
+          <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); color: var(--ink); text-decoration: none;">
+            <div style="display: flex; justify-content: space-between; gap: 8px;"><b style="font-weight: 600;">{{q.buyer}}</b><span class="ic-mono" style="color: var(--ink-muted);">{{q.id}}</span></div>
+            <div style="font-size: 13px; color: var(--ink-muted);">{{q.what}}</div>
+            <div><span class="{{q.badgeClass}}">{{q.status}}</span></div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; flex-wrap: wrap;">
+        <h2 class="subheading" style="margin: 0;">Orders to fulfil</h2>
+        <button class="ic-btn ic-btn--ghost ic-btn--sm" onClick="{{replay}}">Replay ship animation</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="otable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <thead><tr><th scope="col">Order</th><th scope="col">Buyer</th><th scope="col">Channel</th><th scope="col">Items</th><th scope="col" style="text-align: end;">Total</th><th scope="col">Status</th><th scope="col" style="text-align: end;">Action</th></tr></thead>
+          <tbody>
+            <sc-for list="{{orders}}" as="o" hint-placeholder-count="4">
+              <tr>
+                <td class="ic-mono">{{o.id}}</td>
+                <td>{{o.buyer}}</td>
+                <td><span class="{{o.channelClass}}">{{o.channel}}</span></td>
+                <td>{{o.items}}</td>
+                <td class="ic-num" style="text-align: end; font-weight: 600;">USD {{o.total}}</td>
+                <td><span class="{{o.statusClass}}">{{o.status}}</span></td>
+                <td style="text-align: end;">
+                  <sc-if value="{{o.canShip}}" hint-placeholder-val="{{true}}">
+                    <button class="ic-btn ic-btn--primary ic-btn--sm ic-mbtn ic-ship" data-state="idle" style="min-width: 170px;" onClick="{{o.ship}}">
+                      <svg class="ic-truck" viewBox="0 0 34 20" aria-hidden="true"><path d="M1 3h19v11H1z" fill="currentColor"/><path d="M20 7h7l5 5v2H20z" fill="currentColor" opacity=".85"/><circle cx="7" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/><circle cx="26" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/></svg>
+                      <span class="ic-road"></span>
+                      <span class="ic-mbtn__label">Mark as shipped</span>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{o.cantShip}}" hint-placeholder-val="{{false}}">
+                    <a href="#" class="ic-btn ic-btn--sm" style="text-decoration: none;">View order</a>
+                  </sc-if>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var ship = function (e) { if (window.iCommerce) window.iCommerce.ship(e.currentTarget, {}); };
+    var raw = [[4.2, 1.1], [6.8, 1.4], [5.1, 1.9], [9.6, 1.6], [7.3, 2.2], [12.4, 2.0], [10.8, 2.6], [8.9, 2.4], [14.6, 2.9], [11.2, 3.1], [16.8, 3.4], [19.5, 3.8]];
+    var MAX = 30;
+    var weeks = raw.map(function (r, i) {
+      return { b2b: (r[0] / MAX * 100).toFixed(1), b2c: (r[1] / MAX * 100).toFixed(1), label: 'W' + (i + 29),
+        tip: 'Week ' + (i + 29) + ': wholesale USD ' + r[0] + 'k, retail USD ' + r[1] + 'k' };
+    });
+    var B = 'ic-badge';
+    return {
+      replay: function () {
+        [].forEach.call(document.querySelectorAll('.ic-ship'), function (b) {
+          b.setAttribute('data-state', 'idle'); b.querySelector('.ic-mbtn__label').textContent = 'Mark as shipped';
+        });
+      },
+      weeks: weeks,
+      kpis: [
+        { label: 'Revenue, 12 weeks', value: 'USD 155,600', trend: '+18% vs previous 12 weeks', trendColor: 'var(--success)' },
+        { label: 'Orders', value: '214', trend: '+11%', trendColor: 'var(--success)' },
+        { label: 'Quote win rate', value: '38%', trend: '−4 pts', trendColor: 'var(--danger)' },
+        { label: 'Next payout', value: 'USD 12,480', trend: 'Thursday 15 Oct', trendColor: 'var(--ink-muted)' }
+      ],
+      quotes: [
+        { buyer: 'Al Noor Hotels, Riyadh', id: 'Q-2026-00418', what: '1,200 sets · Czech pots, 4 pcs · target USD 10.00', status: 'Expires in 2 days', badgeClass: B + ' ic-badge--warning' },
+        { buyer: 'Hamburg Haus GmbH', id: 'Q-2026-00422', what: '3,600 sets · Czech pots, 4 pcs', status: 'New request', badgeClass: B + ' ic-badge--verified' },
+        { buyer: 'Casa Kitchen, Nairobi', id: 'Q-2026-00425', what: '500 sets · milk pots, 3 pcs · counter-offer', status: 'Awaiting your offer', badgeClass: B }
+      ],
+      orders: [
+        { id: 'SO-2026-01187', buyer: 'Hamburg Haus GmbH', channel: 'B2B', channelClass: B + ' ic-badge--b2b', items: '200 sets', total: '2,480.00', status: 'Ready to ship', statusClass: B + ' ic-badge--warning', canShip: true, cantShip: false, ship: ship },
+        { id: 'SO-2026-01190', buyer: 'Mona A., Giza', channel: 'Retail', channelClass: B, items: '1 set', total: '14.90', status: 'Ready to ship', statusClass: B + ' ic-badge--warning', canShip: true, cantShip: false, ship: ship },
+        { id: 'SO-2026-01192', buyer: 'Karim S., Alexandria', channel: 'Retail', channelClass: B, items: '2 sets', total: '29.80', status: 'Ready to ship', statusClass: B + ' ic-badge--warning', canShip: true, cantShip: false, ship: ship },
+        { id: 'SO-2026-01174', buyer: 'Al Noor Hotels, Riyadh', channel: 'B2B', channelClass: B + ' ic-badge--b2b', items: '800 sets', total: '8,880.00', status: 'Delivered', statusClass: B + ' ic-badge--success', canShip: false, cantShip: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
