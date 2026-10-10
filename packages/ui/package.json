@@ -1,0 +1,33 @@
+{
+  "name": "@icommerce/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fonts": "./src/fonts.ts",
+    "./theme.css": "./src/theme.css",
+    "./components.css": "./src/components.css"
+  },
+  "scripts": {
+    "gen:theme": "node scripts/gen-theme.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "1.55.0"
+  },
+  "peerDependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0"
+  },
+  "devDependencies": {
+    "@icommerce/config": "workspace:*",
+    "@types/react": "19.3.0",
+    "eslint": "9.39.5",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}
