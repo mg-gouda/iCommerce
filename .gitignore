@@ -34,3 +34,6 @@ test-results/
 # next
 next-env.d.ts
 *.tsbuildinfo
+
+# WP migration output: contains PII from the legacy dump. NEVER commit.
+tools/migrate-wp/out/
