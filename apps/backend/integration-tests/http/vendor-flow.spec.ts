@@ -91,6 +91,27 @@ medusaIntegrationTestRunner({
       expect((await api.get(`/vendors/products/${id}`, bearer(a.token))).data.product.title).toBe("Alpha only")
     })
 
+    it("vendor B cannot touch A's variants or options through its own product", async () => {
+      const a = await applyVendor("Gamma")
+      const b = await applyVendor("Delta")
+      const pa = (await api.post("/vendors/products", product("Gamma pot"), bearer(a.token))).data.product
+      const pb = (await api.post("/vendors/products", product("Delta pot"), bearer(b.token))).data.product
+      const [va, oa] = [pa.variants[0], pa.options[0]]
+
+      for (const body of [
+        { variants: [{ id: va.id, title: "stolen" }] },
+        { options: [{ id: oa.id, title: "stolen", values: ["x"] }] },
+      ]) {
+        await expect(api.post(`/vendors/products/${pb.id}`, body, bearer(b.token))).rejects.toMatchObject({
+          response: { status: 400 },
+        })
+      }
+      const after = (await api.get(`/vendors/products/${pa.id}`, bearer(a.token))).data.product
+      expect(after.variants).toHaveLength(1)
+      expect(after.variants[0]).toMatchObject({ id: va.id, title: va.title })
+      expect(after.options[0]).toMatchObject({ id: oa.id, title: oa.title })
+    })
+
     it("CSV import reports the bad row and creates the good ones", async () => {
       await getContainer()
         .resolve(Modules.PRODUCT)
