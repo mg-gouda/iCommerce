@@ -20,6 +20,7 @@ test-results/
 .env
 .env.*
 !.env.example
+!apps/backend/.env.test
 
 # os / editor
 .DS_Store
@@ -37,3 +38,6 @@ next-env.d.ts
 
 # WP migration output: contains PII from the legacy dump. NEVER commit.
 tools/migrate-wp/out/
+# medusa file-local uploads (dev)
+apps/backend/uploads/
+apps/backend/static/
