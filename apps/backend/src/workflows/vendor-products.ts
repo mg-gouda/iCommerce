@@ -59,7 +59,7 @@ export const createVendorProductWorkflow = createWorkflow(
   },
 )
 
-type UpsertComp = { prev?: Record<string, unknown> & { id: string }; created_id?: string }
+type UpsertComp = { prev?: Record<string, unknown> & { id: string }; created_id?: string; product_id?: string }
 
 // Updates the linked extra, or creates + links one if the product has none (e.g. created via admin).
 const upsertProductExtraStep = createStep(
@@ -80,12 +80,18 @@ const upsertProductExtraStep = createStep(
       [Modules.PRODUCT]: { product_id },
       [PRODUCT_EXTRA_MODULE]: { product_extra_id: created.id },
     })
-    return new StepResponse<undefined, UpsertComp>(undefined, { created_id: created.id })
+    return new StepResponse<undefined, UpsertComp>(undefined, { created_id: created.id, product_id })
   },
   async (comp, { container }) => {
     if (!comp) return
     const svc: ProductExtraModuleService = container.resolve(PRODUCT_EXTRA_MODULE)
-    if (comp.created_id) await svc.deleteProductExtras(comp.created_id)
+    if (comp.created_id) {
+      await container.resolve(ContainerRegistrationKeys.LINK).dismiss({
+        [Modules.PRODUCT]: { product_id: comp.product_id },
+        [PRODUCT_EXTRA_MODULE]: { product_extra_id: comp.created_id },
+      })
+      await svc.deleteProductExtras(comp.created_id)
+    }
     if (comp.prev) {
       const { created_at, updated_at, deleted_at, raw_cost_price, ...restore } = comp.prev // eslint-disable-line @typescript-eslint/no-unused-vars
       await svc.updateProductExtras(restore as ProductExtraInput & { id: string })
