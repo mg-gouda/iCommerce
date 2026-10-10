@@ -1,6 +1,6 @@
 import { Search } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { Badge, ProductCard } from "@icommerce/ui"
+import { AddToCartButton, Badge, CartLink, ProductCard } from "@icommerce/ui"
 import { LocaleSwitch } from "@/components/LocaleSwitch"
 import { Link } from "@/i18n/navigation"
 import { products } from "@/lib/mock-products"
@@ -30,6 +30,7 @@ export default function Home() {
               {t("signIn")}
             </Link>
             <LocaleSwitch />
+            <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} initialCount={2} className="text-on-navy" />
           </div>
         </div>
       </header>
@@ -68,6 +69,7 @@ export default function Home() {
                 }
                 cta={b2b ? t("requestQuote") : t("addToCart")}
                 ctaPrimary={!b2b}
+                action={b2b ? undefined : <AddToCartButton block className="ic-card__cta" label={t("addToCart")} doneLabel={t("added")} />}
               />
             )
           })}

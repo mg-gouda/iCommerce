@@ -13,7 +13,9 @@
     "moq": "MOQ",
     "lead": "Lead",
     "addToCart": "Add to cart",
-    "requestQuote": "Request quote"
+    "requestQuote": "Request quote",
+    "added": "Added",
+    "cartLabel": "Cart, {count} items"
   },
   "login": {
     "sub": "Sign in to buy, sell or manage your store.",
@@ -23,5 +25,20 @@
     "forgot": "Forgot password?",
     "newHere": "New here?",
     "create": "Create account"
+  },
+  "cart": {
+    "title": "Your cart",
+    "sub": "Each supplier ships separately.",
+    "qty": "Quantity",
+    "remove": "Remove",
+    "summary": "Order summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "checkout": "Checkout",
+    "packing": "Packing your order",
+    "packed": "Order packed",
+    "payNote": "Pay cash on delivery or by bank transfer.",
+    "back": "Continue shopping"
   }
 }

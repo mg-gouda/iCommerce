@@ -1,5 +1,7 @@
 {
-  "meta": { "title": "iCommerce vendor portal" },
+  "meta": {
+    "title": "iCommerce vendor portal"
+  },
   "login": {
     "sub": "Sign in to manage your store.",
     "email": "Email or phone",
@@ -34,7 +36,22 @@
     "orders": {
       "title": "Orders",
       "emptyTitle": "No orders yet",
-      "emptyBody": "Retail and company orders for your products land here. Ship them and add tracking from each order."
+      "emptyBody": "Retail and company orders for your products land here. Ship them and add tracking from each order.",
+      "col": {
+        "order": "Order",
+        "buyer": "Buyer",
+        "channel": "Channel",
+        "items": "Items",
+        "total": "Total",
+        "action": "Action"
+      },
+      "channel": {
+        "b2b": "B2B",
+        "b2c": "Retail"
+      },
+      "ship": "Mark as shipped",
+      "shipping": "On the way",
+      "shipped": "Shipped"
     },
     "quotes": {
       "title": "Quotes",

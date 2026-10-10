@@ -24,11 +24,13 @@ export type ProductCardProps = HTMLAttributes<HTMLElement> & {
   facts?: ReactNode[]
   cta: string
   ctaPrimary?: boolean
+  /** Replaces the default CTA button, e.g. <AddToCartButton />. */
+  action?: ReactNode
 }
 
 export function ProductCard({
   href, image, imageAlt, vendor, verified, title, currency, price, priceMax, compareAt, unit,
-  flags, facts, cta, ctaPrimary, className, ...props
+  flags, facts, cta, ctaPrimary, action, className, ...props
 }: ProductCardProps) {
   const sale = compareAt != null && compareAt > price
   return (
@@ -66,9 +68,11 @@ export function ProductCard({
             ))}
           </ul>
         ) : null}
-        <Button variant={ctaPrimary ? "primary" : "secondary"} block className="ic-card__cta">
-          {cta}
-        </Button>
+        {action ?? (
+          <Button variant={ctaPrimary ? "primary" : "secondary"} block className="ic-card__cta">
+            {cta}
+          </Button>
+        )}
       </div>
     </article>
   )
