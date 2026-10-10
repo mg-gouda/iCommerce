@@ -68,7 +68,7 @@
 .ic-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
   overflow: hidden; color: var(--ink); text-decoration: none; transition: box-shadow 200ms cubic-bezier(.25,1,.5,1), border-color 200ms; min-inline-size: 0; }
 .ic-card:hover { box-shadow: var(--shadow-1); border-color: var(--line-strong); }
-.ic-card:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.ic-card:has(:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .ic-card__media { aspect-ratio: 4 / 3; background: var(--ground); position: relative; display: grid; place-items: center; max-inline-size: 100%; }
 .ic-card__media img { inline-size: 100%; block-size: 100%; object-fit: cover; }
 .ic-card__flags { position: absolute; inset-block-start: var(--space-2); inset-inline-start: var(--space-2); display: flex; gap: var(--space-1); }
@@ -99,7 +99,7 @@
   background: var(--glass-fill); border: 1px solid var(--glass-line); border-radius: var(--radius-lg);
   backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); box-shadow: var(--shadow-glass); color: var(--glass-ink); }
 .ic-login__brand { font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
-.ic-login__brand span { color: var(--brand); }
+.ic-login__brand span { color: var(--glass-brand); }
 .ic-login__sub { font-size: 13px; line-height: 18px; color: var(--glass-ink-muted); margin: 0; }
 .ic-login .ic-label { color: var(--glass-ink-muted); }
 .ic-login .ic-input { background: var(--glass-fill); border-color: var(--glass-line); color: var(--glass-ink); block-size: 36px; }
@@ -112,4 +112,37 @@
   .ic-btn, .ic-input, .ic-card { transition: none; }
   .ic-btn:active { transform: none; }
   .ic-btn[aria-busy="true"]::after { animation-duration: 2s; }
+}
+
+/* Motion buttons (AddToCartButton, CheckoutButton, ShipButton) — behaviour in bundle.js */
+.ic-mbtn { position: relative; overflow: hidden; isolation: isolate; }
+.ic-mbtn__label { display: inline-flex; align-items: center; gap: var(--space-2); position: relative; z-index: 1; }
+.ic-mbtn[data-state="done"] { background: var(--success); border-color: var(--success); color: var(--surface); }
+.ic-mbtn[data-state="busy"] { cursor: progress; }
+
+/* Cart icon + count (header) */
+.ic-cart { position: relative; display: inline-grid; place-items: center; inline-size: 40px; block-size: 40px; border-radius: var(--radius-md); color: var(--on-navy); }
+.ic-cart svg { inline-size: 22px; block-size: 22px; }
+.ic-cart__count { position: absolute; inset-block-start: 2px; inset-inline-end: 0; min-inline-size: 18px; block-size: 18px; padding-inline: 4px;
+  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); font-size: 11px; line-height: 18px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Box (checkout) */
+.ic-box { inline-size: 22px; block-size: 22px; flex: none; overflow: visible; }
+.ic-box .body { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.ic-box .flap { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; transition: transform 260ms cubic-bezier(.25,1,.5,1); }
+.ic-box .flap-l { transform-origin: 4px 9px; transform: rotate(-38deg); }
+.ic-box .flap-r { transform-origin: 20px 9px; transform: rotate(38deg); }
+.ic-box.is-closed .flap-l, .ic-box.is-closed .flap-r { transform: rotate(0deg); }
+.ic-box .tape { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 10; stroke-dashoffset: 10; transition: stroke-dashoffset 200ms 220ms cubic-bezier(.25,1,.5,1); }
+.ic-box.is-closed .tape { stroke-dashoffset: 0; }
+
+/* Truck (ship) */
+.ic-truck { position: absolute; left: 0; inset-block-end: 7px; inline-size: 34px; block-size: 20px; opacity: 0; z-index: 2; color: currentColor; }
+.ic-mbtn[data-state="busy"] .ic-truck { opacity: 1; }
+.ic-road { position: absolute; inset-inline: 0; inset-block-end: 5px; block-size: 2px; opacity: 0; z-index: 1;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 10px, transparent 10px 16px); }
+.ic-ship[data-state="busy"] .ic-mbtn__label { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ic-box .flap, .ic-box .tape { transition: none; }
 }

@@ -1,0 +1,28 @@
+<!-- @dsCard group="Motion" height=200 subtitle="Vendor portal: truck drives across the button, then Shipped ✓ (LTR and RTL)" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ship</title></head>
+<body style="margin:0;background:var(--ground)">
+<div class="ic-root ic-stack" style="padding:16px;max-width:520px">
+  <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:12px 16px">
+    <div><div class="ic-mono">SO-2026-01187</div><div class="small" style="color:var(--ink-muted)">200 sets · Alexandria → Hamburg</div></div>
+    <button class="ic-btn ic-btn--primary ic-mbtn ic-ship" data-state="idle" style="min-width:170px"><svg class="ic-truck" viewBox="0 0 34 20" aria-hidden="true"><path d="M1 3h19v11H1z" fill="currentColor"/><path d="M20 7h7l5 5v2H20z" fill="currentColor" opacity=".85"/><circle cx="7" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/><circle cx="26" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/></svg><span class="ic-road"></span><span class="ic-mbtn__label">Mark as shipped</span></button>
+  </div>
+  <div dir="rtl" lang="ar" style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:12px 16px">
+    <div><div class="ic-mono">SO-2026-01188</div><div class="small" style="color:var(--ink-muted)">٥٠ قطعة · القاهرة ← جدة</div></div>
+    <button class="ic-btn ic-btn--primary ic-mbtn ic-ship" data-state="idle" style="min-width:170px"><svg class="ic-truck" viewBox="0 0 34 20" aria-hidden="true"><path d="M1 3h19v11H1z" fill="currentColor"/><path d="M20 7h7l5 5v2H20z" fill="currentColor" opacity=".85"/><circle cx="7" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/><circle cx="26" cy="16" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="1.5"/></svg><span class="ic-road"></span><span class="ic-mbtn__label">تم الشحن</span></button>
+  </div>
+  <button class="ic-btn ic-btn--ghost ic-btn--sm" id="reset" style="align-self:center">Replay</button>
+</div>
+<script>
+  var labels = ['Mark as shipped', 'تأكيد الشحن'];
+  [].forEach.call(document.querySelectorAll('.ic-ship'), function (b, i) {
+    b.querySelector('.ic-mbtn__label').textContent = labels[i];
+    b.addEventListener('click', function () {
+      iCommerce.ship(b, i ? { busyText: 'في الطريق', doneText: 'تم الشحن' } : {});
+    });
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    [].forEach.call(document.querySelectorAll('.ic-ship'), function (b, i) { b.setAttribute('data-state', 'idle'); b.querySelector('.ic-mbtn__label').textContent = labels[i]; });
+  });
+</script>
+</body></html>

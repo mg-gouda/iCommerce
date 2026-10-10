@@ -1,0 +1,27 @@
+<!-- @dsCard group="Motion" height=400 subtitle="Product photo flies into the cart; count bumps; button confirms" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Add to cart</title></head>
+<body style="margin:0;background:var(--ground)">
+<div class="ic-root">
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--navy);color:var(--on-navy)">
+    <strong style="font-size:16px">i<span style="color:var(--on-navy-muted)">Commerce</span></strong>
+    <span class="ic-cart" id="cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><span class="ic-cart__count" id="count">2</span></span>
+  </header>
+  <div style="padding:16px;max-width:240px">
+    <article class="ic-card">
+      <div class="ic-card__media"><img id="pimg" src="/_blob/b1d5730fe9212d537b6466b7ecb1c018" alt="Kilim wool rug"></div>
+      <div class="ic-card__body">
+        <div class="ic-card__vendor"><span>Nile Flowers Handcrafts</span></div>
+        <h3 class="ic-card__title">Kilim wool rug, Mamlouky NF88, 1.5 × 2 m</h3>
+        <div class="ic-card__price">USD 179.00</div>
+        <button class="ic-btn ic-btn--primary ic-btn--block ic-mbtn" id="add" data-state="idle"><span class="ic-mbtn__label">Add to cart</span></button>
+      </div>
+    </article>
+  </div>
+</div>
+<script>
+  document.getElementById('add').addEventListener('click', function (e) {
+    iCommerce.addToCart(e.currentTarget, { image: document.getElementById('pimg'), cart: document.getElementById('cart'), count: document.getElementById('count') });
+  });
+</script>
+</body></html>

@@ -42,6 +42,7 @@ iCommerce is a multi-vendor marketplace for B2B export trade and B2C retail from
 ### Motion
 - 150–200ms, ease-out (`cubic-bezier(.25,1,.5,1)`), for state changes only: hover, press, open/close, loading.
 - No page-load choreography, no bounce. `prefers-reduced-motion` removes transforms and transitions.
+- **Three signature moments** (owner-requested, the only travel animations in the product): `AddToCartButton` (photo flies into cart, 700ms), `CheckoutButton` (items drop into a box that seals, ≤1.2s), `ShipButton` (truck drives across in reading direction, 1.3s). Each is feedback for an action already taken: optimistic, never blocking, skipped under reduced motion. Don't add more travel animations elsewhere.
 
 ### Imagery
 - Real product photos on `ground` placeholders, 4:3 `object-fit: cover` in tiles. Vendors' own photos; no stock lifestyle shots.
@@ -67,8 +68,11 @@ No iCommerce logo exists yet: set the name in type as "i" in `ink` + "Commerce" 
 | `ProductCard` | catalog tile, B2C and B2B modes, RTL |
 | `PriceTiers` | B2B quantity-break table |
 | `LoginCard` | sign-in screen for all three apps |
+| `AddToCartButton` | add to cart with flight into the header cart |
+| `CheckoutButton` | proceed to checkout; items pack into a box |
+| `ShipButton` | vendor marks order shipped; truck drive |
 
-Class prefix `ic-`, stylesheet `components/bundle.css`. In the codebase these become React components in `packages/ui` (shadcn primitives restyled with these tokens).
+Class prefix `ic-`, stylesheet `components/bundle.css`, motion helpers `window.iCommerce` in `components/bundle.js` (`addToCart`, `checkout`, `ship`, `fly`). In the codebase these become React components in `packages/ui` (shadcn primitives restyled with these tokens).
 
 ## Intentional additions
 
