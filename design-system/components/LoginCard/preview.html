@@ -1,0 +1,26 @@
+<!-- @dsCard group="Auth" height=470 subtitle="Compact glass card on black abstract backdrop (blur 10px)" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Login</title></head>
+<body style="margin:0">
+<div class="ic-root ic-login">
+  <svg class="ic-login__art" viewBox="0 0 960 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <style>.a1{fill:var(--navy)}.a2{fill:var(--brand)}.a3{fill:none;stroke:var(--brand);stroke-width:1.5;opacity:.45}.a4{fill:var(--brand-ink);opacity:.35}</style>
+    <circle class="a1" cx="210" cy="140" r="210"/>
+    <circle class="a2" cx="760" cy="420" r="150" opacity=".55"/>
+    <circle class="a4" cx="560" cy="90" r="90"/>
+    <path class="a3" d="M-20 360 C 220 260, 420 470, 980 300"/>
+    <path class="a3" d="M-20 400 C 260 300, 460 510, 980 340"/>
+    <path class="a3" d="M-20 440 C 300 340, 500 550, 980 380"/>
+  </svg>
+  <form class="ic-login__card" onsubmit="event.preventDefault()">
+    <div>
+      <div class="ic-login__brand">i<span>Commerce</span></div>
+      <p class="ic-login__sub">Sign in to buy, sell or manage your store.</p>
+    </div>
+    <div class="ic-field"><label class="ic-label" for="le">Email or phone</label><input class="ic-input" id="le" autocomplete="username" placeholder="you@company.com"></div>
+    <div class="ic-field"><label class="ic-label" for="lp">Password</label><input class="ic-input" id="lp" type="password" autocomplete="current-password" value="••••••••••"></div>
+    <button class="ic-btn ic-btn--primary ic-btn--block">Sign in</button>
+    <div class="ic-login__meta"><a href="#">Forgot password?</a><span>New here? <a href="#">Create account</a></span></div>
+  </form>
+</div>
+</body></html>

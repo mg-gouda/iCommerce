@@ -1,0 +1,29 @@
+# Legacy WP backup: contains DB credentials + customer PII. NEVER commit.
+Old WP Project/
+*.sql
+*.wpress
+*:Zone.Identifier
+
+# deps / build
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+build/
+.medusa/
+coverage/
+playwright-report/
+test-results/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=230 subtitle="Default · with unit addon · error · disabled" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Field</title></head>
+<body style="margin:0;background:var(--surface)">
+<div class="ic-root" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+  <div class="ic-field"><label class="ic-label" for="f1">Company name</label><input class="ic-input" id="f1" placeholder="e.g. Nile Flowers Handcrafts"><span class="ic-help">As on your commercial register.</span></div>
+  <div class="ic-field"><label class="ic-label" for="f2">Quantity</label><div class="ic-input-group"><input class="ic-input ic-num" id="f2" value="120" inputmode="numeric"><span class="ic-addon">pieces</span></div><span class="ic-help">MOQ 50 · steps of 10</span></div>
+  <div class="ic-field"><label class="ic-label" for="f3">Tax ID</label><input class="ic-input ic-mono" id="f3" value="512-48" aria-invalid="true" aria-describedby="f3e"><span class="ic-error" id="f3e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Tax ID has 9 digits, e.g. 512-483-907.</span></div>
+  <div class="ic-field"><label class="ic-label" for="f4">HS code</label><input class="ic-input ic-mono" id="f4" value="5702.10" disabled><span class="ic-help">Set by category. Contact support to change.</span></div>
+</div>
+<style>.ic-error svg{inline-size:14px;block-size:14px;flex:none}</style>
+</body></html>

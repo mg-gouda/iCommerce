@@ -1,0 +1,100 @@
+/* iCommerce — generated from tokens.json */
+:root, [data-theme="light"] {
+  --brand: #2a74ba;
+  --on-brand: #ffffff;
+  --brand-ink: #22609c;
+  --brand-tint: #e8f0f9;
+  --navy: #1c1952;
+  --on-navy: #ffffff;
+  --on-navy-muted: #9fc4ea;
+  --accent: #dd3333;
+  --on-accent: #ffffff;
+  --ground: #f3f5fa;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --ink: #14123a;
+  --ink-muted: #4f5672;
+  --line: #dde2ec;
+  --line-strong: #8b93ad;
+  --focus-ring: var(--brand);
+  --success: #1a7a48;
+  --success-tint: #e6f4ec;
+  --warning: #9a5300;
+  --warning-tint: #fbf0e2;
+  --danger: #c42b2b;
+  --danger-tint: #fbe9e9;
+  --glass-ground: #07070c;
+  --glass-fill: rgba(255, 255, 255, 0.07);
+  --glass-line: rgba(255, 255, 255, 0.18);
+  --glass-ink: #ffffff;
+  --glass-ink-muted: #b8bccc;
+  --shadow-1: 0 1px 2px rgba(20, 18, 58, 0.06), 0 1px 1px rgba(20, 18, 58, 0.04);
+  --shadow-2: 0 8px 24px rgba(20, 18, 58, 0.12), 0 2px 6px rgba(20, 18, 58, 0.06);
+  --shadow-glass: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] {
+  --brand: #6aa6e4;
+  --on-brand: #0f0e29;
+  --brand-ink: #8dbcec;
+  --brand-tint: #1f2a55;
+  --navy: #22214f;
+  --on-navy: #eceefb;
+  --on-navy-muted: #9fc4ea;
+  --accent: #ff7a7a;
+  --on-accent: #0f0e29;
+  --ground: #0f0e29;
+  --surface: #18173d;
+  --surface-raised: #22214f;
+  --ink: #eceefb;
+  --ink-muted: #a9aecb;
+  --line: #2c2b5c;
+  --line-strong: #6d6fa3;
+  --focus-ring: var(--brand);
+  --success: #4cc78a;
+  --success-tint: #173a35;
+  --warning: #f0a74a;
+  --warning-tint: #3a2f22;
+  --danger: #ff7a7a;
+  --danger-tint: #3d1f33;
+  --glass-ground: #07070c;
+  --glass-fill: rgba(255, 255, 255, 0.07);
+  --glass-line: rgba(255, 255, 255, 0.18);
+  --glass-ink: #ffffff;
+  --glass-ink-muted: #b8bccc;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-glass: 0 24px 60px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "IBM Plex Sans", "Segoe UI", Tahoma, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+.display { font-family: var(--font-sans); font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; }
+.title { font-family: var(--font-sans); font-size: 24px; line-height: 30px; font-weight: 600; }
+.heading { font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; }
+.subheading { font-family: var(--font-sans); font-size: 16px; line-height: 22px; font-weight: 600; }
+.body { font-family: var(--font-sans); font-size: 14px; line-height: 21px; font-weight: 400; }
+.body-strong { font-family: var(--font-sans); font-size: 14px; line-height: 21px; font-weight: 600; }
+.small { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; }
+.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em; }
+.ar-title { font-family: var(--font-arabic); font-size: 24px; line-height: 36px; font-weight: 600; }
+.ar-body { font-family: var(--font-arabic); font-size: 15px; line-height: 26px; font-weight: 400; }
+.data { font-family: var(--font-mono); font-size: 13px; line-height: 18px; font-weight: 400; }

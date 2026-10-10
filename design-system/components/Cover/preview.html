@@ -1,0 +1,38 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>iCommerce cover</title>
+<style>
+  html,body{margin:0}
+  .cv{position:relative;width:960px;height:288px;background:var(--ground);overflow:hidden;font-family:var(--font-sans)}
+  .cv svg{position:absolute;left:480px;top:0;width:480px;height:288px}
+  .navy{fill:var(--navy)} .brand{fill:var(--brand)} .tint{fill:var(--brand-tint)} .accent{fill:var(--accent)} .ink{fill:var(--ink)}
+  .route{fill:none;stroke:var(--on-navy);stroke-width:1.5;opacity:.55}
+  .route-b{fill:none;stroke:var(--navy);stroke-width:1.5}
+  .tile{rx:var(--radius-lg)}
+  .txt{position:absolute;left:48px;bottom:40px;max-width:440px}
+  .name{font-size:80px;line-height:.92;font-weight:600;letter-spacing:-0.02em;color:var(--ink);margin:0}
+  .name span{color:var(--brand)}
+  .tag{font-size:14px;line-height:20px;color:var(--ink-muted);margin:16px 0 0}
+</style></head>
+<body>
+<div class="cv">
+  <svg viewBox="0 0 480 288" aria-hidden="true">
+    <!-- blocks: navy 288×288 slab bleeding top/bottom (identity), brand 144×144, brand-tint 96×144, accent 48×48 (signal, small)
+         arrangement: one tall slab with satellites, flush to the right edge, gaps = space-6 (24px)
+         pattern: literal motif "Bridging the Globe" → three trade-route arcs crossing slab and brand block; shipping lanes, not decoration
+         scales: sides multiples of space-12 (48px), gap space-6, corners radius-lg (10px), stroke = 1.5px hairline -->
+    <rect class="tint tile" x="0" y="24" width="96" height="144"/>
+    <rect class="brand tile" x="120" y="120" width="144" height="144"/>
+    <rect class="accent tile" x="168" y="48" width="48" height="48"/>
+    <rect class="navy" x="288" y="0" width="192" height="288"/>
+    <path class="route-b" d="M0 236 C 120 236, 200 90, 300 96"/>
+    <path class="route" d="M288 96 C 360 100, 400 200, 480 196"/>
+    <path class="route" d="M288 144 C 360 148, 410 236, 480 240"/>
+    <path class="route" d="M288 48 C 350 52, 420 150, 480 148"/>
+  </svg>
+  <div class="txt">
+    <h1 class="name">i<span>Commerce</span></h1>
+    <p class="tag">Bridging the globe: B2B export trade and retail, one verified marketplace.</p>
+  </div>
+</div>
+</body></html>

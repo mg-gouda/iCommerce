@@ -1,0 +1,1 @@
+Real vendor product photos migrated from the Gosoor catalog, used in component previews only: `kilim-rug.jpg` (Nile Flowers Handcrafts) and `aluminum-pots.jpg` (Helwan Non-Ferrous Industries). Not brand assets.
