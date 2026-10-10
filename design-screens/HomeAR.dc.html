@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>الصفحة الرئيسية للمتجر</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/icommerce/tokens.css">
+<link rel="stylesheet" href="ds/icommerce/components/bundle.css">
+<script src="ds/icommerce/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:var(--ground)}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.hdr-search:focus-within{outline:2px solid var(--brand);outline-offset:2px}
+.cat:hover{border-color:var(--line-strong);background:var(--surface-raised)}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--on-navy-muted);padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;min-height:32px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+</style>
+</helmet>
+<div class="ic-root" lang="ar" dir="rtl" style="min-height: 100vh; background: var(--ground); color: var(--ink); font-family: var(--font-arabic); font-size: 15px; line-height: 26px;">
+
+  <header style="background: var(--navy); color: var(--on-navy);">
+    <div style="max-width: 1360px; margin: 0 auto; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px;">
+      <a href="HomeAR.dc.html" dir="ltr" style="font-family: var(--font-sans); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--on-navy); text-decoration: none;">i<span style="color: var(--on-navy-muted);">Commerce</span></a>
+      <button class="ic-btn ic-btn--sm" style="background: transparent; border-color: rgba(255,255,255,0.28); color: var(--on-navy);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        جميع الفئات
+      </button>
+      <form class="hdr-search" style="flex: 1 1 360px; min-width: 0; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden;" onSubmit="{{noSubmit}}">
+        <label for="q-ar" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">ابحث عن المنتجات والموردين</label>
+        <input id="q-ar" placeholder="ابحث في ١٦٬٥٠٠ منتج من موردين مصريين" style="flex: 1; min-width: 0; border: 0; padding: 0 14px; height: 40px; font: inherit; color: var(--ink); background: transparent; outline: none;">
+        <button class="ic-btn ic-btn--primary" style="border-radius: 0; height: 40px;" aria-label="بحث">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+      </form>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="Main.dc.html" lang="en" dir="ltr" style="font-family: var(--font-sans); color: var(--on-navy); font-size: 13px; padding: 8px;">English</a>
+        <a href="#" style="color: var(--on-navy); font-size: 14px; padding: 8px; text-decoration: none;">تسجيل الدخول</a>
+        <a href="Cart.dc.html" class="ic-cart" id="hdr-cart-ar" aria-label="السلة، منتجان">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: scaleX(-1);"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+          <span class="ic-cart__count" id="hdr-count-ar">2</span>
+        </a>
+      </div>
+    </div>
+    <div style="border-top: 1px solid rgba(255,255,255,0.12);">
+      <div style="max-width: 1360px; margin: 0 auto; padding: 8px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+        <div class="seg" role="group" aria-label="طريقة الشراء" style="display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-md); background: rgba(255,255,255,0.10);">
+          <button aria-pressed="{{isB2c}}" onClick="{{toB2c}}">تجزئة</button>
+          <button aria-pressed="{{isB2b}}" onClick="{{toB2b}}">جملة · <bdi>B2B</bdi></button>
+        </div>
+        <nav style="display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 14px;">
+          <a href="#" style="color: var(--on-navy-muted); text-decoration: none;">العروض</a>
+          <a href="#" style="color: var(--on-navy-muted); text-decoration: none;">موردون موثّقون</a>
+          <a href="#" style="color: var(--on-navy-muted); text-decoration: none;">طلب عرض سعر</a>
+          <a href="#" style="color: var(--on-navy-muted); text-decoration: none;">بِع على <bdi>iCommerce</bdi></a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 48px;">
+
+    <section style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch;">
+      <div style="flex: 999 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 40px; display: flex; flex-direction: column; gap: 20px; justify-content: center;">
+        <h1 style="margin: 0; font-size: 36px; line-height: 52px; font-weight: 600; text-wrap: balance; max-width: 22ch;">صُنع في مصر. اشترِ بالقطعة أو بالحاوية.</h1>
+        <p style="margin: 0; color: var(--ink-muted); font-size: 17px; line-height: 30px; max-width: 56ch;">أثاث وسجاد وأدوات طهي ومنسوجات وأغذية ومواد بناء من ١٬١٨١ مصنّعًا مصريًا. اشترِ بالتجزئة مع التوصيل، أو اطلب الجملة بأسعار متدرّجة وعروض أسعار وآجال دفع.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+          <a href="#popular-ar" class="ic-btn ic-btn--primary ic-btn--lg" style="text-decoration: none;">تسوّق المنتجات الأكثر رواجًا</a>
+          <a href="Product.dc.html" class="ic-btn ic-btn--lg" style="text-decoration: none;">الشراء بالجملة</a>
+        </div>
+        <ul style="list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--ink-muted);">
+          <li><b style="color: var(--ink);">١٦٬٥٠٠</b> منتج</li>
+          <li><b style="color: var(--ink);">٩٧</b> فئة حسب فصول النظام المنسّق</li>
+          <li>الشحن داخل مصر وإلى العالم</li>
+        </ul>
+      </div>
+      <form style="flex: 1 1 340px; min-width: 0; background: var(--navy); color: var(--on-navy); border-radius: var(--radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 14px;" onSubmit="{{noSubmit}}">
+        <span class="ic-badge ic-badge--verified" style="align-self: flex-start; font-size: 13px;">للشركات</span>
+        <h2 style="margin: 0; font-size: 22px; line-height: 32px; font-weight: 600; color: var(--on-navy);">أرسل طلب عرض سعر</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 22px; color: var(--on-navy-muted);">يرد الموردون الموثّقون بسعر الوحدة ومدة التوريد وصلاحية العرض.</p>
+        <div class="ic-field"><label class="ic-label" for="rfq-p-ar" style="color: var(--on-navy); font-size: 14px;">ماذا تحتاج؟</label><input class="ic-input" id="rfq-p-ar" placeholder="مثال: أطقم حلل ألومنيوم، ٤ قطع"></div>
+        <div style="display: flex; gap: 10px;">
+          <div class="ic-field" style="flex: 1;"><label class="ic-label" for="rfq-q-ar" style="color: var(--on-navy); font-size: 14px;">الكمية</label><input class="ic-input ic-num" id="rfq-q-ar" value="500" inputmode="numeric" dir="ltr" style="text-align: right;"></div>
+          <div class="ic-field" style="flex: 1;"><label class="ic-label" for="rfq-u-ar" style="color: var(--on-navy); font-size: 14px;">الوحدة</label>
+            <select class="ic-input" id="rfq-u-ar"><option>أطقم</option><option>قطع</option><option>كراتين</option><option>م²</option><option>أطنان</option></select></div>
+        </div>
+        <button class="ic-btn ic-btn--primary ic-btn--block" style="margin-top: 4px;">إرسال الطلب</button>
+      </form>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 36px; font-weight: 600;">تسوّق حسب الفئة</h2>
+        <a href="#" style="font-size: 14px;">جميع الفئات الـ٩٧</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+        <sc-for list="{{categories}}" as="c" hint-placeholder-count="8">
+          <a href="#" class="cat" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); color: var(--ink); text-decoration: none;">
+            <span style="font-weight: 600; font-size: 15px;">{{c.name}}</span>
+            <span style="font-size: 13px; color: var(--ink-muted);">{{c.count}} منتج · <bdi>HS {{c.hs}}</bdi></span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="popular-ar" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 36px; font-weight: 600;">{{gridTitle}}</h2>
+        <span style="font-size: 14px; color: var(--ink-muted);">{{gridNote}}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px;">
+        <sc-for list="{{products}}" as="p" hint-placeholder-count="8">
+          <article class="ic-card">
+            <div class="ic-card__media">
+              <img src="{{p.img}}" alt="{{p.name}}">
+              <div class="ic-card__flags">
+                <sc-if value="{{p.showSale}}" hint-placeholder-val="{{false}}"><span class="ic-badge ic-badge--sale"><bdi>{{p.sale}}</bdi></span></sc-if>
+                <sc-if value="{{isB2b}}" hint-placeholder-val="{{false}}"><span class="ic-badge ic-badge--b2b">جملة</span></sc-if>
+              </div>
+            </div>
+            <div class="ic-card__body">
+              <div class="ic-card__vendor" style="font-size: 13px;">
+                <sc-if value="{{p.verified}}" hint-placeholder-val="{{true}}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="مورد موثّق"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </sc-if>
+                <span>{{p.vendor}}</span>
+              </div>
+              <h3 class="ic-card__title" style="font-size: 15px; line-height: 24px;"><a href="Product.dc.html" style="color: inherit; text-decoration: none;">{{p.name}}</a></h3>
+              <sc-if value="{{isB2c}}" hint-placeholder-val="{{true}}">
+                <div class="ic-card__price"><bdi>USD {{p.price}}</bdi><sc-if value="{{p.showSale}}" hint-placeholder-val="{{false}}"><s><bdi>USD {{p.was}}</bdi></s></sc-if></div>
+                <ul class="ic-card__facts" style="font-size: 13px;"><li>{{p.ship}}</li></ul>
+                <button class="ic-btn ic-btn--primary ic-btn--block ic-card__cta ic-mbtn" data-state="idle" onClick="{{p.add}}"><span class="ic-mbtn__label">أضف إلى السلة</span></button>
+              </sc-if>
+              <sc-if value="{{isB2b}}" hint-placeholder-val="{{false}}">
+                <div class="ic-card__price"><bdi>USD {{p.range}}</bdi> <span style="font-size: 13px; font-weight: 400; color: var(--ink-muted);">/ {{p.unit}}</span></div>
+                <ul class="ic-card__facts" style="font-size: 13px;"><li>الحد الأدنى <b>{{p.moq}}</b></li><li>التوريد <b>{{p.lead}}</b></li></ul>
+                <a href="Product.dc.html" class="ic-btn ic-btn--block ic-card__cta" style="text-decoration: none;">طلب عرض سعر</a>
+              </sc-if>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);">
+      <sc-for list="{{trust}}" as="t" hint-placeholder-count="4">
+        <div style="padding: 20px 24px; display: flex; gap: 12px; align-items: flex-start;">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--brand-tint); color: var(--brand-ink); display: grid; place-items: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <div><div style="font-weight: 600;">{{t.title}}</div><div style="font-size: 14px; line-height: 22px; color: var(--ink-muted);">{{t.text}}</div></div>
+        </div>
+      </sc-for>
+    </section>
+  </main>
+
+  <footer style="background: var(--navy); color: var(--on-navy-muted); font-size: 14px;">
+    <div style="max-width: 1360px; margin: 0 auto; padding: 32px 24px; display: flex; flex-wrap: wrap; gap: 16px 48px; justify-content: space-between;">
+      <div><div dir="ltr" style="font-family: var(--font-sans); font-size: 18px; font-weight: 600; color: var(--on-navy); text-align: right;">iCommerce</div><div>جسر إلى العالم. القاهرة، مصر.</div></div>
+      <nav style="display: flex; flex-wrap: wrap; gap: 8px 24px;">
+        <a href="#" style="color: var(--on-navy-muted);">مركز المساعدة</a>
+        <a href="#" style="color: var(--on-navy-muted);">حماية المشتري</a>
+        <a href="#" style="color: var(--on-navy-muted);">كن موردًا</a>
+        <a href="#" style="color: var(--on-navy-muted);">الشروط</a>
+        <a href="#" style="color: var(--on-navy-muted);">الخصوصية</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startMode":{"editor":"enum","options":["b2c","b2b"],"default":"b2c"},"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { mode: null }; }
+  renderVals() {
+    var mode = this.state.mode || this.props.startMode || 'b2c';
+    var self = this;
+    var add = function (e) {
+      var btn = e.currentTarget;
+      if (!window.iCommerce) return;
+      window.iCommerce.addToCart(btn, {
+        image: btn.closest('article').querySelector('img'),
+        cart: document.getElementById("hdr-cart-ar"),
+        count: document.getElementById("hdr-count-ar"),
+        doneText: 'تمت الإضافة'
+      });
+    };
+    var P = [
+      { img: '/_blob/3fe982013a74a10ded89b096060efcc1', name: 'سجادة كليم صوف، مملوكي NF88، ١٫٥ × ٢ م', vendor: 'نايل فلاورز للمشغولات اليدوية', verified: true, price: '152.00', was: '179.00', sale: '−15%', ship: 'التوصيل خلال ٥–٧ أيام', range: '118.00–135.00', unit: 'قطعة', moq: '٢٠ قطعة', lead: '١٤ يومًا' },
+      { img: '/_blob/40873d78a68cffb7e1e1233ad1e6306a', name: 'طقم ٤ حلل تشيكي، ألومنيوم', vendor: 'حلوان للصناعات غير الحديدية', verified: true, price: '14.90', ship: 'التوصيل خلال ٢–٤ أيام', range: '9.80–12.40', unit: 'طقم', moq: '٢٠٠ طقم', lead: '٢١ يومًا' },
+      { img: '/_blob/bbb277b09ea373170a6e471d99ed862f', name: 'كنبة مودرن بأرجل ستانلس ستيل AS001', vendor: 'المعتز للأثاث', verified: false, price: '640.00', ship: 'التوصيل خلال ١٠–١٤ يومًا', range: '455.00–520.00', unit: 'قطعة', moq: '١٠ قطع', lead: '٣٠ يومًا' },
+      { img: '/_blob/eaaa2adb0cca2bd99e7e06ad088649c8', name: 'سجادة صوف معقودة يدويًا، ٢ × ٣ م', vendor: 'مكي للسجاد اليدوي', verified: true, price: '210.00', ship: 'التوصيل خلال ٥–٧ أيام', range: '165.00–190.00', unit: 'قطعة', moq: '١٠ قطع', lead: '٢٨ يومًا' },
+      { img: '/_blob/070559c4e410812ba520f239b7791ce8', name: 'فوط مطبخ منسوجة، عبوة ٣ قطع', vendor: 'الشيخ لنسيج الفوط', verified: true, price: '6.50', was: '7.90', sale: '−18%', ship: 'التوصيل خلال ٢–٤ أيام', range: '3.10–3.90', unit: 'عبوة', moq: '٥٠٠ عبوة', lead: '١٨ يومًا' },
+      { img: '/_blob/a8882551142d765b3d438d828fc48f5a', name: 'كابل PVC مرن ٢ × ١٫٦ مم، لفة ١٠٠ م', vendor: 'جيزة للكابلات', verified: true, price: '38.00', ship: 'التوصيل خلال ٢–٤ أيام', range: '24.00–29.00', unit: 'لفة', moq: '١٠٠ لفة', lead: '١٠ أيام' },
+      { img: '/_blob/7104cf135d4860b895b7e9cf03c816ba', name: 'زيت زيتون بكر ممتاز، ٠٫٧٥ لتر', vendor: 'بورتلاند', verified: false, price: '9.20', ship: 'التوصيل خلال ٢–٤ أيام', range: '5.40–6.10', unit: 'زجاجة', moq: '١٬٠٠٠ زجاجة', lead: '١٢ يومًا' },
+      { img: '/_blob/2ef19bd8578de729f2750f38f6d7b89d', name: 'حذاء رياضي رجالي من الجلد', vendor: 'الأسطورة لصناعة الأحذية', verified: true, price: '34.00', ship: 'التوصيل خلال ٣–٥ أيام', range: '19.50–24.00', unit: 'زوج', moq: '١٢٠ زوجًا', lead: '٢٥ يومًا' }
+    ].map(function (p) { return Object.assign({ showSale: mode === 'b2c' && !!p.sale, add: add }, p); });
+    return {
+      isB2c: mode === 'b2c', isB2b: mode === 'b2b',
+      toB2c: function () { self.setState({ mode: 'b2c' }); },
+      toB2b: function () { self.setState({ mode: 'b2b' }); },
+      noSubmit: function (e) { e.preventDefault(); },
+      gridTitle: mode === 'b2c' ? 'الأكثر رواجًا بالتجزئة' : 'جملة من موردين موثّقين',
+      gridNote: mode === 'b2c' ? 'الأسعار شاملة الضريبة · تُحسب رسوم التوصيل عند الدفع' : 'أسعار متدرّجة للوحدة · رسوم المنصة تظهر عند الدفع',
+      products: P,
+      categories: [
+        { name: 'الأثاث والمفروشات المنزلية', count: '١٬٧٧١', hs: '94' },
+        { name: 'البلاستيك ومنتجاته', count: '١٬٦٦٤', hs: '39' },
+        { name: 'السجاد وأغطية الأرضيات', count: '١٬٣٠٧', hs: '57' },
+        { name: 'الألومنيوم ومنتجاته', count: '١٬١٨٤', hs: '76' },
+        { name: 'الآلات والمعدات الكهربائية', count: '١٬١٦٥', hs: '85' },
+        { name: 'مصنوعات الحديد والصلب', count: '١٬٣٨٩', hs: '73' },
+        { name: 'الملابس الجاهزة', count: '١٬٠٠٩', hs: '61–62' },
+        { name: 'الأجهزة الطبية والبصرية', count: '٤٢٤', hs: '90' }
+      ],
+      trust: [
+        { title: 'موردون موثّقون', text: 'نتحقق من السجل التجاري والبطاقة الضريبية وبطاقة التصدير قبل ظهور علامة التوثيق.' },
+        { title: 'الدفع عند الاستلام أو بالتحويل البنكي', text: 'ادفع عند وصول الطلب، أو حوّل المبلغ وارفع الإيصال.' },
+        { title: 'آجال دفع للشركات', text: 'تدفع الشركات المعتمدة خلال ١٥ أو ٣٠ أو ٦٠ يومًا.' },
+        { title: 'الشحن داخل مصر وخارجها', text: 'يشحن كل مورد طلبك ويشاركك رقم التتبع.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
