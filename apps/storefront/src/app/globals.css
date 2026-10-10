@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "@icommerce/ui/theme.css";
+@import "@icommerce/ui/components.css" layer(components);
+@source "../../../../packages/ui/src";
+
+body {
+  margin: 0;
+  background: var(--ground);
+}
