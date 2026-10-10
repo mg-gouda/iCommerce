@@ -1,0 +1,22 @@
+{
+  "name": "@icommerce/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@medusajs/js-sdk": "2.21.2"
+  },
+  "devDependencies": {
+    "@icommerce/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "eslint": "9.39.5",
+    "typescript": "5.9.3"
+  }
+}
