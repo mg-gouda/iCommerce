@@ -27,3 +27,7 @@ test-results/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# next
+next-env.d.ts
+*.tsbuildinfo
