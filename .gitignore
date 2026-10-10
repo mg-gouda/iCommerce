@@ -30,3 +30,7 @@ test-results/
 
 # agent worktrees
 .claude/worktrees/
+
+# next
+next-env.d.ts
+*.tsbuildinfo

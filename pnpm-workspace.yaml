@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - "@swc/core"
+  - esbuild
+  - msgpackr-extract
+  - unrs-resolver
+# ponytail: one React types version workspace-wide; Medusa dashboard ships prebuilt and pulls @types/react 18, which otherwise leaks into Next apps via pnpm hidden hoisting.
+overrides:
+  "@types/react": 19.3.0
+  "@types/react-dom": 19.3.0

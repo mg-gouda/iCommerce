@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "title": "iCommerce",
+    "description": "Buy from Egyptian manufacturers: wholesale for companies, retail for everyone."
+  },
+  "home": {
+    "searchLabel": "Search products",
+    "searchPlaceholder": "Search rugs, cookware, textiles…",
+    "signIn": "Sign in",
+    "featured": "Featured products",
+    "featuredSub": "Retail and wholesale listings from verified Egyptian suppliers.",
+    "verified": "Verified supplier",
+    "moq": "MOQ",
+    "lead": "Lead",
+    "addToCart": "Add to cart",
+    "requestQuote": "Request quote"
+  },
+  "login": {
+    "sub": "Sign in to buy, sell or manage your store.",
+    "email": "Email or phone",
+    "password": "Password",
+    "submit": "Sign in",
+    "forgot": "Forgot password?",
+    "newHere": "New here?",
+    "create": "Create account"
+  }
+}
