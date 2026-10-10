@@ -1,0 +1,33 @@
+{
+  "name": "@icommerce/backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "medusa develop",
+    "build": "medusa build",
+    "start": "medusa start",
+    "db:migrate": "medusa db:migrate",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@medusajs/admin-sdk": "2.21.2",
+    "@medusajs/cli": "2.21.2",
+    "@medusajs/framework": "2.21.2",
+    "@medusajs/medusa": "2.21.2",
+    "ioredis": "5.11.1"
+  },
+  "devDependencies": {
+    "@icommerce/config": "workspace:*",
+    "@swc/core": "1.16.13",
+    "@types/node": "22.20.5",
+    "eslint": "9.39.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
