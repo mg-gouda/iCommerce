@@ -1,0 +1,65 @@
+{
+  "meta": { "title": "iCommerce vendor portal" },
+  "login": {
+    "sub": "Sign in to manage your store.",
+    "email": "Email or phone",
+    "password": "Password",
+    "submit": "Sign in",
+    "forgot": "Forgot password?",
+    "apply": "Apply to sell"
+  },
+  "nav": {
+    "label": "Vendor portal",
+    "portal": "Vendor",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "quotes": "Quotes",
+    "messages": "Messages",
+    "reports": "Reports",
+    "payouts": "Payouts",
+    "settings": "Settings"
+  },
+  "sections": {
+    "dashboard": {
+      "title": "Dashboard",
+      "emptyTitle": "Your store at a glance",
+      "emptyBody": "Sales, open orders and quote requests show here once your first product is live."
+    },
+    "products": {
+      "title": "Products",
+      "emptyTitle": "No products yet",
+      "emptyBody": "Products you add appear here with price, stock, MOQ and review status. Bulk import from CSV or Excel arrives with the catalog release."
+    },
+    "orders": {
+      "title": "Orders",
+      "emptyTitle": "No orders yet",
+      "emptyBody": "Retail and company orders for your products land here. Ship them and add tracking from each order."
+    },
+    "quotes": {
+      "title": "Quotes",
+      "emptyTitle": "No quote requests yet",
+      "emptyBody": "When a company buyer requests a quote, set unit prices, lead time and validity here, then send the offer."
+    },
+    "messages": {
+      "title": "Messages",
+      "emptyTitle": "No conversations yet",
+      "emptyBody": "Buyer questions about your products and quotes appear here."
+    },
+    "reports": {
+      "title": "Reports",
+      "emptyTitle": "No data yet",
+      "emptyBody": "Sales, top products and buyer reports build up as orders come in."
+    },
+    "payouts": {
+      "title": "Payouts",
+      "emptyTitle": "No payouts yet",
+      "emptyBody": "Each delivered order adds a payout line: order total minus commission and refunds."
+    },
+    "settings": {
+      "title": "Settings",
+      "emptyTitle": "Store settings",
+      "emptyBody": "Store profile, staff, shipping options and KYC documents are managed here."
+    }
+  }
+}
