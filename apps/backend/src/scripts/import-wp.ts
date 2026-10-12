@@ -425,7 +425,7 @@ async function importProducts(
       } as Record<string, unknown>,
       sales_channels: salesChannels,
       options: [{ title: "Default", values: ["Default"] }],
-      variants: [{ title: "Default", sku, options: { Default: "Default" }, prices: [{ currency_code: "usd", amount: p.regular_price! }] }],
+      variants: [{ title: "Default", sku, options: { Default: "Default" }, manage_inventory: false, prices: [{ currency_code: "usd", amount: p.regular_price! }] }],
     }
     const vendor_id = vendorId.get(String(p.vendor_legacy_id))!
     product.metadata.import_hash = createHash("sha256").update(JSON.stringify({ product, extra, vendor_id })).digest("hex").slice(0, 16)
@@ -464,7 +464,7 @@ async function importProducts(
               products: rows.map(({ extra, product: { options, variants, ...p } }) => {
                 const { id, variants: [variant] } = prev.get(extra.legacy_id)!.product!
                 const [v] = variants!
-                return { ...p, handle: p.handle!, id, variants: [{ id: variant?.id, title: v.title, sku: v.sku, prices: v.prices }] }
+                return { ...p, handle: p.handle!, id, variants: [{ id: variant?.id, title: v.title, sku: v.sku, manage_inventory: v.manage_inventory, prices: v.prices }] }
               }),
             },
           })

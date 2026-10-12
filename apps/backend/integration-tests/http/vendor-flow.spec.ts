@@ -59,6 +59,7 @@ medusaIntegrationTestRunner({
 
       const created = await api.post("/vendors/products", product("Steel pipe", "published"), bearer(a.token))
       expect(created.status).toBe(201)
+      expect(created.data.product.variants[0].manage_inventory).toBe(false)
       expect(created.data.product).toMatchObject({
         title: "Steel pipe",
         status: "published",
