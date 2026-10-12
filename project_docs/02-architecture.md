@@ -274,6 +274,12 @@ Envs: `dev` → `staging` → `prod`, GitHub Actions CI.
 | 7 | Paid vendor plans **v1** |
 | 8 | Plan billing manual/invoice until gateway chosen |
 | 9 | Fee < first tier → handled by admin config (`min_amount = 0` tier) |
+| 10 | Export Card No. optional in KYC (vendors + companies); Tax ID + Commercial Reg. required |
+| 11 | Decimal MOQ/step/max allowed; fractional-step products are quote-only (cart qty is integer) |
+| 12 | Vendors don't track stock in v1 → all variants unmanaged inventory |
+| 13 | Guests may pay by bank transfer; proof upload + tracking via order number + email |
+| 14 | Vendor cancels → buyer emailed; all vendor orders cancelled → parent order cancelled |
+| 15 | One "Storefront" publishable key (Retail + Wholesale); cart channel = Retail for consumers, Wholesale for verified company members |
 
 ## Open questions
 1. Payment gateway (parked).
