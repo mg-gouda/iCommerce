@@ -40,13 +40,13 @@ const FIELDS = [
 ].join(",")
 
 let regionId: string | undefined
-async function region() {
-  // ponytail: single USD region (seed-defaults "Egypt"); region picker + EGP when checkout lands (P2).
+export async function region() {
+  // ponytail: single USD region (seed-defaults "Egypt", the only market we ship to); EGP prices + picker when a second region exists.
   regionId ??= (await sdk.store.region.list({ limit: 1, fields: "id" })).regions[0]?.id
   return regionId
 }
 
-export async function listProducts(query: { limit?: number; category_id?: string[]; handle?: string } = {}) {
+export async function listProducts(query: { limit?: number; category_id?: string[]; handle?: string; id?: string[] } = {}) {
   await connection()
   const { products, count } = await sdk.store.product.list({
     ...query,
@@ -98,4 +98,33 @@ export const priceOf = (p: Product) => p.variants[0]?.calculated_price?.calculat
 export const compareAtOf = (p: Product) => {
   const c = Number(p.metadata?.compare_at_usd)
   return c > 0 ? c : undefined
+}
+
+/** Snaps a quantity onto the product's MOQ / step grid (integers only). Over max → throws. */
+export function fitQty(qty: number, e: Pick<Extra, "min_qty" | "qty_step" | "max_qty"> | null) {
+  const lo = e?.min_qty ?? 1
+  const step = e?.qty_step ?? 1
+  const fit = lo + Math.ceil((Math.max(lo, Math.floor(qty)) - lo) / step) * step
+  if (e?.max_qty && fit > e.max_qty) throw new Error("qty")
+  return fit
+}
+
+/** Products by id (vendor + MOQ facts for cart / order lines). Suspended vendors' products drop out. */
+export async function productsById(ids: (string | null | undefined)[]) {
+  const unique = [...new Set(ids.filter((i): i is string => !!i))]
+  if (!unique.length) return new Map<string, Product>()
+  const { products } = await listProducts({ id: unique, limit: unique.length })
+  return new Map(products.map((p) => [p.id, p]))
+}
+
+/** Lines grouped by supplier, in first-seen order. Unknown vendor → handle "". */
+export function byVendor<T extends { product_id?: string | null }>(items: T[], products: Map<string, Product>) {
+  const groups = new Map<string, { vendor: StoreVendor | null; items: T[] }>()
+  for (const it of items) {
+    const v = products.get(it.product_id ?? "")?.vendor ?? null
+    const key = v?.handle ?? ""
+    if (!groups.has(key)) groups.set(key, { vendor: v, items: [] })
+    groups.get(key)!.items.push(it)
+  }
+  return [...groups.values()]
 }

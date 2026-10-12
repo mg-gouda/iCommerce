@@ -1,59 +1,11 @@
 "use client"
 
-import { CircleAlert } from "lucide-react"
 import { useLocale } from "next-intl"
-import { useId, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react"
+import { useId, type ReactNode } from "react"
+import { Select, type SelectProps } from "@icommerce/ui"
 
-// Select / textarea / checkbox in the same markup as @icommerce/ui Field (label, help, error, aria wiring).
-// ponytail: vendor-only for now; move to packages/ui when the storefront needs them.
-
-type Wrap = { label: ReactNode; help?: ReactNode; error?: ReactNode }
-
-function Note({ id, help, error }: { id: string; help?: ReactNode; error?: ReactNode }) {
-  if (error)
-    return (
-      <span className="ic-error" id={id}>
-        <CircleAlert aria-hidden /> {error}
-      </span>
-    )
-  return help ? <span className="ic-help" id={id}>{help}</span> : null
-}
-
-export function Select({ label, help, error, children, className, ...props }: Wrap & SelectHTMLAttributes<HTMLSelectElement>) {
-  const id = useId()
-  return (
-    <div className="ic-field">
-      <label className="ic-label" htmlFor={id}>{label}</label>
-      <select
-        id={id}
-        className={`ic-input ${className ?? ""}`}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error || help ? `${id}-note` : undefined}
-        {...props}
-      >
-        {children}
-      </select>
-      <Note id={`${id}-note`} help={help} error={error} />
-    </div>
-  )
-}
-
-export function Textarea({ label, help, error, className, ...props }: Wrap & TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const id = useId()
-  return (
-    <div className="ic-field">
-      <label className="ic-label" htmlFor={id}>{label}</label>
-      <textarea
-        id={id}
-        className={`ic-input min-h-28 py-2 ${className ?? ""}`}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error || help ? `${id}-note` : undefined}
-        {...props}
-      />
-      <Note id={`${id}-note`} help={help} error={error} />
-    </div>
-  )
-}
+// Checkbox in the same markup as @icommerce/ui Field. Select/Textarea live in @icommerce/ui.
+export { Select, Textarea } from "@icommerce/ui"
 
 export function Checkbox({ label, help, name, defaultChecked }: { label: ReactNode; help?: ReactNode; name: string; defaultChecked?: boolean }) {
   const id = useId()
@@ -78,7 +30,7 @@ export function Checkbox({ label, help, name, defaultChecked }: { label: ReactNo
 // ponytail: short list of export/import markets; full ISO list when a vendor outside it signs up.
 const COUNTRIES = ["EG", "SA", "AE", "KW", "QA", "BH", "OM", "JO", "LB", "MA", "TN", "DZ", "LY", "SD", "TR", "CN", "IN", "DE", "IT", "GB", "US"]
 
-export function CountrySelect(props: Wrap & SelectHTMLAttributes<HTMLSelectElement>) {
+export function CountrySelect(props: SelectProps) {
   const names = new Intl.DisplayNames([useLocale()], { type: "region" })
   return (
     <Select {...props}>

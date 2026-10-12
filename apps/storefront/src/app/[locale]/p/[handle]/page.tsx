@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: Props) {
             )}
             {/* PriceTiers render once wholesale tier price lists exist (P3); none yet → hidden. */}
 
-            <BuyBox price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
+            <BuyBox productId={p.id} price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
 
             {p.description && (
               <div className="flex flex-col gap-1">

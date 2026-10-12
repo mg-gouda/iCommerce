@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from "next-intl"
 import { AddToCartButton, Badge, ProductCard } from "@icommerce/ui"
 import type { SearchDoc } from "@/lib/search"
+import { addToCart } from "@/lib/cart-actions"
 import { compareAtOf, isRetail, isVerified, priceOf, type Product } from "@/lib/store"
 
 export type Tile = {
@@ -76,7 +77,7 @@ export function ProductGrid({ tiles }: { tiles: Tile[] }) {
               cta={t("requestQuote")}
               action={
                 p.retail ? (
-                  <AddToCartButton block className="ic-card__cta" label={t("addToCart")} doneLabel={t("added")} />
+                  <AddToCartButton block className="ic-card__cta" qty={p.moq ?? 1} onAdd={addToCart.bind(null, p.id, p.moq ?? 1)} label={t("addToCart")} doneLabel={t("added")} errorLabel={t("addFailed")} />
                 ) : (
                   <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${t("requestQuote")}: ${p.title}`}>
                     {t("requestQuote")}

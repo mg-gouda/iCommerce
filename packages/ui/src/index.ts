@@ -1,6 +1,7 @@
 export { Badge, type BadgeProps } from "./Badge"
 export { Button, type ButtonProps } from "./Button"
 export { Field, type FieldProps } from "./Field"
+export { Select, Textarea, type SelectProps, type TextareaProps } from "./Select"
 export { LoginCard, type LoginCardProps } from "./LoginCard"
 export { PriceTiers, type PriceTiersProps, type Tier } from "./PriceTiers"
 export { ProductCard, type ProductCardProps } from "./ProductCard"

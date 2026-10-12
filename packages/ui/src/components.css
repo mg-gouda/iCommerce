@@ -121,6 +121,7 @@
 .ic-mbtn__label { display: inline-flex; align-items: center; gap: var(--space-2); position: relative; z-index: 1; }
 .ic-mbtn[data-state="done"] { background: var(--success); border-color: var(--success); color: var(--surface); }
 .ic-mbtn[data-state="busy"] { cursor: progress; }
+.ic-mbtn[data-state="error"] { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 
 /* Cart icon + count (header) */
 .ic-cart { position: relative; display: inline-grid; place-items: center; inline-size: 40px; block-size: 40px; border-radius: var(--radius-md); color: var(--on-navy); }

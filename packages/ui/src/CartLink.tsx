@@ -9,14 +9,22 @@ export type CartLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string
   /** Accessible name; `{count}` is replaced, e.g. "Cart, {count} items". */
   label: string
-  initialCount?: number
+  /** Server-rendered cart count; AddToCartButton landings update it until the next render. */
+  count?: number
 }
 
-// ponytail: count lives here until the real cart (P2) owns it.
-export function CartLink({ label, initialCount = 0, className, ...props }: CartLinkProps) {
-  const [count, setCount] = useState(initialCount)
+export function CartLink({ label, count: server = 0, className, ...props }: CartLinkProps) {
+  const [count, setCount] = useState(server)
+  const [seen, setSeen] = useState(server)
+  if (server !== seen) {
+    setSeen(server)
+    setCount(server)
+  }
   useEffect(() => {
-    const onAdd = (e: Event) => setCount((c) => c + (e as CustomEvent<CartAddDetail>).detail.qty)
+    const onAdd = (e: Event) => {
+      const d = (e as CustomEvent<CartAddDetail>).detail
+      setCount((c) => d.count ?? c + d.qty)
+    }
     window.addEventListener(CART_ADD_EVENT, onAdd)
     return () => window.removeEventListener(CART_ADD_EVENT, onAdd)
   }, [])
