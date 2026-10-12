@@ -1,3 +1,4 @@
+import Image from "next/image"
 import type { HTMLAttributes, ReactNode } from "react"
 import { Badge } from "./Badge"
 import { Button } from "./Button"
@@ -36,7 +37,7 @@ export function ProductCard({
   return (
     <article className={cx("ic-card", className)} {...props}>
       <div className="ic-card__media">
-        <img src={image} alt={imageAlt} loading="lazy" />
+        <Image src={image} alt={imageAlt} fill sizes="(min-width: 640px) 260px, 50vw" />
         {flags && <div className="ic-card__flags">{flags}</div>}
       </div>
       <div className="ic-card__body">
@@ -44,7 +45,7 @@ export function ProductCard({
           {verified && <Badge variant="verified" role="img" aria-label={verified} style={{ paddingInline: 4 }} />}
           <span>{vendor}</span>
         </div>
-        <h3 className="ic-card__title">
+        <h3 className="ic-card__title" dir="auto">
           <a href={href} style={{ color: "inherit", textDecoration: "none" }}>
             {title}
           </a>
