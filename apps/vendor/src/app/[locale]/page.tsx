@@ -1,7 +1,9 @@
+import { cookies } from "next/headers"
 import { getLocale } from "next-intl/server"
 import { redirect } from "@/i18n/navigation"
+import { TOKEN_COOKIE } from "@/lib/api"
 
 export default async function Index() {
-  // ponytail: always to login until vendor_user auth exists; then route by session.
-  redirect({ href: "/login", locale: await getLocale() })
+  const signedIn = (await cookies()).has(TOKEN_COOKIE)
+  redirect({ href: signedIn ? "/dashboard" : "/login", locale: await getLocale() })
 }

@@ -23,8 +23,19 @@ const csvUpload = upload(5, /^(text\/csv|text\/plain|application\/vnd\.ms-excel|
 
 const vendorAuth = authenticate("vendor", ["session", "bearer"])
 
+// Public storefront may read these linked fields on /store/products (exact paths → cost_price stays private).
+const STORE_PRODUCT_FIELDS = [
+  ...["unit", "min_qty", "max_qty", "qty_step", "hs_code", "b2b_only", "b2c_enabled", "origin_country"].map((f) => `product_extra.${f}`),
+  ...["name", "handle", "logo", "city", "country", "status", "kyc_status"].map((f) => `vendor.${f}`),
+]
+const allowStoreProductFields = (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
+  req.allowed = [...(req.allowed ?? []), ...STORE_PRODUCT_FIELDS]
+  next()
+}
+
 export default defineMiddlewares({
   routes: [
+    { matcher: "/store/products*", method: ["GET"], middlewares: [allowStoreProductFields] },
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.
