@@ -24,7 +24,7 @@ pnpm --filter @icommerce/migrate-wp test
 docker rm -f wp-migrate-db
 ```
 
-Env (all optional): `WP_DB_PORT` (3317), `WP_DB` (wp), `WP_PREFIX` (`wWWvr_`), `WP_UPLOADS` (uploads dir, absolute or relative to repo root; default `Old WP Project/marketplace/wp-content/uploads`).
+Env (all optional): `WP_DB_PORT` (3317), `WP_DB` (wp), `WP_PREFIX` (`wWWvr_`), `WP_UPLOADS` (comma-separated upload roots searched in order, absolute or relative to repo root; default `Old WP Project/marketplace/wp-content/uploads,Old WP Project/recovered-uploads`; the second holds 2022/03–06 originals recovered from the Jun-2022 `.wpress`).
 
 ## Output (`out/`)
 

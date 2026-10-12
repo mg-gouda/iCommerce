@@ -6,7 +6,10 @@ import mysql from "mysql2/promise"
 import { attrKey, cleanText, isoDate, mapProductAttributes, parsePrice, parseQty, phpUnserialize, slugify, stripSizeSuffix, titleCaseIfAllCaps, uniqueHandles, uploadsRelative } from "./transforms.ts"
 
 const P = process.env.WP_PREFIX ?? "wWWvr_"
-const UPLOADS = resolve(import.meta.dirname, "../../..", process.env.WP_UPLOADS ?? "Old WP Project/marketplace/wp-content/uploads")
+// Searched in order. recovered-uploads = 2022/03–06 originals pulled from the Jun-2022 .wpress (the copied uploads/ lacks them).
+const UPLOAD_ROOTS = (process.env.WP_UPLOADS ?? "Old WP Project/marketplace/wp-content/uploads,Old WP Project/recovered-uploads")
+  .split(",").map((r) => resolve(import.meta.dirname, "../../..", r))
+const onDisk = (p: string) => UPLOAD_ROOTS.map((r) => join(r, p)).find((f) => existsSync(f))
 const OUT = resolve(import.meta.dirname, "../out")
 const db = await mysql.createConnection({
   host: "127.0.0.1", port: Number(process.env.WP_DB_PORT ?? 3317), user: "root", database: process.env.WP_DB ?? "wp",
@@ -41,7 +44,7 @@ const resolveImage = (ref: string | number | null | undefined, owner: string): s
   if (!p) { brokenAttachmentRefs++; return null }
   p = p.replace(/^\/+/, "")
   const orig = stripSizeSuffix(p)
-  const hit = existsSync(join(UPLOADS, orig)) ? orig : existsSync(join(UPLOADS, p)) ? p : null
+  const hit = onDisk(orig) ? orig : onDisk(p) ? p : null
   // ponytail: not on disk → keep WP's attached path (= original upload); listed in images.json missing[].
   const bucket = hit ? images : missing
   const key = hit ?? p
@@ -190,8 +193,10 @@ const fee_tiers = (await q(`select * from intermediation_fees order by cast(amou
 // ---------- images manifest ----------
 const sorted = <T>(m: Map<string, Set<string>>, f: (p: string, used: string[]) => T) => [...m.keys()].sort().map((p) => f(p, [...m.get(p)!].sort()))
 const imageManifest = sorted(images, (path, used_by) => {
-  const buf = readFileSync(join(UPLOADS, path))
-  return { path, bytes: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), used_by }
+  const file = onDisk(path)!
+  const buf = readFileSync(file)
+  // ponytail: absolute `file` is machine-local; out/ never leaves this machine.
+  return { path, file, bytes: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), used_by }
 })
 const missingManifest = sorted(missing, (path, used_by) => ({ path, used_by }))
 await db.end()
