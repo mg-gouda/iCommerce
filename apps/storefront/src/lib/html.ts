@@ -14,7 +14,7 @@ const OPTIONS: sanitize.IOptions = {
 export const descriptionHtml = (raw: string) => sanitize(/<\/?[a-z][^>]*>/i.test(raw) ? raw : raw.replace(/\n/g, "<br>"), OPTIONS)
 
 /** Plain text for <meta> description. */
-export const descriptionText = (raw: string) => sanitize(raw, { allowedTags: [], allowedAttributes: {} })
+export const descriptionText = (raw: string) => sanitize(raw.replace(/<br\s*\/?>|<\/(p|li|h3|h4|td|th|tr)>/gi, " "), { allowedTags: [], allowedAttributes: {} })
     .replace(/&(amp|lt|gt|quot|#39);/g, (m) => ENTITIES[m])
     .replace(/\s+/g, " ")
     .trim()
