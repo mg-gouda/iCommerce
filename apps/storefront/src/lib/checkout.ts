@@ -29,9 +29,9 @@ export async function shippingGroups(cartId: string): Promise<ShipGroup[]> {
   }))
 }
 
-export type PayKind = "cod" | "bank"
-const KINDS: Record<string, PayKind> = { pp_cod_cod: "cod", "pp_bank-transfer_bank-transfer": "bank" }
-/** COD / bank transfer by Medusa provider id (p2-backend.md §3); other providers aren't offered. */
+export type PayKind = "cod" | "bank" | "net"
+const KINDS: Record<string, PayKind> = { pp_cod_cod: "cod", "pp_bank-transfer_bank-transfer": "bank", "pp_net-terms_net-terms": "net" }
+/** COD / bank transfer (p2-backend.md §3) / net terms (p3-backend.md §4) by Medusa provider id; others aren't offered. */
 export const payKind = (providerId: string): PayKind | undefined => KINDS[providerId]
 
 export async function paymentProviders(regionId: string) {

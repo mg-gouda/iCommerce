@@ -1,5 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server"
+import { Badge } from "@icommerce/ui"
 import { Header } from "@/components/Header"
+import { RfqQuickForm } from "@/components/RfqForms"
 import { ProductGrid, tileFromProduct } from "@/components/ProductGrid"
 import { Link } from "@/i18n/navigation"
 import { listCategories, listProducts } from "@/lib/store"
@@ -7,7 +9,7 @@ import { listCategories, listProducts } from "@/lib/store"
 const VENDOR_PORTAL = process.env.NEXT_PUBLIC_VENDOR_PORTAL_URL ?? "http://localhost:3001"
 
 export default async function Home() {
-  const t = await getTranslations("home")
+  const [t, tb] = await Promise.all([getTranslations("home"), getTranslations("b2b")])
   const locale = await getLocale()
   const [{ products, count }, categories] = await Promise.all([listProducts({ limit: 12 }), listCategories()])
 
@@ -31,11 +33,12 @@ export default async function Home() {
               <li>{t("ships")}</li>
             </ul>
           </section>
-          <aside className="flex min-w-0 flex-[1_1_300px] flex-col justify-center gap-3 rounded-lg bg-navy p-6 text-on-navy md:p-7">
-            <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("sellTitle")}</h2>
-            <p className="m-0 text-[13px] leading-[18px] text-on-navy-muted">{t("sellBody")}</p>
-            <a href={`${VENDOR_PORTAL}/${locale}/signup`} className="ic-btn ic-btn--primary self-start no-underline">{t("sellCta")}</a>
-          </aside>
+          <section aria-labelledby="rfq-title" className="flex min-w-0 flex-[1_1_320px] flex-col gap-3.5 rounded-lg bg-navy p-6 text-on-navy md:p-7">
+            <Badge variant="verified" className="self-start">{tb("forCompanies")}</Badge>
+            <h2 id="rfq-title" className="m-0 text-[20px] leading-[26px] font-semibold">{tb("rfqTitle")}</h2>
+            <p className="m-0 text-[13px] leading-[18px] text-on-navy-muted">{tb("rfqSub")}</p>
+            <RfqQuickForm />
+          </section>
         </div>
 
         {categories.length > 0 && (
@@ -63,6 +66,14 @@ export default async function Home() {
           </div>
           {products.length ? <ProductGrid tiles={products.map(tileFromProduct)} /> : <p className="m-0 text-ink-muted">{t("empty")}</p>}
         </section>
+
+        <aside className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line bg-surface p-6">
+          <div className="flex max-w-[60ch] flex-col gap-1">
+            <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("sellTitle")}</h2>
+            <p className="m-0 text-[14px] text-ink-muted">{t("sellBody")}</p>
+          </div>
+          <a href={`${VENDOR_PORTAL}/${locale}/signup`} className="ic-btn no-underline">{t("sellCta")}</a>
+        </aside>
       </main>
     </>
   )

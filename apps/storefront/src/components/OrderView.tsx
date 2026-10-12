@@ -73,8 +73,12 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
       <aside className="flex min-w-0 flex-[1_1_340px] flex-col gap-4">
         <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
           <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("payment")}</h2>
-          <p className="m-0 font-medium">{t(`pay.${pay.kind === "bank" ? "bank" : "cod"}`)}</p>
-          {pay.kind === "bank" ? (
+          <p className="m-0 font-medium">{t(`pay.${pay.kind ?? "cod"}`)}</p>
+          {pay.kind === "net" ? (
+            <p className="m-0 text-[14px] text-ink-muted">
+              {t("netHow")} <Link href="/account/credit" className="text-brand-ink underline underline-offset-2">{t("netLink")}</Link>
+            </p>
+          ) : pay.kind === "bank" ? (
             <>
               <p className="m-0 text-[14px] text-ink-muted">{t("bankHow", { n: order.display_id ?? "", total: money(order.total, currency) })}</p>
               {bank ? (

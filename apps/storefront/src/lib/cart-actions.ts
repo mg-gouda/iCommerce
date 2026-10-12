@@ -2,26 +2,41 @@
 
 import { refresh } from "next/cache"
 import { sdk } from "@icommerce/sdk"
-import { auth, CART_COOKIE, countOf, getCart, setCookie } from "./session"
+import { cartSalesChannel } from "./p3/channel"
+import { buyingMode } from "./p3/mode"
+import { auth, CART_COOKIE, countOf, getCart, setCookie, status } from "./session"
 import { fitQty, isFractional, isRetail, listProducts, region } from "./store"
 
 const product = async (id: string) => (await listProducts({ id: [id], limit: 1 })).products[0]
 
-/** Adds a retail product (first variant) to the cookie cart, creating the cart if needed. Returns the new item count. */
-export async function addToCart(productId: string, qty: number) {
-  const p = await product(productId)
+export type AddResult = { count?: number; error?: string }
+
+/**
+ * Adds a product (first variant) to the cookie cart, creating the cart in the buyer's sales channel if needed.
+ * Retail products for everyone; any integer-quantity product for verified members in wholesale mode.
+ * A 400 (Wholesale MOQ / step / max rule) comes back as the backend's sentence for inline display.
+ */
+export async function addToCart(productId: string, qty: number): Promise<AddResult> {
+  const [p, { wholesale }] = await Promise.all([product(productId), buyingMode()])
   // ponytail: single-variant products only (all P1 products are); variant picker lands with variant products.
   const variant = p?.variants[0]
-  if (!variant || !isRetail(p.product_extra) || isFractional(p.product_extra)) throw new Error("not_retail")
-  const quantity = fitQty(qty, p.product_extra)
+  if (!variant || !(wholesale || isRetail(p.product_extra)) || isFractional(p.product_extra)) return { error: "not_retail" }
+  // Wholesale carts: the server enforces MOQ/step/max; retail: snap here.
+  const quantity = wholesale ? qty : fitQty(qty, p.product_extra)
   const headers = await auth()
-  let id = (await getCart())?.id
-  if (!id) {
-    id = (await sdk.store.cart.create({ region_id: await region() }, { fields: "id" }, headers)).cart.id
-    await setCookie(CART_COOKIE, id)
+  try {
+    let id = (await getCart())?.id
+    if (!id) {
+      const body = { region_id: await region(), sales_channel_id: await cartSalesChannel() }
+      id = (await sdk.store.cart.create(body, { fields: "id" }, headers)).cart.id
+      await setCookie(CART_COOKIE, id)
+    }
+    const { cart } = await sdk.store.cart.createLineItem(id, { variant_id: variant.id, quantity }, { fields: "items.quantity" }, headers)
+    return { count: countOf(cart) }
+  } catch (e) {
+    if (status(e) === 400) return { error: (e as Error).message }
+    throw e
   }
-  const { cart } = await sdk.store.cart.createLineItem(id, { variant_id: variant.id, quantity }, { fields: "items.quantity" }, headers)
-  return countOf(cart)
 }
 
 /** Cart page stepper / remove (plain form → works without JS). qty 0 removes the line; others snap to MOQ/step. */

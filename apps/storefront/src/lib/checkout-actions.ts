@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { sdk } from "@icommerce/sdk"
 import { payKind, paymentProviders, shippingGroups } from "./checkout"
 import { EMAIL, parseAddress, routeLocale, str, type FormState } from "./forms"
+import { netTerms } from "./p3/terms"
 import { auth, CART_COOKIE, clearCookie, getCart, token } from "./session"
 
 // Each checkout section posts here; success → back to /checkout, which opens the next unfinished section.
@@ -59,6 +60,10 @@ export async function savePayment(_: FormState, fd: FormData): Promise<FormState
   if (!(await paymentProviders(cart.region_id!)).includes(provider)) return { values: { provider }, fieldErrors: { provider: "pickPayment" } }
   // Bank transfer needs an account: proof upload + order status are customer-only routes.
   if (payKind(provider) === "bank" && !(await token())) return { values: { provider }, fieldErrors: { provider: "bankNeedsAccount" } }
+  if (payKind(provider) === "net") {
+    const net = await netTerms(cart.total)
+    if (!net || net.refusal) return { values: { provider }, fieldErrors: { provider: "netRefused" } }
+  }
   await sdk.store.payment.initiatePaymentSession(cart, { provider_id: provider }, { fields: "id" }, await auth())
   return back(fd)
 }

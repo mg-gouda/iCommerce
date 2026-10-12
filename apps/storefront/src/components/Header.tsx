@@ -3,6 +3,8 @@ import { useTranslations } from "next-intl"
 import { getLocale, getTranslations } from "next-intl/server"
 import { CartLink } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
+import { setMode } from "@/lib/p3/actions"
+import { buyingMode } from "@/lib/p3/mode"
 import { countOf, getCart, token } from "@/lib/session"
 import { LocaleSwitch } from "./LocaleSwitch"
 
@@ -12,9 +14,11 @@ const Brand = () => (
   </Link>
 )
 
-/** Navy top bar: brand, search (→ /search), account, language, cart (server count). */
+/** Navy top bar: brand, search (→ /search), account, language, cart (server count); second row: buying mode + RFQ. */
 export async function Header({ q }: { q?: string }) {
-  const [t, locale, cart, signedIn] = await Promise.all([getTranslations("home"), getLocale(), getCart(), token()])
+  const [t, tb, locale, cart, signedIn, { mode }] = await Promise.all([
+    getTranslations("home"), getTranslations("b2b"), getLocale(), getCart(), token(), buyingMode(),
+  ])
   return (
     <header className="bg-navy text-on-navy">
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 md:px-8">
@@ -32,6 +36,28 @@ export async function Header({ q }: { q?: string }) {
           </Link>
           <LocaleSwitch />
           <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} count={countOf(cart)} className="text-on-navy" />
+        </div>
+      </div>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-2 px-4 py-2 md:px-8">
+          {/* Plain form: works without JS; the server sets the mode cookie and moves an open cart to the matching channel. */}
+          <form action={setMode} role="group" aria-label={tb("modeLabel")} className="inline-flex gap-0.5 rounded-md bg-white/10 p-0.5">
+            {(["retail", "wholesale"] as const).map((m) => (
+              <button
+                key={m}
+                name="mode"
+                value={m}
+                aria-pressed={mode === m}
+                className="min-h-8 cursor-pointer rounded-sm border-0 bg-transparent px-3.5 text-[13px] font-semibold text-on-navy-muted hover:text-on-navy aria-pressed:bg-surface aria-pressed:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+              >
+                {tb(`mode.${m}`)}
+              </button>
+            ))}
+          </form>
+          <nav aria-label={tb("b2bNav")} className="flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+            <Link href={signedIn ? "/account/rfq" : "/login?next=/account/rfq"} className="text-on-navy-muted no-underline hover:text-on-navy hover:underline">{tb("rfqLink")}</Link>
+            {signedIn && <Link href="/account/quotes" className="text-on-navy-muted no-underline hover:text-on-navy hover:underline">{tb("quotesLink")}</Link>}
+          </nav>
         </div>
       </div>
     </header>

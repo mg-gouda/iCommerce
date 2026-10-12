@@ -9,6 +9,8 @@ import { Breadcrumbs, Header } from "@/components/Header"
 import { VendorMark } from "@/components/VendorMark"
 import { Link } from "@/i18n/navigation"
 import { descriptionHtml, descriptionText } from "@/lib/html"
+import { getTiers } from "@/lib/p3/api"
+import { buyingMode } from "@/lib/p3/mode"
 import { compareAtOf, getProduct, isRetail, isVerified, priceOf } from "@/lib/store"
 
 type Props = { params: Promise<{ handle: string }> }
@@ -21,8 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const p = await getProduct((await params).handle)
   if (!p) notFound()
-  const t = await getTranslations("product")
-  const tu = await getTranslations("units")
+  const [t, tu, tb, { mode, wholesale, membership, verified: member }] = await Promise.all([
+    getTranslations("product"), getTranslations("units"), getTranslations("b2b"), buyingMode(),
+  ])
+  const tiers = wholesale ? ((await getTiers(p.id)) ?? []) : null
   const region = new Intl.DisplayNames([await getLocale()], { type: "region" })
   const e = p.product_extra
   const v = p.vendor
@@ -78,16 +82,27 @@ export default async function ProductPage({ params }: Props) {
               )}
             </div>
 
-            {price != null && (
+            {price != null && tiers?.length ? (
+              <p className="m-0 text-[14px] text-ink-muted">{tb("retailPrice", { price: money(price, "USD"), unit })}</p>
+            ) : price != null && (
               <div className="flex flex-wrap items-baseline gap-x-2">
-                <bdi className={`text-[24px] leading-[30px] font-semibold tabular-nums ${compareAt ? "text-accent" : ""}`}>{money(price, "USD")}</bdi>
-                {compareAt && <s className="text-[14px] text-ink-muted"><bdi>{money(compareAt, "USD")}</bdi></s>}
+                <bdi className={`text-[24px] leading-[30px] font-semibold tabular-nums ${compareAt && !wholesale ? "text-accent" : ""}`}>{money(price, "USD")}</bdi>
+                {compareAt && !wholesale && <s className="text-[14px] text-ink-muted"><bdi>{money(compareAt, "USD")}</bdi></s>}
                 <span className="text-[14px] text-ink-muted">/ {unit}</span>
               </div>
             )}
-            {/* PriceTiers render once wholesale tier price lists exist (P3); none yet → hidden. */}
 
-            <BuyBox productId={p.id} price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
+            <BuyBox
+              productId={p.id}
+              price={price}
+              unit={e?.unit ?? null}
+              min={e?.min_qty ?? null}
+              step={e?.qty_step ?? null}
+              max={e?.max_qty ?? null}
+              retail={retail}
+              tiers={tiers}
+              gate={member || (mode === "retail" && retail) ? null : membership ? "verify" : "signIn"}
+            />
 
             {p.description && (
               <div className="flex flex-col gap-1">
