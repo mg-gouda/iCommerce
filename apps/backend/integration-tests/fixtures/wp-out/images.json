@@ -1,0 +1,8 @@
+{
+  "images": [
+    { "path": "2022/01/a-copy.png", "file": "uploads/a.png", "bytes": 68, "sha256": "63ef318d96b5d0d0ceba6e04a4e622b1158335cdc67c49e27839132c6f655058", "used_by": ["product:1002"] },
+    { "path": "2022/01/a.png", "file": "uploads/a.png", "bytes": 68, "sha256": "63ef318d96b5d0d0ceba6e04a4e622b1158335cdc67c49e27839132c6f655058", "used_by": ["product:1001", "vendor:101"] },
+    { "path": "2022/01/b.png", "file": "uploads/b.png", "bytes": 70, "sha256": "bc09c2590d2502c8ffaf1a3c09aa89df222e03d186a8daa0c7fce6321fb6e928", "used_by": ["product:1001"] }
+  ],
+  "missing": [{ "path": "2022/06/missing.png", "used_by": ["product:1002"] }]
+}

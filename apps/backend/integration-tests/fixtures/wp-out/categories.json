@@ -1,0 +1,4 @@
+[
+  { "legacy_id": 1, "name": "Fixture Steel", "handle": "fixture-steel", "parent_legacy_id": null, "product_count": 2 },
+  { "legacy_id": 2, "name": "Fixture Pipes", "handle": "fixture-pipes", "parent_legacy_id": 1, "product_count": 1 }
+]
