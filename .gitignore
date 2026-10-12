@@ -41,3 +41,5 @@ tools/migrate-wp/out/
 # medusa file-local uploads (dev)
 apps/backend/uploads/
 apps/backend/static/
+# rendered emails (dev, no RESEND_API_KEY)
+apps/backend/.emails/

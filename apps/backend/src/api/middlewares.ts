@@ -21,7 +21,10 @@ const kycUpload = upload(10, /^(application\/pdf|image\/(png|jpeg|webp))$/)
 const imageUpload = upload(5, /^image\/(png|jpeg|webp|gif)$/)
 const csvUpload = upload(5, /^(text\/csv|text\/plain|application\/vnd\.ms-excel|application\/octet-stream)$/)
 
+const proofUpload = upload(10, /^(application\/pdf|image\/(png|jpeg|webp))$/)
+
 const vendorAuth = authenticate("vendor", ["session", "bearer"])
+const customerAuth = authenticate("customer", ["session", "bearer"])
 
 // Public storefront may read these linked fields on /store/products (exact paths → cost_price stays private).
 const STORE_PRODUCT_FIELDS = [
@@ -36,6 +39,10 @@ const allowStoreProductFields = (req: MedusaRequest, _res: MedusaResponse, next:
 export default defineMiddlewares({
   routes: [
     { matcher: "/store/products*", method: ["GET"], middlewares: [allowStoreProductFields] },
+    // Own-order routes (handlers 404 on anyone else's order).
+    { matcher: "/store/orders/:id/vendor-orders", method: ["GET"], middlewares: [customerAuth] },
+    { matcher: "/store/orders/:id/return-request", method: ["POST"], middlewares: [customerAuth] },
+    { matcher: "/store/orders/:id/payment-proof", method: ["POST"], middlewares: [customerAuth, proofUpload.single("file")] },
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.

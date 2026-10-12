@@ -19,7 +19,7 @@ Env: `BANK_TRANSFER_DETAILS` (free text shown to buyers, newlines ok), `RESEND_A
 - Addresses, `GET /store/customers/me`, `GET /store/orders` (own parent orders) are core routes.
 
 ## 2. Multi-vendor shipping (the cart needs **one shipping method per vendor**)
-Each vendor has its own shipping profile `vendor_<handle>`, stock location `vendor_<handle>`, fulfillment set `vendor_<handle>` with one service zone `Egypt` (country `eg`), provider `manual_manual`. Every vendor product belongs to its vendor's shipping profile.
+Each vendor has its own shipping profile `vendor_<handle>`, stock location `vendor_<handle>`, fulfillment set and service zone (country `eg`), all named `vendor_<handle>`, provider `manual_manual`. Every vendor product belongs to its vendor's shipping profile.
 
 **Checkout flow** — use `GET /store/carts/:id/vendor-groups` (the standard `GET /store/shipping-options?cart_id=` also works but lists **every** vendor's options, since all vendor locations share the sales channel; don't use it for the picker).
 
@@ -67,7 +67,7 @@ Vendors cannot ship a bank-transfer order before the admin confirms the transfer
 `VendorOrder.status`: `pending` (to ship) → `shipped` → `delivered`; or `canceled` (only before shipped).
 
 ### `GET /store/orders/:id/vendor-orders` (customer auth, own orders only; else 404)
-Per-vendor progress for the order page.
+Per-vendor progress for the order page. Each entry = `VendorOrder` (§6) without `email`/`buyer`/`shipping_address`/`vendor_id`, plus `vendor`. Key fields:
 ```json
 {
   "vendor_orders": [ {
