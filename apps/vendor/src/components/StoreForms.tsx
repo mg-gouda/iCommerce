@@ -78,7 +78,7 @@ export function KycForm({ vendor }: { vendor: Vendor }) {
       <FormMessage state={state} />
       <Field label={t("taxId")} name="tax_id" mono dir="ltr" inputMode="numeric" placeholder="512-483-907" required defaultValue={v.tax_id} help={t("taxIdHelp")} error={err("tax_id")} />
       <Field label={t("crNo")} name="commercial_reg_no" mono dir="ltr" inputMode="numeric" required defaultValue={v.commercial_reg_no} help={t("crNoHelp")} error={err("commercial_reg_no")} />
-      <Field label={t("exportCard")} name="export_card_no" mono dir="ltr" required defaultValue={v.export_card_no} help={t("exportCardHelp")} error={err("export_card_no")} />
+      <Field label={t("exportCard")} name="export_card_no" mono dir="ltr" defaultValue={v.export_card_no} help={t("exportCardHelp")} error={err("export_card_no")} />
       <FileField label={t("files")} name="files" multiple required accept="application/pdf,image/png,image/jpeg,image/webp" help={t("filesHelp")} error={err("files")} />
       <div className="flex items-center gap-3">
         <Button type="submit" variant="primary" busy={pending}>{t("submit")}</Button>

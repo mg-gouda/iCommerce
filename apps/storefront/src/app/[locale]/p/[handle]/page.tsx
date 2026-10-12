@@ -2,25 +2,27 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
-import { Badge, money } from "@icommerce/ui"
+import { Badge, money, qtyUnit } from "@icommerce/ui"
 import { BuyBox } from "@/components/BuyBox"
 import { Gallery } from "@/components/Gallery"
 import { Breadcrumbs, Header } from "@/components/Header"
 import { VendorMark } from "@/components/VendorMark"
 import { Link } from "@/i18n/navigation"
+import { descriptionHtml, descriptionText } from "@/lib/html"
 import { compareAtOf, getProduct, isRetail, isVerified, priceOf } from "@/lib/store"
 
 type Props = { params: Promise<{ handle: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getProduct((await params).handle)
-  return p ? { title: `${p.title} · iCommerce`, description: p.description ?? undefined } : {}
+  return p ? { title: `${p.title} · iCommerce`, description: p.description ? descriptionText(p.description) : undefined } : {}
 }
 
 export default async function ProductPage({ params }: Props) {
   const p = await getProduct((await params).handle)
   if (!p) notFound()
   const t = await getTranslations("product")
+  const tu = await getTranslations("units")
   const region = new Intl.DisplayNames([await getLocale()], { type: "region" })
   const e = p.product_extra
   const v = p.vendor
@@ -37,9 +39,9 @@ export default async function ProductPage({ params }: Props) {
   const specs: [string, React.ReactNode][] = [
     [t("specHs"), e?.hs_code && <span className="ic-mono" dir="ltr">{e.hs_code}</span>],
     [t("specUnit"), e?.unit],
-    [t("specMoq"), e?.min_qty && <bdi>{`${e.min_qty} ${unit}`}</bdi>],
-    [t("specStep"), e?.qty_step && <bdi>{`${e.qty_step} ${unit}`}</bdi>],
-    [t("specMax"), e?.max_qty && <bdi>{`${e.max_qty} ${unit}`}</bdi>],
+    [t("specMoq"), e?.min_qty && <bdi>{qtyUnit(tu, e.min_qty, e.unit ?? "piece")}</bdi>],
+    [t("specStep"), e?.qty_step && <bdi>{qtyUnit(tu, e.qty_step, e.unit ?? "piece")}</bdi>],
+    [t("specMax"), e?.max_qty && <bdi>{qtyUnit(tu, e.max_qty, e.unit ?? "piece")}</bdi>],
     [t("specOrigin"), origin],
     [t("specSku"), p.variants[0]?.sku && <span className="ic-mono" dir="ltr">{p.variants[0].sku}</span>],
     [t("specCategory"), cat?.name],
@@ -90,7 +92,7 @@ export default async function ProductPage({ params }: Props) {
             {p.description && (
               <div className="flex flex-col gap-1">
                 <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("about")}</h2>
-                <p dir="auto" className="m-0 max-w-[70ch] text-start whitespace-pre-line text-pretty">{p.description}</p>
+                <div dir="auto" className="ic-prose max-w-[70ch] text-start text-pretty" dangerouslySetInnerHTML={{ __html: descriptionHtml(p.description) }} />
               </div>
             )}
           </div>

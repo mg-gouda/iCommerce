@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { Package, Search } from "lucide-react"
 import { getTranslations } from "next-intl/server"
-import { Badge, money } from "@icommerce/ui"
+import { Badge, money, qtyUnit } from "@icommerce/ui"
 import { DeleteProduct } from "@/components/DeleteProduct"
 import { PageHeader } from "@/components/PageHeader"
 import { Saved } from "@/components/StoreForms"
@@ -19,6 +19,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams
   const t = await getTranslations("products")
   const ts = await getTranslations("status")
+  const tu = await getTranslations("units")
   const status = STATUSES.includes(sp.status as ProductStatus) ? sp.status : ""
   const page = Math.max(1, Number(sp.page) || 1)
   const qs = new URLSearchParams({ limit: String(LIMIT), offset: String((page - 1) * LIMIT) })
@@ -106,7 +107,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       <td className="px-4 py-2.5 whitespace-nowrap tabular-nums">
                         {price != null ? <bdi>{money(price, "USD")}{e?.unit ? ` / ${e.unit}` : ""}</bdi> : "—"}
                       </td>
-                      <td className="px-4 py-2.5 whitespace-nowrap tabular-nums">{e?.min_qty ? <bdi>{e.min_qty}{e.unit ? ` ${e.unit}` : ""}</bdi> : "—"}</td>
+                      <td className="px-4 py-2.5 whitespace-nowrap tabular-nums">{e?.min_qty ? <bdi>{e.unit ? qtyUnit(tu, e.min_qty, e.unit) : e.min_qty}</bdi> : "—"}</td>
                       <td className="px-4 py-2.5"><Badge variant={productBadge(p.status)}>{ts(p.status)}</Badge></td>
                       <td className="px-4 py-2.5 text-end whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">

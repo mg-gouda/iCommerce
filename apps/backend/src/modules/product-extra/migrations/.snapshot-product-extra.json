@@ -40,7 +40,7 @@
         },
         "min_qty": {
           "name": "min_qty",
-          "type": "integer",
+          "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -52,11 +52,11 @@
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "integer"
+          "mappedType": "decimal"
         },
         "max_qty": {
           "name": "max_qty",
-          "type": "integer",
+          "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -68,11 +68,11 @@
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "integer"
+          "mappedType": "decimal"
         },
         "qty_step": {
           "name": "qty_step",
-          "type": "integer",
+          "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -84,7 +84,7 @@
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "integer"
+          "mappedType": "decimal"
         },
         "hs_code": {
           "name": "hs_code",
@@ -181,6 +181,54 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "text"
+        },
+        "raw_min_qty": {
+          "name": "raw_min_qty",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "raw_max_qty": {
+          "name": "raw_max_qty",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "raw_qty_step": {
+          "name": "raw_qty_step",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
         },
         "raw_cost_price": {
           "name": "raw_cost_price",

@@ -128,3 +128,7 @@ export function byVendor<T extends { product_id?: string | null }>(items: T[], p
   }
   return [...groups.values()]
 }
+
+/** Decimal MOQ/step (e.g. 2.5 t): Medusa line items are integers → quote-only. */
+export const isFractional = (e: Pick<Extra, "min_qty" | "qty_step"> | null) =>
+  !Number.isInteger(e?.min_qty ?? 1) || !Number.isInteger(e?.qty_step ?? 1)

@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { cleanText, decodeEntities, isoDate, mapProductAttributes, parsePrice, parseQty, phpUnserialize, slugify, stripSizeSuffix, titleCaseIfAllCaps, uniqueHandles, uploadsRelative } from "./transforms.ts"
+import { cleanText, decodeEntities, htmlImageUrls, isoDate, mapProductAttributes, parsePrice, parseQty, phpUnserialize, slugify, stripSizeSuffix, titleCaseIfAllCaps, uniqueHandles, uploadsRelative } from "./transforms.ts"
 
 test("decodeEntities", () => {
   assert.equal(decodeEntities("ED. FRUITS &amp; NUTS"), "ED. FRUITS & NUTS")
@@ -45,6 +45,17 @@ test("phpUnserialize + mapProductAttributes", () => {
   assert.equal(phpUnserialize('a:1:{s:9:"broken'), null)
   const raw = 'a:2:{s:7:"pa_unit";a:3:{s:4:"name";s:7:"pa_unit";s:5:"value";s:0:"";s:11:"is_taxonomy";i:1;}s:8:"Material";a:3:{s:4:"name";s:8:"Material";s:5:"value";s:16:"Oak | Pine &amp;";s:11:"is_taxonomy";i:0;}}'
   assert.deepEqual(mapProductAttributes(raw), { custom: { material: ["Oak", "Pine &"] }, taxonomies: ["pa_unit"] })
+})
+
+test("htmlImageUrls", () => {
+  const html = `<p>x</p><img class="a" src="https://h.eg/wp-content/uploads/2022/06/a-300x200.jpg" srcset="https://h.eg/wp-content/uploads/2022/06/a-300x200.jpg 300w, /wp-content/uploads/2022/06/a.jpg 720w" data-mce-src="x"><IMG SRC='b.png?a=1&amp;b=2'/>`
+  assert.deepEqual(htmlImageUrls(html), [
+    "https://h.eg/wp-content/uploads/2022/06/a-300x200.jpg",
+    "https://h.eg/wp-content/uploads/2022/06/a-300x200.jpg",
+    "/wp-content/uploads/2022/06/a.jpg",
+    "b.png?a=1&b=2",
+  ])
+  assert.deepEqual(htmlImageUrls(null), [])
 })
 
 test("uploadsRelative / isoDate", () => {

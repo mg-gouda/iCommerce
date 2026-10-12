@@ -9,10 +9,15 @@ import { getCaller } from "../../helpers"
 const KycBody = z.object({
   tax_id: z.string().trim().min(1),
   commercial_reg_no: z.string().trim().min(1),
-  export_card_no: z.string().trim().min(1),
+  // Optional: not every exporter has one yet. Empty string → null.
+  export_card_no: z
+    .string()
+    .trim()
+    .nullish()
+    .transform((v) => v || null),
 })
 
-// multipart/form-data: tax_id, commercial_reg_no, export_card_no + files[] (parsed by multer in middlewares.ts).
+// multipart/form-data: tax_id, commercial_reg_no, optional export_card_no + files[] (parsed by multer in middlewares.ts).
 export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
   const body = KycBody.safeParse(req.body)
   if (!body.success) throw new MedusaError(MedusaError.Types.INVALID_DATA, body.error.message)

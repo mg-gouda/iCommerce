@@ -3,7 +3,7 @@
 import { refresh } from "next/cache"
 import { sdk } from "@icommerce/sdk"
 import { auth, CART_COOKIE, countOf, getCart, setCookie } from "./session"
-import { fitQty, isRetail, listProducts, region } from "./store"
+import { fitQty, isFractional, isRetail, listProducts, region } from "./store"
 
 const product = async (id: string) => (await listProducts({ id: [id], limit: 1 })).products[0]
 
@@ -12,7 +12,7 @@ export async function addToCart(productId: string, qty: number) {
   const p = await product(productId)
   // ponytail: single-variant products only (all P1 products are); variant picker lands with variant products.
   const variant = p?.variants[0]
-  if (!variant || !isRetail(p.product_extra)) throw new Error("not_retail")
+  if (!variant || !isRetail(p.product_extra) || isFractional(p.product_extra)) throw new Error("not_retail")
   const quantity = fitQty(qty, p.product_extra)
   const headers = await auth()
   let id = (await getCart())?.id

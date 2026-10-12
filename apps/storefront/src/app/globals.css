@@ -7,3 +7,14 @@ body {
   margin: 0;
   background: var(--ground);
 }
+
+/* Vendor product descriptions (sanitized HTML, see lib/html.ts) */
+.ic-prose { display: flex; flex-direction: column; gap: var(--space-3); line-height: 1.6; overflow-wrap: anywhere; }
+.ic-prose :where(p, ul, ol, h3, h4, table) { margin: 0; }
+.ic-prose :where(ul, ol) { padding-inline-start: var(--space-6); }
+.ic-prose :where(h3, h4) { font-size: 16px; line-height: 22px; font-weight: 600; }
+.ic-prose a { color: var(--brand-ink); text-decoration: underline; text-underline-offset: 2px; }
+.ic-prose img { max-inline-size: 100%; block-size: auto; border-radius: var(--radius-md); }
+.ic-prose table { border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.ic-prose :where(th, td) { border: 1px solid var(--line); padding: var(--space-2) var(--space-3); text-align: start; }
+.ic-prose th { background: var(--ground); font-weight: 600; }

@@ -78,13 +78,14 @@
     "madeIn": "Made in {country}",
     "unitDefault": "piece",
     "quantity": "Quantity",
-    "moqRule": "MOQ {n} {unit}",
+    "moqRule": "MOQ {qty}",
     "stepRule": "steps of {n}",
     "maxRule": "max {n} per order",
     "anyQty": "Any quantity",
     "qtyFix": "Pick a quantity that fits: {rules}.",
     "subtotalAt": "Subtotal at {price} / {unit}",
-    "addQty": "Add {n} {unit} to cart",
+    "addQty": "Add {qty} to cart",
+    "decimalQuote": "Sold in fractional quantities, which the cart can’t hold, so this product is quote-only.",
     "rfqSoon": "Quotes open for verified companies soon. Message the supplier from their store meanwhile.",
     "about": "About this product",
     "specs": "Specifications",
@@ -99,7 +100,8 @@
     "supplier": "Supplier",
     "visitStore": "Visit store",
     "showImage": "Show image {n} of {total}",
-    "addFailed": "Couldn't add. Try again"
+    "addFailed": "Couldn't add. Try again",
+    "chooseQty": "Choose quantity"
   },
   "category": {
     "home": "Home",
@@ -123,6 +125,25 @@
     "products": "{count, plural, one {# product} other {# products}}",
     "catalog": "Products",
     "empty": "This supplier has no live products yet."
+  },
+  "units": {
+    "bag": "{n, plural, one {{n} bag} other {{n} bags}}",
+    "bottle": "{n, plural, one {{n} bottle} other {{n} bottles}}",
+    "box": "{n, plural, one {{n} box} other {{n} boxes}}",
+    "carton": "{n, plural, one {{n} carton} other {{n} cartons}}",
+    "dozen": "{n, plural, one {{n} dozen} other {{n} dozen}}",
+    "kg": "{n} kg",
+    "liter": "{n, plural, one {{n} liter} other {{n} liters}}",
+    "m": "{n} m",
+    "m2": "{n} m²",
+    "pair": "{n, plural, one {{n} pair} other {{n} pairs}}",
+    "piece": "{n, plural, one {{n} piece} other {{n} pieces}}",
+    "roll": "{n, plural, one {{n} roll} other {{n} rolls}}",
+    "sack": "{n, plural, one {{n} sack} other {{n} sacks}}",
+    "set": "{n, plural, one {{n} set} other {{n} sets}}",
+    "sheet": "{n, plural, one {{n} sheet} other {{n} sheets}}",
+    "ton": "{n, plural, one {{n} ton} other {{n} tons}}",
+    "unit": "{n, plural, one {{n} unit} other {{n} units}}"
   },
   "register": {
     "sub": "Create an account to track orders and save addresses.",

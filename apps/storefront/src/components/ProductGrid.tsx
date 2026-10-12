@@ -1,8 +1,8 @@
 import { useLocale, useTranslations } from "next-intl"
-import { AddToCartButton, Badge, ProductCard } from "@icommerce/ui"
+import { AddToCartButton, Badge, ProductCard, qtyUnit } from "@icommerce/ui"
 import type { SearchDoc } from "@/lib/search"
 import { addToCart } from "@/lib/cart-actions"
-import { compareAtOf, isRetail, isVerified, priceOf, type Product } from "@/lib/store"
+import { compareAtOf, isFractional, isRetail, isVerified, priceOf, type Product } from "@/lib/store"
 
 export type Tile = {
   id: string
@@ -17,6 +17,8 @@ export type Tile = {
   unit: string | null
   moq: number | null
   retail: boolean
+  /** One-click add of 1 unit is valid (MOQ ≤ 1, integer step). Unknown (search docs) → false → product page picks the qty. */
+  quick: boolean
 }
 
 export const tileFromProduct = (p: Product): Tile => ({
@@ -31,6 +33,7 @@ export const tileFromProduct = (p: Product): Tile => ({
   unit: p.product_extra?.unit ?? null,
   moq: p.product_extra?.min_qty ?? null,
   retail: isRetail(p.product_extra),
+  quick: !isFractional(p.product_extra) && (p.product_extra?.min_qty ?? 1) <= 1,
 })
 
 // Search docs carry no vendor KYC state → no verified shield on search tiles.
@@ -45,12 +48,15 @@ export const tileFromDoc = (d: SearchDoc): Tile => ({
   unit: d.unit,
   moq: null,
   retail: !d.b2b_only && d.b2c_enabled,
+  // ponytail: search docs lack min_qty/qty_step → no one-click add from search until the index carries them.
+  quick: false,
 })
 
 const PLACEHOLDER = "/samples/placeholder.svg"
 
 export function ProductGrid({ tiles }: { tiles: Tile[] }) {
   const t = useTranslations("product")
+  const tu = useTranslations("units")
   const locale = useLocale()
   return (
     <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:gap-6">
@@ -73,11 +79,15 @@ export function ProductGrid({ tiles }: { tiles: Tile[] }) {
               compareAt={p.compareAt}
               unit={p.unit ?? undefined}
               flags={!p.retail ? <Badge variant="b2b">B2B</Badge> : off > 0 ? <Badge variant="sale"><bdi>−{off}%</bdi></Badge> : undefined}
-              facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.moq}{p.unit ? ` ${p.unit}` : ""}</bdi></b></span>] : undefined}
+              facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.unit ? qtyUnit(tu, p.moq, p.unit) : p.moq}</bdi></b></span>] : undefined}
               cta={t("requestQuote")}
               action={
-                p.retail ? (
-                  <AddToCartButton block className="ic-card__cta" qty={p.moq ?? 1} onAdd={addToCart.bind(null, p.id, p.moq ?? 1)} label={t("addToCart")} doneLabel={t("added")} errorLabel={t("addFailed")} />
+                p.retail && p.quick ? (
+                  <AddToCartButton block className="ic-card__cta" onAdd={addToCart.bind(null, p.id, 1)} label={t("addToCart")} doneLabel={t("added")} errorLabel={t("addFailed")} />
+                ) : p.retail ? (
+                  <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${t("chooseQty")}: ${p.title}`}>
+                    {t("chooseQty")}
+                  </a>
                 ) : (
                   <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${t("requestQuote")}: ${p.title}`}>
                     {t("requestQuote")}
