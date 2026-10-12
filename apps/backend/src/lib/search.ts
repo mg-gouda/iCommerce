@@ -1,7 +1,8 @@
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
-export const PRODUCTS_INDEX = "products"
+// MEILI_INDEX lets parallel envs (e.g. a migration dry-run) share one Meili server.
+export const PRODUCTS_INDEX = process.env.MEILI_INDEX || "products"
 
 const FIELDS = [
   "id",

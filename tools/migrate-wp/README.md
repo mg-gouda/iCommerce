@@ -42,6 +42,15 @@ All arrays sorted by `legacy_id` (images by `path`). `legacy_id` = WP ID, use it
 
 Dates are ISO UTC strings. Prices are numbers (USD) or `null`.
 
+## Stage 2: import (`apps/backend/src/scripts/import-wp.ts`)
+
+```sh
+cd apps/backend   # .env: DATABASE_URL, REDIS_URL, MEILI_* (MEILI_INDEX optional), WP_OUT=<abs path to out/>
+npx medusa exec ./src/scripts/import-wp.ts [out-dir] -- [--limit N] [--only vendors|products]
+```
+
+Seeds defaults + categories, then vendors (+ owner `vendor_user`, no login yet), images (File module, once per sha256), products (+ `product_extra`, vendor link), then reindexes search. Idempotent by `legacy_id`; unchanged rows are skipped via `metadata.import_hash`, so re-runs are cheap and resumable. Writes `out/image-map.json` (sha → uploaded URL; delete when switching file provider) and `out/import-report.md` (counts only). Sales org + fee tiers are only counted until their modules exist.
+
 ## Known gaps
 
 - The `uploads/` copy has no `2022/03` or `2022/06`–`09` folders, so ~78% of referenced originals are listed in `images.json` `missing[]`. Most of them (~10k) are inside `wp-content/ai1wm-backups/*.wpress` (2022-06-29), which is a plain tar-like format with a 4377-byte header per file. Stage 2 can pull them from there.
