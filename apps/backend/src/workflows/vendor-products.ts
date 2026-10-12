@@ -48,7 +48,11 @@ export const createVendorProductWorkflow = createWorkflow(
   "create-vendor-product",
   (input: { vendor_id: string; product: CreateProductWorkflowInputDTO; extra: ProductExtraInput }) => {
     const products = createProductsWorkflow.runAsStep({
-      input: transform(input, (i) => ({ products: [i.product] })),
+      // ponytail: vendors don't track stock in v1 → force unmanaged (Medusa's schema defaults it to true, and
+      // managed variants have no stock levels, so they couldn't be bought). Revisit when vendor inventory lands.
+      input: transform(input, (i) => ({
+        products: [{ ...i.product, variants: i.product.variants?.map((v) => ({ ...v, manage_inventory: false })) }],
+      })),
     })
     const extra = createProductExtraStep(input.extra)
     const links = transform({ input, products, extra }, ({ input, products, extra }): LinkDefinition[] => [

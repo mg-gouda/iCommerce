@@ -19,7 +19,7 @@ medusaIntegrationTestRunner({
         (
           await query.graph({
             entity: "product",
-            fields: ["title", "handle", "status", "description", "thumbnail", "images.url", "metadata", "variants.sku", "variants.prices.amount", "tags.value", "categories.handle", "sales_channels.name", "product_extra.*", "vendor.legacy_id"],
+            fields: ["title", "handle", "status", "description", "thumbnail", "images.url", "metadata", "variants.sku", "variants.manage_inventory", "variants.prices.amount", "tags.value", "categories.handle", "sales_channels.name", "product_extra.*", "vendor.legacy_id"],
             filters: {},
           })
         ).data.sort((a, b) => a.handle.localeCompare(b.handle))
@@ -62,6 +62,8 @@ medusaIntegrationTestRunner({
       expect(sheet.images.map((i) => i.url)).toEqual([pipe.images.find((i) => i.url === byLegacy["101"].logo)!.url])
       expect(sheet).toMatchObject({ description: "<p>Sheet</p>", variants: [{ sku: null }], product_extra: { min_qty: 2.5 } })
       expect(pot).toMatchObject({ status: "proposed", vendor: { legacy_id: "102" } })
+      // Imported variants must be buyable: vendors don't track stock in v1.
+      for (const p of await products()) expect(p.variants.every((v: { manage_inventory: boolean }) => v.manage_inventory === false)).toBe(true)
 
       const second = await run()
       expect(second.vendors).toMatchObject({ created: 0, updated: 0, unchanged: 2, owner_users_created: 0 })

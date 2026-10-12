@@ -51,6 +51,20 @@ module.exports = defineConfig({
         ],
       },
     },
+    {
+      // Offline payments: ids pp_cod_cod, pp_bank-transfer_bank-transfer (pp_system_default stays registered).
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        providers: [
+          { resolve: "./src/modules/offline-payment/cod", id: "cod" },
+          { resolve: "./src/modules/offline-payment/bank-transfer", id: "bank-transfer" },
+        ],
+      },
+    },
+    {
+      resolve: "@medusajs/medusa/notification",
+      options: { providers: [{ resolve: "./src/modules/email", id: "email", options: { channels: ["email"] } }] },
+    },
     ...redisModules,
   ],
 })
