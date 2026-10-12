@@ -8,13 +8,14 @@ import { Gallery } from "@/components/Gallery"
 import { Breadcrumbs, Header } from "@/components/Header"
 import { VendorMark } from "@/components/VendorMark"
 import { Link } from "@/i18n/navigation"
+import { descriptionHtml, descriptionText } from "@/lib/html"
 import { compareAtOf, getProduct, isRetail, isVerified, priceOf } from "@/lib/store"
 
 type Props = { params: Promise<{ handle: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getProduct((await params).handle)
-  return p ? { title: `${p.title} · iCommerce`, description: p.description ?? undefined } : {}
+  return p ? { title: `${p.title} · iCommerce`, description: p.description ? descriptionText(p.description) : undefined } : {}
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -86,12 +87,12 @@ export default async function ProductPage({ params }: Props) {
             )}
             {/* PriceTiers render once wholesale tier price lists exist (P3); none yet → hidden. */}
 
-            <BuyBox price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
+            <BuyBox productId={p.id} price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
 
             {p.description && (
               <div className="flex flex-col gap-1">
                 <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("about")}</h2>
-                <p dir="auto" className="m-0 max-w-[70ch] text-start whitespace-pre-line text-pretty">{p.description}</p>
+                <div dir="auto" className="ic-prose max-w-[70ch] text-start text-pretty" dangerouslySetInnerHTML={{ __html: descriptionHtml(p.description) }} />
               </div>
             )}
           </div>

@@ -3,14 +3,15 @@
 import { useId, useState } from "react"
 import { useTranslations } from "next-intl"
 import { AddToCartButton, Button, money, qtyUnit } from "@icommerce/ui"
+import { addToCart } from "@/lib/cart-actions"
 
 // Quantities are decimals (≤3 places, e.g. 2.5 t) → compare in thousandths, never raw floats (0.1 + 0.2 drift).
 const k = (n: number) => Math.round(n * 1000)
 
-type Props = { price: number | null; unit: string | null; min: number | null; step: number | null; max: number | null; retail: boolean }
+type Props = { productId: string; price: number | null; unit: string | null; min: number | null; step: number | null; max: number | null; retail: boolean }
 
 /** Quantity (MOQ / step / max aware) + subtotal + the one action this product allows. */
-export function BuyBox({ price, unit, min, step, max, retail }: Props) {
+export function BuyBox({ productId, price, unit, min, step, max, retail }: Props) {
   const t = useTranslations("product")
   const tu = useTranslations("units")
   const id = useId()
@@ -64,7 +65,7 @@ export function BuyBox({ price, unit, min, step, max, retail }: Props) {
       </div>
       <div className="flex flex-wrap gap-3">
         {retail && !fractional ? (
-          <AddToCartButton size="lg" className="flex-[1_1_200px]" qty={valid ? qty : lo} disabled={!valid} label={t("addQty", { qty: qu(valid ? qty : lo) })} doneLabel={t("added")} />
+          <AddToCartButton size="lg" className="flex-[1_1_200px]" qty={qty} disabled={!valid} onAdd={() => addToCart(productId, qty)} errorLabel={t("addFailed")} label={t("addQty", { qty: qu(valid ? qty : lo) })} doneLabel={t("added")} />
         ) : (
           <div className="flex flex-[1_1_200px] flex-col gap-1">
             {/* ponytail: RFQ flow lands in P3; button is a visible placeholder so B2B buyers see the path. */}

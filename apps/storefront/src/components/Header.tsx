@@ -1,19 +1,24 @@
-import { Search } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { Search, ShieldCheck } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { getLocale, getTranslations } from "next-intl/server"
 import { CartLink } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
+import { countOf, getCart, token } from "@/lib/session"
 import { LocaleSwitch } from "./LocaleSwitch"
 
-/** Navy top bar: brand, search (→ /search), sign in, language, cart. */
-export function Header({ q }: { q?: string }) {
-  const t = useTranslations("home")
-  const locale = useLocale()
+const Brand = () => (
+  <Link href="/" dir="ltr" className="text-[20px] leading-[26px] font-semibold tracking-[-0.01em] text-on-navy no-underline">
+    i<span className="text-on-navy-muted">Commerce</span>
+  </Link>
+)
+
+/** Navy top bar: brand, search (→ /search), account, language, cart (server count). */
+export async function Header({ q }: { q?: string }) {
+  const [t, locale, cart, signedIn] = await Promise.all([getTranslations("home"), getLocale(), getCart(), token()])
   return (
     <header className="bg-navy text-on-navy">
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 md:px-8">
-        <Link href="/" dir="ltr" className="text-[20px] leading-[26px] font-semibold tracking-[-0.01em] text-on-navy no-underline">
-          i<span className="text-on-navy-muted">Commerce</span>
-        </Link>
+        <Brand />
         <form role="search" action={`/${locale}/search`} className="order-last flex min-w-0 basis-full md:order-none md:flex-1 md:basis-auto">
           <label htmlFor="q" className="sr-only">{t("searchLabel")}</label>
           <input id="q" name="q" type="search" defaultValue={q} className="ic-input rounded-e-none" placeholder={t("searchPlaceholder")} />
@@ -22,9 +27,30 @@ export function Header({ q }: { q?: string }) {
           </button>
         </form>
         <div className="ms-auto flex items-center gap-4 md:ms-0">
-          <Link href="/login" className="text-[14px] font-medium text-on-navy no-underline hover:underline">{t("signIn")}</Link>
+          <Link href={signedIn ? "/account" : "/login"} className="text-[14px] font-medium text-on-navy no-underline hover:underline">
+            {signedIn ? t("account") : t("signIn")}
+          </Link>
           <LocaleSwitch />
-          <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} initialCount={2} className="text-on-navy" />
+          <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} count={countOf(cart)} className="text-on-navy" />
+        </div>
+      </div>
+    </header>
+  )
+}
+
+/** Cart / checkout / order bar: brand + a calm "secure checkout" note, no search noise. */
+export function CheckoutHeader() {
+  const t = useTranslations("cart")
+  return (
+    <header className="bg-navy text-on-navy">
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-3 md:px-8">
+        <Brand />
+        <div className="flex items-center gap-4">
+          <span className="inline-flex items-center gap-1.5 text-[13px] text-on-navy-muted">
+            <ShieldCheck size={16} aria-hidden />
+            {t("secure")}
+          </span>
+          <LocaleSwitch />
         </div>
       </div>
     </header>
