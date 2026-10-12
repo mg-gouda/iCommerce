@@ -23,8 +23,8 @@ export default async function orderPlaced({ event, container }: SubscriberArgs<{
   })
   if (!o || o.metadata?.parent_order_id) return
   const locale = o.customer?.metadata?.locale
-  const data = { display_id: o.display_id, currency_code: o.currency_code, total: Number(o.total) }
-  const items = (o.items ?? []).map((i: { title: string; quantity: number; total: number }) => ({ title: i.title, quantity: Number(i.quantity), total: Number(i.total) }))
+  const data = { display_id: o.display_id ?? "", currency_code: o.currency_code, total: Number(o.total) }
+  const items = (o.items ?? []).map((i) => ({ title: i?.title ?? "", quantity: Number(i?.quantity), total: Number(i?.total) }))
   await sendEmail(container, { to: o.email, template: "order-placed", locale, data: { ...data, items }, key: `order-placed-${o.id}` })
 
   const payment = o.payment_collections?.flatMap((c: { payments?: unknown[] } | null) => c?.payments ?? [])[0] as

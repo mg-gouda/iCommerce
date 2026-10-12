@@ -24,7 +24,7 @@ class EmailProvider extends AbstractNotificationProviderService {
     }
     const dir = process.env.EMAILS_DIR ?? join(process.cwd(), ".emails")
     await mkdir(dir, { recursive: true })
-    const file = join(dir, `${Date.now()}-${n.template}-${n.to.replace(/[^a-z0-9@.]+/gi, "_")}.html`)
+    const file = join(dir, `${Date.now()}-${n.template}-${n.to.replace(/[^a-z0-9@.-]+/gi, "_")}.html`)
     await writeFile(file, `<!-- to: ${n.to} | subject: ${subject} -->\n${html}`)
     return { id: file }
   }

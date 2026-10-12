@@ -134,7 +134,7 @@ medusaIntegrationTestRunner({
       const { data: [p] } = await getContainer().resolve("query").graph({
         entity: "order", fields: ["payment_collections.payments.captures.amount"], filters: { id: order.id },
       })
-      expect(p.payment_collections[0].payments[0].captures.map((c: { amount: number }) => c.amount)).toEqual([65])
+      expect(p.payment_collections?.[0]?.payments?.[0]?.captures?.map((c) => c?.amount)).toEqual([65])
 
       // B cancels its (unshipped) part.
       const canceled = (await api.post(`/vendors/orders/${ob.id}/cancel`, { reason: "Out of stock" }, auth(b.token))).data.order

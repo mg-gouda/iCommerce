@@ -1,15 +1,14 @@
 import { notFound } from "next/navigation"
 import { EmptySection } from "@/components/EmptySection"
-import { OrdersTable } from "@/components/OrdersTable"
 import { isSection, sections } from "@/lib/sections"
 
-// products + settings have their own routes.
-const own = ["dashboard", "products", "settings"]
+// products, orders + settings have their own routes.
+const own = ["dashboard", "products", "orders", "settings"]
 export const dynamicParams = false
 export const generateStaticParams = () => sections.filter(([id]) => !own.includes(id)).map(([section]) => ({ section }))
 
 export default async function SectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params
   if (!isSection(section) || own.includes(section)) notFound()
-  return section === "orders" ? <OrdersTable /> : <EmptySection id={section} />
+  return <EmptySection id={section} />
 }
