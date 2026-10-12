@@ -6,10 +6,12 @@ import { auth } from "@/lib/session"
 
 export default async function OrdersPage() {
   const [t, locale] = await Promise.all([getTranslations("account"), getLocale()])
-  const { orders } = await sdk.store.order.list(
-    { fields: "id,display_id,created_at,total,currency_code,items.id,items.quantity", order: "-created_at", limit: 50 },
+  const { orders: all } = await sdk.store.order.list(
+    { fields: "id,display_id,created_at,total,currency_code,metadata,items.id,items.quantity", order: "-created_at", limit: 50 },
     await auth()
   )
+  // Vendor sub-orders share the customer; the buyer only sees parents (sub-order progress shows inside each parent).
+  const orders = all.filter((o) => !o.metadata?.parent_order_id)
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" })
 
   if (!orders.length)
@@ -24,7 +26,7 @@ export default async function OrdersPage() {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("orders")}</h2>
-      {/* ponytail: first 50 orders, no pagination until someone has more. */}
+      {/* ponytail: newest 50 orders incl. sub-orders before filtering; pagination when someone has more. */}
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {orders.map((o) => (
           <li key={o.id}>

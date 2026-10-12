@@ -25,7 +25,7 @@ export default async function OrderPlacedPage({ params }: Props) {
             {t("placed")}
           </h1>
           <p className="m-0 text-ink-muted">
-            {t.rich("placedSub", { n: order.display_id ?? "", email: order.email ?? "", b: (c) => <b className="text-ink"><bdi>{c}</bdi></b> })}
+            {t.rich("placedSub", { n: order.display_id ?? "", email: order.email ?? "", b: (c) => <b className="text-ink"><bdi dir="ltr">{c}</bdi></b> })}
           </p>
         </div>
         <OrderView order={order} signedIn={signedIn} />

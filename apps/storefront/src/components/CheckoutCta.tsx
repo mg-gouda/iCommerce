@@ -9,6 +9,8 @@ import { CheckoutButton } from "@icommerce/ui"
 export function CheckoutCta({ label, packingLabel, doneLabel }: { label: string; packingLabel: string; doneLabel: string }) {
   const router = useRouter()
   const href = `/${useLocale()}/checkout`
-  useEffect(() => router.prefetch(href), [router, href])
+  useEffect(() => {
+    router.prefetch(href)
+  }, [router, href])
   return <CheckoutButton label={label} packingLabel={packingLabel} doneLabel={doneLabel} onDone={() => router.push(href)} />
 }

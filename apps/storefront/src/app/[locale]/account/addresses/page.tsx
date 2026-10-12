@@ -1,7 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server"
 import { AddAddressForm } from "@/components/AddAddressForm"
 import { deleteAddress } from "@/lib/account-actions"
-import { governorate } from "@/lib/governorates"
+import { AddressLines } from "@/components/AddressLines"
 import { getCustomer } from "@/lib/session"
 
 export default async function AddressesPage() {
@@ -16,10 +16,7 @@ export default async function AddressesPage() {
           {addresses.map((a) => (
             <li key={a.id} className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-line bg-surface p-4 text-[14px]">
               <span className="flex flex-col">
-                <b>{a.first_name} {a.last_name}</b>
-                <span>{[a.address_1, a.address_2].filter(Boolean).join(", ")}</span>
-                <span>{a.city}, {governorate(a.province, locale)}</span>
-                <bdi dir="ltr" className="text-start text-ink-muted">{a.phone}</bdi>
+                <AddressLines a={a} locale={locale} />
               </span>
               <form action={deleteAddress}>
                 <input type="hidden" name="id" value={a.id} />

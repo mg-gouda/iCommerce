@@ -175,7 +175,8 @@
     "proofNotReady": "Receipt upload isn't available for this order.",
     "proofFailed": "Upload failed. Use a PDF, PNG, JPEG or WebP under 10 MB.",
     "pickItems": "Set a quantity for at least one item.",
-    "returnNotReady": "Return requests aren't available for this order yet."
+    "returnNotReady": "Return requests aren't available for this order yet.",
+    "bankNeedsAccount": "Sign in or create an account to pay by bank transfer, or choose cash on delivery."
   },
   "address": {
     "firstName": "First name",
@@ -227,7 +228,9 @@
     "subtotal": "Items",
     "shipping": "Shipping",
     "nextStep": "Next step",
-    "total": "Total"
+    "total": "Total",
+    "bankAccount": "Bank transfer needs an account so you can upload the receipt and follow the order. Your cart stays.",
+    "createAccount": "Create account"
   },
   "order": {
     "placed": "Order placed",
@@ -247,7 +250,6 @@
     "proofHelp": "PDF or photo (PNG, JPEG, WebP), up to 10 MB.",
     "proofSubmit": "Upload receipt",
     "proofSent": "Receipt uploaded. We'll confirm the transfer shortly.",
-    "proofGuest": "Reply to your confirmation email with the transfer receipt and order number.",
     "summary": "Summary",
     "subtotal": "Items",
     "shipping": "Shipping",

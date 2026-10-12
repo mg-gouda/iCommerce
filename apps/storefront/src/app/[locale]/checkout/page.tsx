@@ -7,7 +7,7 @@ import { CheckoutHeader } from "@/components/Header"
 import { VendorLines } from "@/components/VendorLines"
 import { Link, redirect } from "@/i18n/navigation"
 import { payKind, paymentProviders, shippingGroups } from "@/lib/checkout"
-import { governorate } from "@/lib/governorates"
+import { AddressLines } from "@/components/AddressLines"
 import { getCart, getCustomer } from "@/lib/session"
 import { byVendor, productsById } from "@/lib/store"
 
@@ -51,23 +51,17 @@ export default async function CheckoutPage({ searchParams }: Props) {
 
   const summaries: Record<Step, ReactNode> = {
     email: <bdi dir="ltr">{c.email}</bdi>,
-    address: a && (
-      <>
-        {a.first_name} {a.last_name} · <bdi dir="ltr">{a.phone}</bdi>
-        <br />
-        {[a.address_1, a.address_2, a.city, governorate(a.province, locale)].filter(Boolean).join(locale === "ar" ? "، " : ", ")}
-      </>
-    ),
+    address: a && <AddressLines a={a} locale={locale} />,
     shipping: (
       <ul className="m-0 list-none p-0">
         {chosen.map(({ g, o }) => (
           <li key={g.profileId}>
-            {g.vendor?.name ?? t("supplier")}: {o?.name} · <bdi>{o && money(o.amount, currency)}</bdi>
+            <bdi>{g.vendor?.name ?? t("supplier")}</bdi>: <bdi>{o?.name}</bdi> · <bdi>{o && money(o.amount, currency)}</bdi>
           </li>
         ))}
       </ul>
     ),
-    payment: session && t(`pay.${payKind(session.provider_id) === "bank" ? "bank" : "cod"}`),
+    payment: session && t(`pay.${payKind(session.provider_id) ?? "cod"}`),
     review: null,
   }
 
@@ -79,7 +73,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     ) : (
       <p role="alert" className="ic-error m-0">{t("noShipping")}</p>
     ),
-    payment: <PaymentForm providers={providers.map((id) => ({ id, kind: payKind(id) as "cod" | "bank" }))} selected={session?.provider_id} />,
+    payment: <PaymentForm providers={providers.map((id) => ({ id, kind: payKind(id)! }))} selected={session?.provider_id} signedIn={!!customer} />,
     review: (
       <div className="flex flex-col gap-4">
         <VendorLines groups={byVendor(c.items!, products)} currency={currency} />

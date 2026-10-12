@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { Badge, money } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
 import { orderPayment, vendorOrders, type VendorOrder } from "@/lib/checkout"
-import { governorate } from "@/lib/governorates"
+import { AddressLines } from "./AddressLines"
 import type { Order } from "@/lib/session"
 import { byVendor, productsById } from "@/lib/store"
 import { ProofForm, ReturnForm } from "./OrderForms"
@@ -21,6 +21,13 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
   const split = signedIn ? await vendorOrders(order.id) : null
   const bank = split?.payment.bank_details ?? pay.bank
   const a = order.shipping_address
+  // Returnable = delivered vendor orders with no open request (one open request per vendor order).
+  const open = new Set(
+    split?.vendor_orders
+      .filter((v) => v.status === "delivered" && (!v.return_request || v.return_request.status === "rejected"))
+      .flatMap((v) => v.items.map((i) => i.parent_item_id))
+  )
+  const returnable = (order.items ?? []).filter((i) => open.has(i.id))
 
   let shipments
   if (split?.vendor_orders.length) {
@@ -37,7 +44,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
           currency={currency}
           extra={(v) => {
             const m = methodOf(v?.handle)
-            return m && <p className="m-0 text-[13px] text-ink-muted">{m.name} · <bdi>{money(m.amount, currency)}</bdi></p>
+            return m && <p className="m-0 text-[13px] text-ink-muted"><bdi>{m.name}</bdi> · <bdi>{money(m.amount, currency)}</bdi></p>
           }}
         />
       </div>
@@ -51,13 +58,13 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
         <p className="m-0 text-[14px] text-ink-muted">{t("shipNote")}</p>
         {shipments}
 
-        {split?.vendor_orders.some((v) => v.status === "delivered") && (
+        {returnable.length > 0 && (
           <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 md:p-6">
             <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("returnTitle")}</h2>
             <p className="m-0 text-[14px] text-ink-muted">{t("returnHelp")}</p>
             <ReturnForm
               orderId={order.id}
-              items={(order.items ?? []).map((i) => ({ id: i.id, title: i.product_title ?? i.title, quantity: i.quantity }))}
+              items={returnable.map((i) => ({ id: i.id, title: i.product_title ?? i.title, quantity: i.quantity }))}
             />
           </section>
         )}
@@ -76,11 +83,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
                 <p className="m-0 text-[14px] text-ink-muted">{t("bankByEmail")}</p>
               )}
               {split?.payment.proof_uploaded_at && <Badge variant="success">{t("proofReceived")}</Badge>}
-              {signedIn ? (
-                <ProofForm orderId={order.id} />
-              ) : (
-                <p className="m-0 text-[14px] text-ink-muted">{t("proofGuest")}</p>
-              )}
+              {signedIn && <ProofForm orderId={order.id} />}
             </>
           ) : (
             <p className="m-0 text-[14px] text-ink-muted">{t("codHow")}</p>
@@ -102,10 +105,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
         {a && (
           <section className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-5 text-[14px]">
             <h2 className="m-0 mb-1 text-[16px] leading-[22px] font-semibold">{t("deliverTo")}</h2>
-            <span>{a.first_name} {a.last_name}</span>
-            <span>{[a.address_1, a.address_2].filter(Boolean).join(", ")}</span>
-            <span>{a.city}, {governorate(a.province, locale)}</span>
-            <bdi dir="ltr" className="text-start">{a.phone}</bdi>
+            <AddressLines a={a} locale={locale} />
           </section>
         )}
       </aside>
@@ -134,7 +134,7 @@ function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: Awa
           ))}
         </ul>
         {v.shipping_method && (
-          <p className="m-0 text-ink-muted">{v.shipping_method.name} · <bdi>{money(v.shipping_method.amount, currency)}</bdi></p>
+          <p className="m-0 text-ink-muted"><bdi>{v.shipping_method.name}</bdi> · <bdi>{money(v.shipping_method.amount, currency)}</bdi></p>
         )}
         {f && (
           <p className="m-0">

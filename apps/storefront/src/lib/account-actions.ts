@@ -119,6 +119,7 @@ export async function uploadProof(_: FormState, fd: FormData): Promise<FormState
   const code = await upload(`/store/orders/${encodeURIComponent(str(fd, "order"))}/payment-proof`, body)
   if (code === 404) return { message: "proofNotReady" }
   if (code >= 400) return { message: "proofFailed" }
+  refresh()
   return { ok: true }
 }
 
@@ -140,5 +141,6 @@ export async function requestReturn(_: FormState, fd: FormData): Promise<FormSta
   } catch (e) {
     return { values, message: status(e) === 404 ? "returnNotReady" : (e as Error).message }
   }
+  refresh()
   return { ok: true }
 }
