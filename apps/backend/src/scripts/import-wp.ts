@@ -15,6 +15,7 @@ import type VendorModuleService from "../modules/vendor/service"
 import { PRODUCT_EXTRA_MODULE } from "../modules/product-extra"
 import type ProductExtraModuleService from "../modules/product-extra/service"
 import type { ProductExtraInput } from "../workflows/vendor-products"
+import { isQty } from "../api/vendors/validators"
 
 // Stage 2 of the WP migration: loads tools/migrate-wp/out/*.json (stage-1 output, see its README) into Medusa.
 // medusa exec ./src/scripts/import-wp.ts [out-dir] -- [--limit N] [--only vendors|products]   (out-dir defaults to $WP_OUT)
@@ -39,6 +40,7 @@ type WpVendor = {
   tax_id: string | null
   commercial_reg_no: string | null
   export_card_no: string | null
+  description_image_paths?: string[]
 }
 type WpProduct = {
   legacy_id: number
@@ -60,18 +62,62 @@ type WpProduct = {
   hs_code: string | null
   cost_price: number | null
   image_paths: string[]
+  description_image_paths?: string[]
 }
 type Row = { vendor_id: string; product: CreateProductWorkflowInputDTO; extra: ProductExtraInput & { legacy_id: string } }
 type Counts = Record<string, number>
 
 const bump = (c: Counts, k: string, n = 1) => (c[k] = (c[k] ?? 0) + n)
 const chunks = <T>(a: T[], n: number) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n))
-const posInt = (n: number | null) => (n != null && Number.isInteger(n) && n > 0 ? n : null)
+const posQty = (n: number | null) => (n != null && isQty(n) ? n : null)
 const MIME: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp" }
 
+const UPLOADS = /\/wp-content\/uploads\/([^?#]+)/
+// ponytail: legacy host hardcoded; after the rewrite nothing may still point at it (dead blobs, missing uploads, videos).
+const OLD_HOST = /\/\/(www\.)?gosoor\.com\.eg\//i
+// ponytail: WP [video] shortcodes (old-host mp4s) are dropped, videos are not migrated.
+const VIDEO = /\[video\b[^\]]*\](\s*\[\/video\])?/gi
+const SIZE = /-(\d+x\d+|scaled)(?=\.[a-z0-9]+$)/i
+const isOld = (u?: string) => !!u && (UPLOADS.test(u) || OLD_HOST.test(u))
+const uploadsPath = (src?: string) => {
+  const m = src && UPLOADS.exec(src)
+  if (!m) return null
+  try {
+    return decodeURIComponent(m[1])
+  } catch {
+    return m[1]
+  }
+}
+type DescStats = { with_images: number; rewritten: number; removed: number }
+
 // Keeps formatting HTML; drops script/style (with contents), inline event handlers, style attrs, javascript: URLs.
-const clean = (html?: string | null) =>
-  html ? sanitizeHtml(html, { allowedTags: sanitizeHtml.defaults.allowedTags.concat("img") }).trim() || null : null
+// <img> on old WP uploads: src → uploaded copy (`toUrl`, same image map as product images), old srcset dropped;
+// file missing on disk or any other old-host src → tag removed.
+const clean = (html?: string | null, toUrl: (path: string) => string | undefined = () => undefined, stats?: DescStats) => {
+  if (!html) return null
+  let rewritten = 0
+  let removed = 0
+  const out = sanitizeHtml(html.replace(VIDEO, ""), {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat("img"),
+    transformTags: {
+      img: (tagName, { src, srcset, ...attribs }) => {
+        const path = uploadsPath(src)
+        const url = path ? (toUrl(path.replace(SIZE, "")) ?? toUrl(path)) : undefined
+        if (url) rewritten++
+        else if (isOld(src)) removed++
+        const keep = url ?? (isOld(src) ? undefined : src)
+        return { tagName, attribs: { ...attribs, ...(keep && { src: keep }), ...(srcset && !isOld(srcset) && { srcset }) } }
+      },
+    },
+    exclusiveFilter: (f) => f.tag === "img" && !f.attribs.src,
+  }).trim()
+  if (stats && rewritten + removed) {
+    stats.with_images++
+    stats.rewritten += rewritten
+    stats.removed += removed
+  }
+  return out || null
+}
 
 const createExtrasStep = createStep(
   "import-wp-create-extras",
@@ -140,6 +186,7 @@ export default async function importWp({ container, args }: ExecArgs) {
     vendors: { created: 0, updated: 0, unchanged: 0, owner_users_created: 0, skipped: {} as Counts },
     products: { created: 0, updated: 0, unchanged: 0, skipped: {} as Counts, failed: {} as Counts, notes: {} as Counts },
     images: { referenced: 0, unique: 0, uploaded: 0, already_uploaded: 0, missing: 0 },
+    description_images: { with_images: 0, rewritten: 0, removed: 0 } as DescStats,
   }
 
   // 1. Seeds (both idempotent).
@@ -152,7 +199,9 @@ export default async function importWp({ container, args }: ExecArgs) {
   // 2. Vendors.
   if (only !== "products") {
     const published = new Set(allProducts.filter((p) => p.status === "publish").map((p) => p.vendor_legacy_id))
-    const toUrl = await imageUrl(vendors.flatMap((v) => [v.logo_path, v.banner_path]).filter((p): p is string => !!p))
+    const toUrl = await imageUrl(
+      vendors.flatMap((v) => [v.logo_path, v.banner_path, ...(v.description_image_paths ?? [])]).filter((p): p is string => !!p),
+    )
     const existing = new Map(
       (await vendorSvc.listVendors({ legacy_id: vendors.map((v) => String(v.legacy_id)) }, { take: null })).map((v) => [v.legacy_id, v]),
     )
@@ -179,7 +228,7 @@ export default async function importWp({ container, args }: ExecArgs) {
       const data = {
         name: v.store_name,
         handle: v.handle,
-        description: clean(v.description),
+        description: clean(v.description, toUrl, report.description_images),
         phone: v.phone,
         email,
         country: v.country,
@@ -220,7 +269,7 @@ export default async function importWp({ container, args }: ExecArgs) {
   }
 
   // 3–4. Products.
-  if (only !== "vendors") await importProducts(container, dir, products, imageUrl, report.products, logger)
+  if (only !== "vendors") await importProducts(container, dir, products, imageUrl, report.products, report.description_images, logger)
 
   // 6. ponytail: sales org + fee tiers have no modules yet → counted only, imported when those modules land.
   const org = load<{ branches: unknown[]; reps: unknown[]; assignments: unknown[] }>("sales_org.json")
@@ -282,6 +331,7 @@ async function importProducts(
   products: WpProduct[],
   imageUrl: Awaited<ReturnType<typeof imageUploader>>,
   stats: { created: number; updated: number; unchanged: number; skipped: Counts; failed: Counts; notes: Counts },
+  descStats: DescStats,
   logger: { info: (m: string) => void },
 ) {
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
@@ -324,7 +374,7 @@ async function importProducts(
     const made = missing.length ? await productSvc.createProductTags(missing.map((value) => ({ value }))) : []
     ;[...have, ...made].forEach((t) => tagId.set(t.value, t.id))
   }
-  const toUrl = await imageUrl(rows.flatMap((p) => p.image_paths))
+  const toUrl = await imageUrl(rows.flatMap((p) => [...p.image_paths, ...(p.description_image_paths ?? [])]))
   // Every imported product is b2c_enabled and not b2b_only → same channels for all.
   const salesChannels = await salesChannelsFor(container, { b2b_only: false, b2c_enabled: true })
   const seenSku = new Set<string>()
@@ -337,20 +387,19 @@ async function importProducts(
       sku = null
     }
     if (sku) seenSku.add(sku)
-    const min = posInt(p.min_qty)
-    let max = posInt(p.max_qty)
+    const min = posQty(p.min_qty)
+    let max = posQty(p.max_qty)
     if (max != null && min != null && max < min) {
       bump(stats.notes, "max_qty dropped (< min_qty)")
       max = null
     }
-    // ponytail: product_extra qty columns are integers; fractional WP values (e.g. 2.5 t) are dropped, not rounded.
-    if ((p.min_qty != null && min == null) || (p.qty_step != null && posInt(p.qty_step) == null))
-      bump(stats.notes, "min_qty/qty_step dropped (not a positive integer)")
+    if ((p.min_qty != null && min == null) || (p.qty_step != null && posQty(p.qty_step) == null))
+      bump(stats.notes, "min_qty/qty_step dropped (not a positive number, max 3 decimals)")
     const extra = {
       unit: p.attributes?.unit?.[0] ?? null,
       min_qty: min,
       max_qty: max,
-      qty_step: posInt(p.qty_step),
+      qty_step: posQty(p.qty_step),
       hs_code: p.hs_code,
       cost_price: p.cost_price,
       b2b_only: false,
@@ -363,7 +412,7 @@ async function importProducts(
       title: p.title!.trim(),
       handle: p.handle,
       // ponytail: short description only used when there is no long one.
-      description: clean(p.description_html) ?? clean(p.short_description_html),
+      description: clean(p.description_html, toUrl, descStats) ?? clean(p.short_description_html, toUrl, descStats),
       status: p.status === "publish" ? ProductStatus.PUBLISHED : ProductStatus.PROPOSED,
       images: urls.map((url) => ({ url })),
       thumbnail: urls[0] ?? null,
@@ -431,7 +480,12 @@ async function importProducts(
 }
 
 function renderReport(
-  r: { vendors: Record<string, number | Counts>; products: Record<string, number | Counts>; images: Record<string, number> },
+  r: {
+    vendors: Record<string, number | Counts>
+    products: Record<string, number | Counts>
+    images: Record<string, number>
+    description_images: DescStats
+  },
   run: { limit?: number; only?: string; secs: number; indexed: number | null; notImported: string },
 ) {
   const section = (title: string, o: Record<string, number | Counts>) =>
@@ -454,6 +508,7 @@ function renderReport(
     section("Vendors", r.vendors),
     section("Products", r.products),
     section("Images", r.images),
+    section("Description images", r.description_images),
     `## Not imported (no module yet)\n${run.notImported}\n`,
   ].join("\n")
 }

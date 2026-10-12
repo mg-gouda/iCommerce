@@ -87,6 +87,14 @@ export const uploadsRelative = (url: string): string | null => {
   return m ? decodeURIComponent(m[1]) : null
 }
 
+/** URLs in `<img src>` / `srcset` of an HTML fragment (entities decoded, srcset descriptors dropped). */
+export const htmlImageUrls = (html: string | null | undefined): string[] =>
+  [...(html ?? "").matchAll(/<img\b[^>]*>/gi)].flatMap(([tag]) =>
+    [...tag.matchAll(/\s(src|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi)].flatMap((m) => {
+      const v = decodeEntities(m[2] ?? m[3] ?? m[4]).trim()
+      return m[1].toLowerCase() === "src" ? [v] : v.split(",").map((s) => s.trim().split(/\s+/)[0])
+    }).filter(Boolean))
+
 /** WP datetime → ISO UTC; zero date → null */
 export const isoDate = (gmt: string | null, local?: string | null): string | null => {
   const d = gmt && !gmt.startsWith("0000") ? gmt : local && !local.startsWith("0000") ? local : null

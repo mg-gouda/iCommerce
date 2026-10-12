@@ -112,6 +112,32 @@ medusaIntegrationTestRunner({
       expect(after.options[0]).toMatchObject({ id: oa.id, title: oa.title })
     })
 
+    it("KYC without export card succeeds; tax ID still required", async () => {
+      const a = await applyVendor("Kyc")
+      const form = (fields: Record<string, string>) => {
+        const f = new FormData()
+        Object.entries(fields).forEach(([k, v]) => f.append(k, v))
+        f.append("files", new Blob(["%PDF-1.4"], { type: "application/pdf" }), "cr.pdf")
+        return f
+      }
+      const ok = await api.post("/vendors/me/kyc", form({ tax_id: "512483907", commercial_reg_no: "12345", export_card_no: "" }), bearer(a.token))
+      expect(ok.data.vendor).toMatchObject({ kyc_status: "submitted", tax_id: "512483907", export_card_no: null })
+      await expect(api.post("/vendors/me/kyc", form({ commercial_reg_no: "12345" }), bearer(a.token))).rejects.toMatchObject({
+        response: { status: 400 },
+      })
+    })
+
+    it("decimal quantities round-trip; more than 3 decimals rejected", async () => {
+      const a = await applyVendor("Decimal")
+      const body = { ...product("Wire"), extra: { unit: "ton", min_qty: 2.5, qty_step: 0.25, max_qty: 100.125 } }
+      const { data } = await api.post("/vendors/products", body, bearer(a.token))
+      const got = (await api.get(`/vendors/products/${data.product.id}`, bearer(a.token))).data.product.product_extra
+      expect(got).toMatchObject({ min_qty: 2.5, qty_step: 0.25, max_qty: 100.125 })
+      await expect(
+        api.post(`/vendors/products/${data.product.id}`, { extra: { min_qty: 1.2345 } }, bearer(a.token)),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+    })
+
     it("CSV import reports the bad row and creates the good ones", async () => {
       await getContainer()
         .resolve(Modules.PRODUCT)
@@ -119,7 +145,7 @@ medusaIntegrationTestRunner({
       const a = await applyVendor("Importer")
       const csv = [
         "handle,title,description,category_handle,price_usd,compare_at_usd,unit,min_qty,qty_step,hs_code,b2b_only,image_urls",
-        "good-1,Good one,desc,plastics,12.5,15,piece,10,5,3923,false,https://example.com/a.jpg",
+        "good-1,Good one,desc,plastics,12.5,15,piece,2.5,0.5,3923,false,https://example.com/a.jpg",
         "bad-1,,desc,unknown-cat,abc,,piece,,,,,",
         "good-2,Good two,,,3,,ton,,,,true,",
       ].join("\n")

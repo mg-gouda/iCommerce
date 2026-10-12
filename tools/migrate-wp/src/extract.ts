@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 import mysql from "mysql2/promise"
-import { attrKey, cleanText, isoDate, mapProductAttributes, parsePrice, parseQty, phpUnserialize, slugify, stripSizeSuffix, titleCaseIfAllCaps, uniqueHandles, uploadsRelative } from "./transforms.ts"
+import { attrKey, cleanText, htmlImageUrls, isoDate, mapProductAttributes, parsePrice, parseQty, phpUnserialize, slugify, stripSizeSuffix, titleCaseIfAllCaps, uniqueHandles, uploadsRelative } from "./transforms.ts"
 
 const P = process.env.WP_PREFIX ?? "wWWvr_"
 // Searched in order. recovered-uploads = 2022/03–06 originals pulled from the Jun-2022 .wpress (the copied uploads/ lacks them).
@@ -51,6 +51,10 @@ const resolveImage = (ref: string | number | null | undefined, owner: string): s
   ;(bucket.get(key) ?? bucket.set(key, new Set()).get(key)!).add(owner)
   return key
 }
+
+/** <img src/srcset> in description HTML pointing at WP uploads (any host) → resolved paths, registered like product images. */
+const descImages = (owner: string, ...html: string[]) => [...new Set(html.flatMap(htmlImageUrls).map(uploadsRelative)
+  .map((p) => (p ? resolveImage(p, owner) : null)).filter((x): x is string => !!x))]
 
 // ---------- categories ----------
 const catRows = await q(`select t.term_id, t.name, t.slug, tt.parent, tt.term_taxonomy_id from ${P}term_taxonomy tt join ${P}terms t using(term_id) where tt.taxonomy='product_cat' order by t.term_id`)
@@ -120,6 +124,7 @@ const products = byId(productRows.map((p) => {
     cost_price: parsePrice(m._wc_cog_cost),
     vendor_product_link: cleanText(m.venderproductlink) || null,
     image_paths,
+    description_image_paths: descImages(owner, str(p.post_content), str(p.post_excerpt)),
     created_at: isoDate(str(p.post_date_gmt), str(p.post_date)),
   }
 }))
@@ -159,6 +164,7 @@ const vendors = byId(vendorRows.map((u) => {
     description: str(ps.shop_description || m._store_description).trim() || null,
     logo_path: resolveImage((ps.gravatar as string) || m[`${P}user_avatar`], owner),
     banner_path: resolveImage(ps.banner as string, owner),
+    description_image_paths: descImages(owner, str(ps.shop_description || m._store_description)),
     // ponytail: spec'd KYC keys (`tax-id-number` …) are ~empty; real data lives in the registration-form keys → fallback.
     tax_id: first(m["tax-id-number"], m["tax-id"]),
     commercial_reg_no: first(m["commercial-registration-number"], m["commercial-registration-id-no"], m["registration-id-no"]),
@@ -286,6 +292,7 @@ Categories with 0 exported products: ${categories.filter((c) => c.product_count 
 - Sale price ≥ regular: ${products.filter((p) => p.sale_price != null && p.regular_price != null && p.sale_price >= p.regular_price).length}
 - min_qty > max_qty: ${products.filter((p) => p.min_qty != null && p.max_qty != null && p.min_qty > p.max_qty).length}
 - Products without category: ${products.filter((p) => p.category_legacy_ids.length === 0).length}
+- Descriptions with WP-uploads images: ${products.filter((p) => p.description_image_paths.length).length} products (${products.reduce((n, p) => n + p.description_image_paths.length, 0)} images), ${vendors.filter((v) => v.description_image_paths.length).length} vendors
 - Products without any image ref: ${products.filter((p) => p.image_paths.length === 0).length}
 - Products whose images are all missing on disk: ${products.filter((p) => p.image_paths.length > 0 && p.image_paths.every((i) => missing.has(i))).length}
 - Vendor logo/banner refs missing on disk: ${vendors.filter((v) => missing.has(v.logo_path ?? "")).length} / ${vendors.filter((v) => missing.has(v.banner_path ?? "")).length}
