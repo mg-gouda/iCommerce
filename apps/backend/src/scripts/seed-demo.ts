@@ -4,6 +4,7 @@ import type { CreateProductWorkflowInputDTO, ExecArgs } from "@medusajs/framewor
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { createProductCategoriesWorkflow, uploadFilesWorkflow } from "@medusajs/medusa/core-flows"
 import { syncProduct } from "../lib/search"
+import { createVendorOption, ensureVendorShipping, listVendorOptions } from "../lib/vendor-shipping"
 import { salesChannelsFor } from "../api/vendors/products/helpers"
 import { VENDOR_MODULE } from "../modules/vendor"
 import type VendorModuleService from "../modules/vendor/service"
@@ -87,6 +88,11 @@ export default async function seedDemo({ container }: ExecArgs) {
         kyc_status: "verified",
       })
     }
+    // One flat option per demo vendor so checkout works end to end.
+    const { shipping_profile_id } = await ensureVendorShipping(container, vendor)
+    if (!(await listVendorOptions(container, shipping_profile_id)).length) {
+      await createVendorOption(container, vendor, { name: "Standard delivery (2–4 days)", kind: "flat", amount: 5 })
+    }
     for (const p of PRODUCTS[v.handle]) {
       const handle = `demo-${slug(p.title)}`
       if ((await product.listProducts({ handle }, { select: ["id"] })).length) continue
@@ -110,6 +116,7 @@ export default async function seedDemo({ container }: ExecArgs) {
               { title: "Default", options: { Default: "Default" }, manage_inventory: false, prices: [{ currency_code: "usd", amount: p.price }] },
             ],
             sales_channels: await salesChannelsFor(container, extra),
+            shipping_profile_id,
           } as CreateProductWorkflowInputDTO,
         },
       })

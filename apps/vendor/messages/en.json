@@ -37,22 +37,7 @@
     "orders": {
       "title": "Orders",
       "emptyTitle": "No orders yet",
-      "emptyBody": "Retail and company orders for your products land here. Ship them and add tracking from each order.",
-      "col": {
-        "order": "Order",
-        "buyer": "Buyer",
-        "channel": "Channel",
-        "items": "Items",
-        "total": "Total",
-        "action": "Action"
-      },
-      "channel": {
-        "b2b": "B2B",
-        "b2c": "Retail"
-      },
-      "ship": "Mark as shipped",
-      "shipping": "On the way",
-      "shipped": "Shipped"
+      "emptyBody": "Retail and company orders for your products land here. Ship them and add tracking from each order."
     },
     "quotes": {
       "title": "Quotes",
@@ -123,7 +108,13 @@
     "positiveQty": "Use a number above 0 with up to 3 decimals, e.g. 2.5, or leave it empty.",
     "maxBelowMin": "Maximum quantity must be at least the minimum order quantity.",
     "csvRequired": "Choose a .csv file to import.",
-    "csvSize": "CSV files can be up to 5 MB. Split it into smaller files."
+    "csvSize": "CSV files can be up to 5 MB. Split it into smaller files.",
+    "carrierRequired": "Enter the carrier, e.g. Aramex.",
+    "trackingRequired": "Enter the tracking number.",
+    "url": "Use a full link starting with https://",
+    "reasonRequired": "Tell the buyer why you're canceling.",
+    "optionNameRequired": "Give the option a name buyers understand.",
+    "freeOver": "Enter the cart amount in USD above 0."
   },
   "banner": {
     "note": "Note from iCommerce:",
@@ -350,5 +341,152 @@
     "sheet": "{n, plural, one {{n} sheet} other {{n} sheets}}",
     "ton": "{n, plural, one {{n} ton} other {{n} tons}}",
     "unit": "{n, plural, one {{n} unit} other {{n} units}}"
+  },
+  "orders": {
+    "title": "Orders",
+    "sub": "Retail orders for your products. Ship pending orders and add tracking so buyers can follow them.",
+    "search": "Search orders",
+    "searchPlaceholder": "Order number, buyer name, email, city or phone",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "apply": "Apply",
+    "emptyTitle": "No orders yet",
+    "emptyBody": "When a buyer checks out with your products, the order lands here. Ship it, add tracking, then mark it delivered.",
+    "noMatchTitle": "No orders match",
+    "noMatchBody": "Try another search term or status.",
+    "caption": "Your orders, {count} in total",
+    "col": {
+      "order": "Order",
+      "date": "Placed",
+      "buyer": "Buyer",
+      "items": "Items",
+      "total": "Total",
+      "payment": "Payment",
+      "status": "Status",
+      "product": "Product",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "lineTotal": "Line total"
+    },
+    "units": "{count, plural, one {# unit} other {# units}}",
+    "status": {
+      "pending": "To ship",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "canceled": "Canceled"
+    },
+    "method": {
+      "cod": "Cash on delivery",
+      "bank": "Bank transfer",
+      "other": "Other"
+    },
+    "payment": {
+      "awaiting": "Awaiting payment",
+      "paid": "Paid",
+      "canceled": "Canceled"
+    },
+    "paymentHelp": {
+      "cod": "Your courier collects cash from the buyer. Marking the order delivered records the payment.",
+      "bank": "The buyer pays iCommerce by bank transfer. You can ship once we confirm the money arrived.",
+      "other": "Payment is handled by iCommerce."
+    },
+    "pagination": "Order pages",
+    "pageOf": "Page {page} of {pages} · {count} orders",
+    "prev": "Previous",
+    "next": "Next",
+    "breadcrumb": "Breadcrumb",
+    "back": "All orders",
+    "orderTitle": "Order #{id}",
+    "placed": "Placed {date}",
+    "items": "Items",
+    "subtotal": "Items subtotal",
+    "shippingLine": "Shipping",
+    "shippingVia": "Shipping · {name}",
+    "tax": "Tax",
+    "total": "Total",
+    "shipTitle": "Ship this order",
+    "awaitingTransfer": "Waiting for the buyer's bank transfer. You can ship as soon as iCommerce confirms the payment.",
+    "carrier": "Carrier",
+    "carrierPlaceholder": "e.g. Aramex, Bosta, own courier",
+    "trackingNumber": "Tracking number",
+    "trackingUrl": "Tracking link",
+    "trackingUrlHelp": "Optional. The buyer gets this link in the shipping email.",
+    "ship": "Mark as shipped",
+    "shipping": "Saving shipment…",
+    "shipped": "Shipped",
+    "shipment": "Shipment",
+    "shippedAt": "Shipped",
+    "deliveredAt": "Delivered",
+    "opensNewTab": "opens in a new tab",
+    "deliver": "Mark as delivered",
+    "deliverQuestion": "Did the buyer receive everything?",
+    "deliverConfirm": "Yes, delivered",
+    "deliverHelp": "Mark delivered once the buyer has the goods. The buyer gets an email.",
+    "deliverHelpCod": "Mark delivered once the buyer has the goods and paid your courier. This records the cash payment and emails the buyer.",
+    "keep": "Not now",
+    "cancelTitle": "Cancel order",
+    "cancelHelp": "Only before shipping. The buyer is not charged for canceled items.",
+    "cancelOrder": "Cancel this order…",
+    "cancelReason": "Reason for the buyer",
+    "cancelReasonHelp": "For example: out of stock, can't deliver to this address.",
+    "cancelConfirm": "Cancel order",
+    "canceledTitle": "Canceled",
+    "buyer": "Buyer and delivery address",
+    "paymentTitle": "Payment",
+    "returnTitle": "Return request",
+    "returnStatus": {
+      "requested": "Waiting for you",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "returnReason": "Buyer's reason",
+    "returnLine": "{qty} × {title}",
+    "returnNote": "Note to the buyer",
+    "returnNoteHelp": "Optional. E.g. where to send the items back.",
+    "approveReturn": "Approve return",
+    "rejectReturn": "Reject",
+    "yourNote": "Your note",
+    "refundManual": "iCommerce refunds the buyer once the items are back."
+  },
+  "shipping": {
+    "title": "Shipping",
+    "sub": "Delivery options buyers can pick at checkout for your products. Prices in USD, delivery within Egypt.",
+    "linkSub": "Delivery options and prices buyers see at checkout",
+    "breadcrumb": "Breadcrumb",
+    "back": "Store settings",
+    "emptyTitle": "No delivery options yet",
+    "emptyBody": "Buyers can't check out your products until you add at least one option. Start with a flat rate.",
+    "caption": "Your delivery options",
+    "col": {
+      "name": "Option",
+      "kind": "Type",
+      "price": "Price",
+      "actions": "Actions"
+    },
+    "kinds": {
+      "flat": "Flat rate",
+      "free_over": "Free over an amount",
+      "pickup": "Pickup"
+    },
+    "kindHelp": {
+      "flat": "Same price for every order.",
+      "free_over": "Flat price, free once the cart reaches the amount.",
+      "pickup": "Buyer collects from you. Free."
+    },
+    "free": "Free",
+    "priceFreeOver": "{amount}, free over {over}",
+    "addTitle": "Add a delivery option",
+    "name": "Name buyers see",
+    "namePlaceholder": "e.g. Standard delivery (2–4 days)",
+    "kind": "Type",
+    "amount": "Price (USD)",
+    "freeOver": "Free when cart total reaches (USD)",
+    "freeOverHelp": "Counted on the buyer's whole cart.",
+    "add": "Add option",
+    "added": "Option added",
+    "delete": "Delete",
+    "deleteLabel": "Delete {name}",
+    "confirmDelete": "Delete this option?",
+    "cancel": "Cancel"
   }
 }

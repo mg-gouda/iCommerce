@@ -5,6 +5,7 @@ import { parse } from "csv-parse/sync"
 import { createVendorProductWorkflow } from "../../../../workflows/vendor-products"
 import { gateStatus, getCaller } from "../../helpers"
 import { salesChannelsFor } from "../helpers"
+import { ensureVendorShipping } from "../../../../lib/vendor-shipping"
 import { isQty } from "../../validators"
 
 const MAX_ROWS = 1000
@@ -41,6 +42,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   if (rows.length > MAX_ROWS) throw new MedusaError(MedusaError.Types.INVALID_DATA, `Max ${MAX_ROWS} rows per file.`)
 
   const { vendor } = await getCaller(req)
+  const { shipping_profile_id } = await ensureVendorShipping(req.scope, vendor)
   const status = gateStatus(vendor.status, (req.body as { status?: string })?.status ?? "draft")
   const handles = [...new Set(rows.map((r) => r.category_handle).filter(Boolean))] as string[]
   const categories = handles.length
@@ -86,10 +88,13 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
         {
           title: "Default",
           options: { Default: "Default" },
+          // Vendor-managed stock (no inventory levels yet) → unmanaged, else checkout rejects the variant.
+          manage_inventory: false,
           prices: [{ currency_code: "usd", amount: num(r.price_usd)! }],
         },
       ],
       sales_channels: await salesChannelsFor(req.scope, extra),
+      shipping_profile_id,
     } as unknown as CreateProductWorkflowInputDTO
     try {
       const { result } = await createVendorProductWorkflow(req.scope).run({

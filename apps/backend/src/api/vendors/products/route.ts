@@ -2,6 +2,7 @@ import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/frame
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
 import type { CreateProductWorkflowInputDTO } from "@medusajs/framework/types"
 import { createVendorProductWorkflow } from "../../../workflows/vendor-products"
+import { ensureVendorShipping } from "../../../lib/vendor-shipping"
 import { gateStatus, getCaller } from "../helpers"
 import { GetVendorProducts, type PostVendorProductType } from "../validators"
 import { retrieveVendorProduct, salesChannelsFor, VENDOR_PRODUCT_FIELDS, vendorProductIds } from "./helpers"
@@ -34,6 +35,7 @@ export async function POST(req: AuthenticatedMedusaRequest<PostVendorProductType
         ...product,
         status: gateStatus(vendor.status, product.status ?? "draft"),
         sales_channels: await salesChannelsFor(req.scope, extra),
+        shipping_profile_id: (await ensureVendorShipping(req.scope, vendor)).shipping_profile_id,
       } as CreateProductWorkflowInputDTO,
       extra,
     },

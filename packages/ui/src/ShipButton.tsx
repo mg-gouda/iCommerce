@@ -10,22 +10,27 @@ export type ShipButtonProps = Omit<ButtonProps, "onClick"> & {
   label: string
   busyLabel: string
   doneLabel: string
-  /** Runs immediately (save shipment); the truck run is feedback. Done state is final. */
-  onShip?: () => void
+  /** Saves the shipment. The truck only drives after it resolves; `false` (or a throw) = failed → back to idle. Done state is final. */
+  onShip?: () => void | boolean | Promise<void | boolean>
+  /** After the truck has arrived (e.g. refresh the page). */
+  onDone?: () => void
   shipped?: boolean
 }
 
-export function ShipButton({ label, busyLabel, doneLabel, onShip, shipped, className, style, ...props }: ShipButtonProps) {
+export function ShipButton({ label, busyLabel, doneLabel, onShip, onDone, shipped, className, style, ...props }: ShipButtonProps) {
   const [state, setState] = useState<"idle" | "busy" | "done">(shipped ? "done" : "idle")
   const truck = useRef<SVGSVGElement>(null)
   const road = useRef<HTMLSpanElement>(null)
 
   async function ship(e: MouseEvent<HTMLButtonElement>) {
     if (state !== "idle") return
+    const btn = e.currentTarget
     setState("busy")
-    onShip?.()
-    await driveTruck(e.currentTarget, truck.current!, road.current!)
+    const ok = await Promise.resolve(onShip?.()).catch(() => false)
+    if (ok === false) return setState("idle")
+    await driveTruck(btn, truck.current!, road.current!)
     setState("done")
+    onDone?.()
   }
 
   return (

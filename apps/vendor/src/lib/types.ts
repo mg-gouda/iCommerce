@@ -49,6 +49,43 @@ export type VendorProduct = {
   product_extra: ProductExtra | null
 }
 
+// Shapes from project_docs/api/p2-backend.md §6.
+export type OrderStatus = "pending" | "shipped" | "delivered" | "canceled"
+
+export type ReturnRequest = {
+  status: "requested" | "approved" | "rejected"
+  reason: string
+  items: { item_id: string; quantity: number }[]
+  note: string | null
+  requested_at: string
+  decided_at: string | null
+}
+
+type AddressKey = "first_name" | "last_name" | "company" | "address_1" | "address_2" | "city" | "province" | "postal_code" | "country_code" | "phone"
+
+export type VendorOrder = {
+  id: string
+  display_id: number
+  status: OrderStatus
+  created_at: string
+  currency_code: string
+  email: string | null
+  buyer: { first_name: string | null; last_name: string | null }
+  shipping_address: Record<AddressKey, string | null>
+  items: { id: string; title: string; variant_title: string | null; thumbnail: string | null; quantity: number; unit_price: number; total: number }[]
+  shipping_method: { name: string; amount: number } | null
+  item_total: number
+  shipping_total: number
+  tax_total: number
+  total: number
+  payment: { provider_id: string | null; status: "awaiting" | "paid" | "canceled" }
+  fulfillment: { carrier: string | null; tracking_number: string | null; tracking_url: string | null; shipped_at: string | null; delivered_at: string | null } | null
+  return_request: ReturnRequest | null
+  cancel_reason: string | null
+}
+
+export type ShippingOption = { id: string; name: string; kind: "flat" | "free_over" | "pickup"; amount: number; free_over: number | null }
+
 /** Server-action result: field errors are message keys under `errors.*`, `message` is a raw API message. */
 export type FormState = {
   ok?: boolean
