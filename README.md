@@ -40,6 +40,7 @@ pnpm dev
 ```sh
 pnpm exec medusa exec ./src/scripts/seed-defaults.ts                       # USD+EGP, region Egypt, Retail/Wholesale channels + publishable keys
 pnpm exec medusa exec ./src/scripts/seed-categories.ts <categories.json>  # [{legacy_id,name,handle,parent_legacy_id}], idempotent by handle
+pnpm exec medusa exec ./src/scripts/seed-demo.ts                           # DEMO ONLY: 2 approved vendors × 6 products (handles demo-*)
 pnpm exec medusa exec ./src/scripts/sync-search.ts                         # rebuild Meilisearch `products` index + settings
 pnpm test:integration:http                                                 # needs Postgres (DB_* in .env.test, override via shell, e.g. DB_PORT=5442)
 ```
