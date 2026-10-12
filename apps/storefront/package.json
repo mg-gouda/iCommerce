@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@icommerce/sdk": "workspace:*",
     "@icommerce/ui": "workspace:*",
     "lucide-react": "1.55.0",
     "next": "16.4.0",
