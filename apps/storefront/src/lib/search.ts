@@ -21,7 +21,7 @@ const quote = (v: string) => `"${v.replace(/["\\]/g, "\\$&")}"`
 export async function searchProducts(o: { q?: string; category?: string; vendor?: string; limit?: number }) {
   await connection()
   const filter = [o.category && `category_names = ${quote(o.category)}`, o.vendor && `vendor_handle = ${quote(o.vendor)}`].filter(Boolean)
-  const res = await fetch(`${process.env.MEILI_HOST ?? "http://localhost:7700"}/indexes/products/search`, {
+  const res = await fetch(`${process.env.MEILI_HOST ?? "http://localhost:7700"}/indexes/${process.env.MEILI_INDEX || "products"}/search`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${process.env.MEILI_SEARCH_KEY ?? ""}` },
     body: JSON.stringify({ q: o.q ?? "", filter, facets: ["category_names"], limit: o.limit ?? 48 }),

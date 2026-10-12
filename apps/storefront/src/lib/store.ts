@@ -54,7 +54,8 @@ export async function listProducts(query: { limit?: number; category_id?: string
     fields: FIELDS,
     order: "-created_at",
   })
-  return { products: products as unknown as Product[], count }
+  // ponytail: suspended vendors' published products are dropped here, not in the API (count may overshoot by those).
+  return { products: (products as unknown as Product[]).filter((p) => !p.vendor || p.vendor.status === "approved"), count }
 }
 
 export async function getProduct(handle: string) {

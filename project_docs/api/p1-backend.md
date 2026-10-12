@@ -388,7 +388,9 @@ Vendor's products: read the search index with filter `vendor_handle = "acme"` (p
 
 ### Extra fields on `GET /store/products` / `GET /store/products/:id`
 Request with `fields=+product_extra.unit,+vendor.name,...`. Allowed exact paths only (so `cost_price` stays private):
-`product_extra.{unit,min_qty,max_qty,qty_step,hs_code,b2b_only,b2c_enabled,origin_country}`, `vendor.{name,handle,logo,city,country,status,kyc_status}`. Anything else under these relations is silently dropped.
+`product_extra.{unit,min_qty,max_qty,qty_step,hs_code,b2b_only,b2c_enabled,origin_country}`, `vendor.{name,handle,logo,city,country,status,kyc_status}`. Anything else under these relations is silently dropped, **wildcards included** (`+product_extra.*`, `*vendor` return nothing). List each path:
+`fields=+product_extra.unit,+product_extra.min_qty,+product_extra.hs_code,+vendor.name,+vendor.handle,+vendor.kyc_status`.
+The store API still lists published products of a later-suspended vendor; the storefront drops them (`vendor.status !== "approved"`).
 
 ---
 
