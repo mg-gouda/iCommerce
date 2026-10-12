@@ -373,9 +373,30 @@ Known gap: vendor rename / category rename don't reindex until the product chang
 
 ---
 
+## 5b. Storefront (public, `x-publishable-api-key` required like all `/store/*`)
+
+### `GET /store/vendors/:handle`
+Public store profile. **Approved vendors only**; pending, suspended and missing handles all return the same 404.
+```json
+// 200
+{ "vendor": { "id": "ven_01...", "name": "Acme", "handle": "acme", "logo": null, "banner": null,
+              "description": "...", "city": "Cairo", "country": "EG", "kyc_status": "verified" } }
+// 404
+{ "type": "not_found", "message": "Vendor acme not found" }
+```
+Vendor's products: read the search index with filter `vendor_handle = "acme"` (published only; the core store API cannot filter by vendor).
+
+### Extra fields on `GET /store/products` / `GET /store/products/:id`
+Request with `fields=+product_extra.unit,+vendor.name,...`. Allowed exact paths only (so `cost_price` stays private):
+`product_extra.{unit,min_qty,max_qty,qty_step,hs_code,b2b_only,b2c_enabled,origin_country}`, `vendor.{name,handle,logo,city,country,status,kyc_status}`. Anything else under these relations is silently dropped.
+
+---
+
 ## 6. Seeded defaults (`medusa exec ./src/scripts/seed-defaults.ts`)
 - Store currencies: USD (default), EGP.
 - Region `Egypt`: currency **USD**, country `eg`, payment provider `pp_system_default`.
 - Sales channels `Retail`, `Wholesale`, each with a publishable key titled `Retail storefront` / `Wholesale storefront` (tokens printed by the script). Storefront uses the key as `x-publishable-api-key` for `/store/*`.
+
+Demo data (local dev / E2E only): `medusa exec ./src/scripts/seed-demo.ts` → categories `carpets-rugs`, `cookware`; approved vendors `demo-nile-looms`, `demo-helwan-metal` × 6 published products each (handles `demo-*`, `metadata.demo = true`). Idempotent by handle. Then run `sync-search`.
 
 Categories: `medusa exec ./src/scripts/seed-categories.ts <file.json>`, file shape `[{ "legacy_id", "name", "handle", "parent_legacy_id" | null }]`, idempotent by handle, `legacy_id` → category `metadata.legacy_id`. Storefront reads them via core `GET /store/product-categories`.

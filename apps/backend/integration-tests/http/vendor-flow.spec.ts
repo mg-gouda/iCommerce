@@ -139,5 +139,21 @@ medusaIntegrationTestRunner({
       // Pending vendor → imported products are drafts, never published.
       expect(mine.data.products.every((p: { status: string }) => p.status !== "published")).toBe(true)
     })
+
+    it("public store vendor page: approved 200, pending 404", async () => {
+      const key = await getContainer()
+        .resolve(Modules.API_KEY)
+        .createApiKeys({ title: "test", type: "publishable", created_by: "test" })
+      const store = { headers: { "x-publishable-api-key": key.token } }
+      const ok = await applyVendor("Shown")
+      await applyVendor("Hidden")
+      await api.post(`/admin/vendors/${ok.id}/approve`, {}, bearer(admin))
+
+      const res = await api.get("/store/vendors/shown", store)
+      expect(res.status).toBe(200)
+      expect(res.data.vendor).toMatchObject({ handle: "shown", name: "Shown" })
+      expect(res.data.vendor.tax_id).toBeUndefined()
+      await expect(api.get("/store/vendors/hidden", store)).rejects.toMatchObject({ response: { status: 404 } })
+    })
   },
 })
