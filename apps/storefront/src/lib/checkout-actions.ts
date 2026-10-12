@@ -45,11 +45,10 @@ export async function saveShipping(_: FormState, fd: FormData): Promise<FormStat
   if (!groups.length || groups.some((g) => !g.options.length)) return { message: "noShipping" }
   if (Object.keys(fieldErrors).length) return { fieldErrors }
   const headers = await auth()
-  // One method per vendor; re-adding for a profile replaces its old method.
-  for (const { id } of picks) await sdk.store.cart.addShippingMethod(cart.id, { option_id: id }, { fields: "id" }, headers)
-  // Parent order keeps cart metadata → guest confirmation can name each vendor's method (vendor-orders route needs an account).
-  const ship_vendors = Object.fromEntries(picks.map(({ g, id }) => [id, g.vendor?.handle ?? ""]))
-  await sdk.store.cart.update(cart.id, { metadata: { ship_vendors } }, { fields: "id" }, headers)
+  // One method per vendor; re-adding for a profile replaces its old method. `data.vendor_handle` rides along to the
+  // order's shipping method so a guest confirmation can name each vendor's method (vendor-orders needs an account).
+  for (const { g, id } of picks)
+    await sdk.store.cart.addShippingMethod(cart.id, { option_id: id, data: { vendor_handle: g.vendor?.handle ?? "" } }, { fields: "id" }, headers)
   return back(fd)
 }
 

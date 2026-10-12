@@ -28,9 +28,8 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
   } else {
     // Guest (vendor-orders needs an account) or split not done yet: group lines by product vendor.
     const products = await productsById(order.items?.map((i) => i.product_id) ?? [])
-    const shipVendors = (order.metadata?.ship_vendors ?? {}) as Record<string, string>
     const methodOf = (handle?: string) =>
-      order.shipping_methods?.find((m) => m.shipping_option_id && shipVendors[m.shipping_option_id] === (handle ?? ""))
+      order.shipping_methods?.find((m) => (m.data as { vendor_handle?: string } | null)?.vendor_handle === (handle ?? ""))
     shipments = (
       <div className="rounded-lg border border-line bg-surface p-4 md:p-6">
         <VendorLines

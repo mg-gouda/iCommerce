@@ -73,7 +73,7 @@ export async function paymentProviders(regionId: string) {
 }
 
 const ORDER_FIELDS = [
-  "id", "display_id", "email", "status", "created_at", "currency_code", "total", "item_subtotal", "shipping_total", "metadata",
+  "id", "display_id", "email", "status", "created_at", "currency_code", "total", "item_subtotal", "shipping_total",
   "*items", "*shipping_address", "*shipping_methods", "*payment_collections", "*payment_collections.payment_sessions",
 ].join(",")
 

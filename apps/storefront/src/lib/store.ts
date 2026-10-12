@@ -55,7 +55,12 @@ export async function listProducts(query: { limit?: number; category_id?: string
     order: "-created_at",
   })
   // ponytail: suspended vendors' published products are dropped here, not in the API (count may overshoot by those).
-  return { products: (products as unknown as Product[]).filter((p) => !p.vendor || p.vendor.status === "approved"), count }
+  const live = (products as unknown as Product[]).filter((p) => !p.vendor || p.vendor.status === "approved")
+  // Decimal columns (min/max/step) arrive as strings ("50", "2.5") → numbers once, here.
+  for (const e of live.map((p) => p.product_extra)) {
+    if (e) for (const k of ["min_qty", "max_qty", "qty_step"] as const) e[k] = e[k] == null ? null : Number(e[k])
+  }
+  return { products: live, count }
 }
 
 export async function getProduct(handle: string) {

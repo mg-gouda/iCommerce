@@ -58,7 +58,10 @@ export async function getCart(): Promise<Cart | null> {
   const id = await cartId()
   if (!id) return null
   const res = await orNull(sdk.store.cart.retrieve(id, { fields: CART_FIELDS }, await auth()))
-  return res && !res.cart.completed_at ? res.cart : null
+  if (!res || res.cart.completed_at) return null
+  // API order is unstable; keep lines put while the buyer edits quantities.
+  res.cart.items?.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+  return res.cart
 }
 
 export const countOf = (cart: Pick<Cart, "items"> | null) => cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0
