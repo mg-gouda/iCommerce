@@ -9,3 +9,4 @@ export { AddToCartButton, CART_ADD_EVENT, type AddToCartButtonProps, type CartAd
 export { CartLink, type CartLinkProps } from "./CartLink"
 export { CheckoutButton, type CheckoutButtonProps } from "./CheckoutButton"
 export { ShipButton, type ShipButtonProps } from "./ShipButton"
+export { qtyUnit } from "./units"

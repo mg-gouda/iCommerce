@@ -3,9 +3,9 @@ import { model } from "@medusajs/framework/utils"
 const ProductExtra = model.define("product_extra", {
   id: model.id({ prefix: "pext" }).primaryKey(),
   unit: model.text().nullable(),
-  min_qty: model.number().nullable(),
-  max_qty: model.number().nullable(),
-  qty_step: model.number().nullable(),
+  min_qty: model.bigNumber().nullable(),
+  max_qty: model.bigNumber().nullable(),
+  qty_step: model.bigNumber().nullable(),
   hs_code: model.text().nullable(),
   cost_price: model.bigNumber().nullable(),
   b2b_only: model.boolean().default(false),

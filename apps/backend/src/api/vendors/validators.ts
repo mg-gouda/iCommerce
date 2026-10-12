@@ -26,12 +26,16 @@ export const PostVendorApply = z
 
 export const PostVendorMe = z.object(profile).partial().strict()
 
+// Quantities may be fractional (2.5 t, 0.25 m²): positive, at most 3 decimals.
+export const isQty = (n: number) => n > 0 && /^\d+(\.\d{1,3})?$/.test(String(n))
+const qty = z.number().refine(isQty, "must be a positive number with at most 3 decimals")
+
 export const ProductExtra = z
   .object({
     unit: z.string().nullish(),
-    min_qty: z.number().int().positive().nullish(),
-    max_qty: z.number().int().positive().nullish(),
-    qty_step: z.number().int().positive().nullish(),
+    min_qty: qty.nullish(),
+    max_qty: qty.nullish(),
+    qty_step: qty.nullish(),
     hs_code: z.string().nullish(),
     cost_price: z.number().nonnegative().nullish(),
     b2b_only: z.boolean().optional(),

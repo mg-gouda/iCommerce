@@ -7,7 +7,9 @@ import type { FormState, VendorProduct } from "./types"
 
 const MB = 1024 * 1024
 const TEXT = ["title", "description", "category_id", "price", "compare_at", "unit", "min_qty", "qty_step", "max_qty", "hs_code", "cost_price", "status"]
-const INTS = ["min_qty", "qty_step", "max_qty"] as const
+const QTYS = ["min_qty", "qty_step", "max_qty"] as const
+// Same rule as the backend: > 0, at most 3 decimals.
+const QTY = /^\d+(\.\d{1,3})?$/
 
 const num = (s: string) => (s === "" ? null : Number(s))
 
@@ -17,7 +19,7 @@ function validate(v: Record<string, string>, files: File[]) {
   if (v.price === "" || !(Number(v.price) >= 0)) e.price = "price"
   if (v.compare_at !== "" && !(Number(v.compare_at) > Number(v.price))) e.compare_at = "compareAt"
   if (v.cost_price !== "" && !(Number(v.cost_price) >= 0)) e.cost_price = "costPrice"
-  for (const k of INTS) if (v[k] !== "" && !(Number.isInteger(Number(v[k])) && Number(v[k]) > 0)) e[k] = "positiveInt"
+  for (const k of QTYS) if (v[k] !== "" && !(QTY.test(v[k]) && Number(v[k]) > 0)) e[k] = "positiveQty"
   if (!e.max_qty && v.max_qty !== "" && v.min_qty !== "" && Number(v.max_qty) < Number(v.min_qty)) e.max_qty = "maxBelowMin"
   if (files.some((f) => !/^image\/(png|jpeg|webp|gif)$/.test(f.type))) e.images = "imageType"
   else if (files.some((f) => f.size > 5 * MB)) e.images = "imageSize"

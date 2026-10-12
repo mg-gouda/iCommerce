@@ -6,6 +6,7 @@ import { createVendorProductWorkflow } from "../../../../workflows/vendor-produc
 import { gateStatus, getCaller } from "../../helpers"
 import { salesChannelsFor } from "../helpers"
 import { ensureVendorShipping } from "../../../../lib/vendor-shipping"
+import { isQty } from "../../validators"
 
 const MAX_ROWS = 1000
 type Row = Record<string, string | undefined>
@@ -19,7 +20,7 @@ function rowErrors(r: Row) {
   if (!r.price_usd || !(Number(r.price_usd) >= 0)) errs.push("price_usd must be a number >= 0")
   if (r.compare_at_usd && !(Number(r.compare_at_usd) >= 0)) errs.push("compare_at_usd must be a number >= 0")
   for (const k of ["min_qty", "qty_step"] as const) {
-    if (r[k] && !(Number.isInteger(Number(r[k])) && Number(r[k]) > 0)) errs.push(`${k} must be a positive integer`)
+    if (r[k] && !isQty(Number(r[k]))) errs.push(`${k} must be a positive number with at most 3 decimals`)
   }
   if (r.b2b_only && !/^(0|1|true|false|yes|no|y|n)$/i.test(r.b2b_only)) errs.push("b2b_only must be true/false")
   if (r.handle && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(r.handle)) errs.push("handle must be lowercase-kebab-case")

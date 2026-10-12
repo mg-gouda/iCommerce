@@ -79,9 +79,9 @@ export function ProductForm({ product, categories, approved }: Props) {
       </Section>
 
       <Section title={t("quantities")}>
-        <Field label={t("minQty")} name="min_qty" inputMode="numeric" dir="ltr" defaultValue={v.min_qty} help={t("minQtyHelp")} error={err("min_qty")} />
-        <Field label={t("qtyStep")} name="qty_step" inputMode="numeric" dir="ltr" defaultValue={v.qty_step} help={t("qtyStepHelp")} error={err("qty_step")} />
-        <Field label={t("maxQty")} name="max_qty" inputMode="numeric" dir="ltr" defaultValue={v.max_qty} help={t("maxQtyHelp")} error={err("max_qty")} />
+        <Field label={t("minQty")} name="min_qty" type="number" min="0.001" step="0.001" inputMode="decimal" dir="ltr" defaultValue={v.min_qty} help={t("minQtyHelp")} error={err("min_qty")} />
+        <Field label={t("qtyStep")} name="qty_step" type="number" min="0.001" step="0.001" inputMode="decimal" dir="ltr" defaultValue={v.qty_step} help={t("qtyStepHelp")} error={err("qty_step")} />
+        <Field label={t("maxQty")} name="max_qty" type="number" min="0.001" step="0.001" inputMode="decimal" dir="ltr" defaultValue={v.max_qty} help={t("maxQtyHelp")} error={err("max_qty")} />
       </Section>
 
       <Section title={t("images")}>

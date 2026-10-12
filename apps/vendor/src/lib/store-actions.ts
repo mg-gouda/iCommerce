@@ -55,7 +55,7 @@ export async function submitKyc(_prev: FormState, fd: FormData): Promise<FormSta
   const fieldErrors: Record<string, string> = {}
   if (!/^\d{9}$/.test(values.tax_id.replace(/[\s-]/g, ""))) fieldErrors.tax_id = "taxId"
   if (!/^\d{1,12}$/.test(values.commercial_reg_no)) fieldErrors.commercial_reg_no = "crNo"
-  if (!/^[A-Za-z0-9/-]{3,20}$/.test(values.export_card_no)) fieldErrors.export_card_no = "exportCard"
+  if (values.export_card_no && !/^[A-Za-z0-9/-]{3,20}$/.test(values.export_card_no)) fieldErrors.export_card_no = "exportCard"
   if (!files.length) fieldErrors.files = "kycFilesRequired"
   else if (files.length > 10) fieldErrors.files = "kycFilesMax"
   else if (files.some((f) => !KYC_TYPE.test(f.type))) fieldErrors.files = "kycFileType"
