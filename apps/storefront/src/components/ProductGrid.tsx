@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl"
-import { AddToCartButton, Badge, ProductCard } from "@icommerce/ui"
+import { AddToCartButton, Badge, ProductCard, qtyUnit } from "@icommerce/ui"
 import type { SearchDoc } from "@/lib/search"
 import { compareAtOf, isRetail, isVerified, priceOf, type Product } from "@/lib/store"
 
@@ -50,6 +50,7 @@ const PLACEHOLDER = "/samples/placeholder.svg"
 
 export function ProductGrid({ tiles }: { tiles: Tile[] }) {
   const t = useTranslations("product")
+  const tu = useTranslations("units")
   const locale = useLocale()
   return (
     <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:gap-6">
@@ -72,7 +73,7 @@ export function ProductGrid({ tiles }: { tiles: Tile[] }) {
               compareAt={p.compareAt}
               unit={p.unit ?? undefined}
               flags={!p.retail ? <Badge variant="b2b">B2B</Badge> : off > 0 ? <Badge variant="sale"><bdi>−{off}%</bdi></Badge> : undefined}
-              facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.moq}{p.unit ? ` ${p.unit}` : ""}</bdi></b></span>] : undefined}
+              facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.unit ? qtyUnit(tu, p.moq, p.unit) : p.moq}</bdi></b></span>] : undefined}
               cta={t("requestQuote")}
               action={
                 p.retail ? (

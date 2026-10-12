@@ -14,7 +14,7 @@ const ROW_ERRORS: [RegExp, string][] = [
   [/^title is required$/, "title"],
   [/^price_usd must be/, "price"],
   [/^compare_at_usd must be/, "compareAt"],
-  [/^(min_qty|qty_step) must be a positive integer$/, "positiveInt"],
+  [/^(min_qty|qty_step) must be a positive number/, "positiveQty"],
   [/^b2b_only must be/, "b2bOnly"],
   [/^handle must be/, "handleFormat"],
   [/^unknown category_handle "(.*)"$/, "category"],

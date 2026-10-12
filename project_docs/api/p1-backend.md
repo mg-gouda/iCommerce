@@ -140,7 +140,7 @@ Auth: vendor (any status).
 |---|---|---|
 | `tax_id` | text | required, non-empty |
 | `commercial_reg_no` | text | required, non-empty |
-| `export_card_no` | text | required, non-empty |
+| `export_card_no` | text | optional; empty/omitted → `null` |
 | `files` | file (repeat field) | 1–10 files, ≤10 MB each, `application/pdf`, `image/png`, `image/jpeg`, `image/webp` (others silently dropped) |
 
 ```json
@@ -185,9 +185,9 @@ Sales channels are assigned by the platform: always **Wholesale**; also **Retail
 ```json
 {
   "unit": "ton" | null,            // free text: ton, m2, piece, kg...
-  "min_qty": 5 | null,             // positive int
-  "max_qty": 100 | null,           // positive int
-  "qty_step": 5 | null,            // positive int
+  "min_qty": 5 | null,             // positive decimal, ≤3 decimals (e.g. 2.5)
+  "max_qty": 100 | null,           // positive decimal, ≤3 decimals
+  "qty_step": 5 | null,            // positive decimal, ≤3 decimals
   "hs_code": "7304" | null,
   "cost_price": 80.5 | null,       // >= 0, vendor-private
   "b2b_only": false,               // default false
@@ -195,7 +195,8 @@ Sales channels are assigned by the platform: always **Wholesale**; also **Retail
   "origin_country": "EG"           // 2 letters, default "EG"
 }
 ```
-Response adds `id` (`pext_...`), `legacy_id`, `raw_cost_price`, timestamps.
+Response adds `id` (`pext_...`), `legacy_id`, `raw_cost_price`, `raw_min_qty`, `raw_max_qty`, `raw_qty_step` (Medusa bigNumber raw values), timestamps.
+Numbers stored as `numeric` (exact). Cart line-item quantities are integers in Medusa, so the storefront shows products whose `min_qty`/`qty_step` is fractional as **Request quote** only (no Add to cart).
 
 ### `VendorProduct` (response)
 Medusa product with: `*`, `variants.*`, `variants.prices.*`, `options.*`, `options.values.*`, `images.*`, `categories.{id,name,handle}`, `sales_channels.{id,name}`, `product_extra.*`.
@@ -297,8 +298,8 @@ Columns (header names exact, order free, extra columns ignored):
 | `price_usd` | ✔ | number ≥ 0 |
 | `compare_at_usd` | – | number ≥ 0 → stored in `metadata.compare_at_usd` |
 | `unit` | – | text |
-| `min_qty` | – | positive int |
-| `qty_step` | – | positive int |
+| `min_qty` | – | positive number, ≤3 decimals |
+| `qty_step` | – | positive number, ≤3 decimals |
 | `hs_code` | – | text |
 | `b2b_only` | – | `true/false/1/0/yes/no/y/n` |
 | `image_urls` | – | `\|`-separated URLs; first = thumbnail |

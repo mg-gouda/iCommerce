@@ -30,9 +30,10 @@ medusaIntegrationTestRunner({
         created: 3,
         skipped: { "empty title": 1, "orphan (vendor not in dump)": 1 },
         failed: {},
-        notes: { "sku dropped (duplicate of earlier product)": 1, "max_qty dropped (< min_qty)": 1, "min_qty/qty_step dropped (not a positive integer)": 1 },
+        notes: { "sku dropped (duplicate of earlier product)": 1, "max_qty dropped (< min_qty)": 1, "min_qty/qty_step dropped (not a positive number, max 3 decimals)": 1 },
       })
-      expect(first.images).toMatchObject({ uploaded: 2, missing: 1 })
+      expect(first.images).toMatchObject({ uploaded: 2, missing: 2 })
+      expect(first.description_images).toEqual({ with_images: 1, rewritten: 1, removed: 1 })
 
       const { data: vendors } = await query.graph({ entity: "vendor", fields: ["legacy_id", "status", "kyc_status", "logo", "description", "users.email", "users.role"], filters: {} })
       const byLegacy = Object.fromEntries(vendors.map((v) => [v.legacy_id, v]))
@@ -44,7 +45,6 @@ medusaIntegrationTestRunner({
       const [pot, pipe, sheet] = await products()
       expect(pipe).toMatchObject({
         status: "published",
-        description: "<p>Seamless <b>pipe</b></p>",
         metadata: { sale_price_usd: 10, wp_attributes: { color: ["grey"] } },
         variants: [{ sku: "FX-1", prices: [{ amount: 12.5 }] }],
         categories: [{ handle: "fixture-pipes" }],
@@ -52,12 +52,15 @@ medusaIntegrationTestRunner({
         vendor: { legacy_id: "101" },
       })
       expect(pipe.images).toHaveLength(2)
+      // Description <img>: old-host upload → same uploaded file as the product image, srcset/unknown attrs dropped; missing file + [video] removed.
+      const bUrl = pipe.images.find((i) => i.url !== byLegacy["101"].logo)!.url
+      expect(pipe.description).toBe(`<p>Seamless <b>pipe</b></p><p><img alt="b" src="${bUrl}" /></p>`)
       expect(pipe.thumbnail).toBe(pipe.images[0].url)
       expect(pipe.tags.map((t) => t.value).sort()).toEqual(["pipe", "steel"])
       expect(pipe.sales_channels!.map((c) => c!.name).sort()).toEqual(["Retail", "Wholesale"])
       // Same sha → same uploaded file; missing image just left out.
       expect(sheet.images.map((i) => i.url)).toEqual([pipe.images.find((i) => i.url === byLegacy["101"].logo)!.url])
-      expect(sheet).toMatchObject({ description: "<p>Sheet</p>", variants: [{ sku: null }], product_extra: { min_qty: null } })
+      expect(sheet).toMatchObject({ description: "<p>Sheet</p>", variants: [{ sku: null }], product_extra: { min_qty: 2.5 } })
       expect(pot).toMatchObject({ status: "proposed", vendor: { legacy_id: "102" } })
 
       const second = await run()
