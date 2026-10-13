@@ -86,6 +86,9 @@ Implementation: one Medusa price list **"B2B wholesale"** (type `override`) with
 - `GET /store/products/:id/wholesale-tiers` (customer token optional)
   - caller in `b2b_verified` → `{ tiers: [WholesaleTier], gated: false }` (`[]` = no tiers)
   - anyone else → `{ tiers: null, gated: true }`
+- `GET /store/products/wholesale-tiers?ids=prod_a,prod_b` (1–50 ids, customer token optional) — batch for product grids
+  - verified → `{ tiers: { "prod_a": [WholesaleTier], "prod_b": [] }, gated: false }` (every requested id present; `[]` = no tiers)
+  - anyone else → `{ tiers: null, gated: true }` · 400 when `ids` empty or > 50
 
 ### Direct B2B checkout (Wholesale cart)
 Create the cart with the **Wholesale** publishable key (or `sales_channel_id` of Wholesale). Standard cart/checkout flow (P2). For Wholesale carts the server enforces on `POST /store/carts/:id/line-items` and `POST /store/carts/:id/line-items/:line_id` (line quantity after the change):
@@ -137,7 +140,7 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
 ```
 - `accepted` is momentary: the same request creates the order and the quote ends `ordered` (if order creation fails, e.g. credit limit, the request fails with 400 and the status is unchanged).
 - Accepting needs `validity_until` in the future (400 `Offer expired.`).
-- Every transition appends a `system` message and emails the other party (EN/AR by the recipient customer's `metadata.locale`; vendors EN).
+- Every transition appends a `system` message whose `body` is an **event code** (translate it client-side): `requested`, `viewed` (vendor opened), `offered`, `countered`, `pending_approval`, `ordered`, `rejected`, `expired`. Buyer/vendor notes (offer note, counter message, reject reason) are separate `buyer`/`vendor` messages. Each transition also emails the other party (EN/AR by the recipient customer's `metadata.locale`; vendors EN).
 
 ### Store (customer token, member of a **verified** company for create; any member for the rest; other company's quote = 404)
 - `POST /store/quotes` — create RFQ
@@ -175,7 +178,8 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
 ### Quote → order
 On `accepted` the backend creates a **parent order** (Wholesale channel, customer = requester, items at `offered_unit_price`, exact decimal `quantity`, item `metadata { quote_id, quote_item_id, vendor_id, unit }`, order `metadata { quote_id, rfq_id, company_id }`, shipping address = company address, no shipping line) and emits `order.placed` → the P2 split creates the **vendor order** (shows in `GET /vendors/orders`; customer sees the parent in `GET /store/orders` + `GET /store/orders/:id/vendor-orders`) and sends the P2 order emails.
 Payment: company `payment_mode = net_terms` → `pp_net-terms_net-terms` (credit check §4, failure = 400, quote stays as is); `upfront` → `pp_bank-transfer_bank-transfer` (bank instructions emailed; proof upload / admin confirm as P2).
-**Decimal quantities**: order line items are Medusa `bigNumber` → `800.5` is stored and totalled exactly (cart line items are integers, which is why fractional products are quote-only).
+**Decimal quantities**: order line items are Medusa `bigNumber` → `800.5` is stored, totalled (`800.5 × 11.10 = 8885.55`), split into the vendor order and fulfilled exactly (verified in tests). Cart line items are integers (`model.number()`), which is why fractional products stay quote-only.
+Shipping: the order gets one shipping method on the vendor's first shipping option at price 0 ("Delivery as quoted (FOB)") so the vendor can mark it shipped as usual. A vendor with no shipping option can't ship until it adds one.
 
 ---
 

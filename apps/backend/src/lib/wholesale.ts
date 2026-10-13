@@ -74,6 +74,35 @@ export async function getTiers(scope: MedusaContainer, product_id: string): Prom
     .sort((a, b) => a.min_qty - b.min_qty)
 }
 
+/** Tiers for many products at once: product id → tiers (first variant each; [] when none). */
+export async function getTiersMany(scope: MedusaContainer, product_ids: string[]): Promise<Record<string, Tier[]>> {
+  const out: Record<string, Tier[]> = Object.fromEntries(product_ids.map((id) => [id, []]))
+  if (!product_ids.length) return out
+  const { data } = await scope.resolve(ContainerRegistrationKeys.QUERY).graph({
+    entity: "product_variant",
+    fields: ["id", "product_id", "created_at", "price_set.id"],
+    filters: { product_id: product_ids },
+  })
+  const first = new Map<string, { created_at: Date; set?: string }>()
+  for (const v of data as { product_id: string; created_at: Date; price_set?: { id: string } | null }[]) {
+    const cur = first.get(v.product_id)
+    if (!cur || new Date(v.created_at) < new Date(cur.created_at)) first.set(v.product_id, { created_at: v.created_at, set: v.price_set?.id })
+  }
+  const sets = [...first.values()].map((f) => f.set).filter(Boolean) as string[]
+  if (!sets.length) return out
+  const prices = await scope
+    .resolve(Modules.PRICING)
+    .listPrices({ price_set_id: sets, price_list_id: [await wholesaleListId(scope)], currency_code: "usd" } as never, {
+      select: ["amount", "min_quantity", "price_set_id"],
+    })
+  const productOf = new Map([...first].map(([pid, f]) => [f.set, pid]))
+  for (const p of prices as { amount: number; min_quantity: number | null; price_set_id: string }[]) {
+    out[productOf.get(p.price_set_id)!]?.push({ min_qty: Number(p.min_quantity ?? 1), unit_price_usd: Number(p.amount) })
+  }
+  for (const t of Object.values(out)) t.sort((a, b) => a.min_qty - b.min_qty)
+  return out
+}
+
 export async function setTiers(scope: MedusaContainer, product_id: string, tiers: Tier[]) {
   const variants = await productVariantIds(scope, product_id)
   await replacePrices(

@@ -47,11 +47,11 @@ export default defineMiddlewares({
     { matcher: "/store/companies*", middlewares: [customerAuth] },
     { matcher: "/store/companies/me/kyc", method: ["POST"], middlewares: [kycUpload.array("files", 10)] },
     { matcher: "/store/quotes*", middlewares: [customerAuth] },
-    {
-      matcher: "/store/products/:id/wholesale-tiers",
-      method: ["GET"],
+    ...["/store/products/:id/wholesale-tiers", "/store/products/wholesale-tiers"].map((matcher) => ({
+      matcher,
+      method: ["GET" as const],
       middlewares: [authenticate("customer", ["session", "bearer"], { allowUnauthenticated: true })],
-    },
+    })),
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.

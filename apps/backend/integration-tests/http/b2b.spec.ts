@@ -197,6 +197,10 @@ medusaIntegrationTestRunner({
       expect(verified.kyc_status).toBe("verified")
       expect(emails().some((f) => f.includes("company-verified") && f.includes(owner.email))).toBe(true)
       expect((await api.get(`/store/products/${p.product_id}/wholesale-tiers`, auth(buyer.token))).data).toEqual({ tiers, gated: false })
+      const batch = `/store/products/wholesale-tiers?ids=${p.product_id},${other.products[0].product_id}`
+      expect((await api.get(batch, auth(buyer.token))).data).toEqual({ tiers: { [p.product_id]: tiers, [other.products[0].product_id]: [] }, gated: false })
+      expect((await api.get(batch, auth(stranger.token))).data).toEqual({ tiers: null, gated: true })
+      await expect(api.get("/store/products/wholesale-tiers?ids=", auth(buyer.token))).rejects.toMatchObject(status(400))
 
       // Wholesale cart: MOQ grid enforced, tier price by quantity.
       const wc = await cart(buyer.token, wholesale, [])
