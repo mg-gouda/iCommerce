@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation"
 import { sdk } from "@icommerce/sdk"
-import { paymentProviders, shippingGroups } from "./checkout"
+import { payKind, paymentProviders, shippingGroups } from "./checkout"
 import { EMAIL, parseAddress, routeLocale, str, type FormState } from "./forms"
+import { netTerms } from "./p3/terms"
 import { auth, CART_COOKIE, clearCookie, getCart } from "./session"
 
 // Each checkout section posts here; success → back to /checkout, which opens the next unfinished section.
@@ -55,6 +56,10 @@ export async function savePayment(_: FormState, fd: FormData): Promise<FormState
   const cart = await openCart()
   if (!cart) return { message: "cartGone" }
   if (!(await paymentProviders(cart.region_id!)).includes(provider)) return { values: { provider }, fieldErrors: { provider: "pickPayment" } }
+  if (payKind(provider) === "net") {
+    const net = await netTerms(cart.total)
+    if (!net || net.refusal) return { values: { provider }, fieldErrors: { provider: "netRefused" } }
+  }
   await sdk.store.payment.initiatePaymentSession(cart, { provider_id: provider }, { fields: "id" }, await auth())
   return back(fd)
 }

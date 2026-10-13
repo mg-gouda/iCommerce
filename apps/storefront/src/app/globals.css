@@ -8,6 +8,10 @@ body {
   background: var(--ground);
 }
 
+/* Forms on navy panels (home RFQ) */
+.rfq-navy .ic-label { color: var(--on-navy); }
+.rfq-navy :where(.ic-help, .ic-error) { color: var(--on-navy); }
+
 /* Vendor product descriptions (sanitized HTML, see lib/html.ts) */
 .ic-prose { display: flex; flex-direction: column; gap: var(--space-3); line-height: 1.6; overflow-wrap: anywhere; }
 .ic-prose :where(p, ul, ol, h3, h4, table) { margin: 0; }

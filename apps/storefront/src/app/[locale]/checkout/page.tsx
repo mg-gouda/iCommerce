@@ -8,6 +8,7 @@ import { VendorLines } from "@/components/VendorLines"
 import { Link, redirect } from "@/i18n/navigation"
 import { payKind, paymentProviders, shippingGroups } from "@/lib/checkout"
 import { AddressLines } from "@/components/AddressLines"
+import { netTerms } from "@/lib/p3/terms"
 import { getCart, getCustomer } from "@/lib/session"
 import { byVendor, productsById } from "@/lib/store"
 
@@ -29,6 +30,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
     getCustomer(),
     productsById(c.items!.map((i) => i.product_id)),
   ])
+  // Net terms: the backend lists the provider only to eligible members; a company with a credit account it hides
+  // (on hold / overdue) still gets a disabled row saying why. Over-limit → listed but greyed out here.
+  const net = await netTerms(c.total)
+  const NET = "pp_net-terms_net-terms"
+  const offered = [...providers.filter((id) => payKind(id) !== "net" || net), ...(net?.refusal && !providers.includes(NET) ? [NET] : [])]
   const currency = c.currency_code.toUpperCase()
   const a = c.shipping_address
   const session = c.payment_collection?.payment_sessions?.[0]
@@ -61,7 +67,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
         ))}
       </ul>
     ),
-    payment: session && t(`pay.${payKind(session.provider_id) ?? "cod"}`),
+    payment: session && t(`pay.${payKind(session.provider_id) ?? "cod"}`, { n: net?.days ?? 30 }),
     review: null,
   }
 
@@ -73,7 +79,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
     ) : (
       <p role="alert" className="ic-error m-0">{t("noShipping")}</p>
     ),
-    payment: <PaymentForm providers={providers.map((id) => ({ id, kind: payKind(id)! }))} selected={session?.provider_id} />,
+    payment: (
+      <PaymentForm
+        providers={offered.map((id) => ({ id, kind: payKind(id)! }))}
+        selected={session?.provider_id}
+        net={net && { ...net, available: money(net.available, currency) }}
+      />
+    ),
     review: (
       <div className="flex flex-col gap-4">
         <VendorLines groups={byVendor(c.items!, products)} currency={currency} />

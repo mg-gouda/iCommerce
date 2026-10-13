@@ -105,7 +105,7 @@ export function PaymentPanel({ t, n, email, total, payment, fallback }: {
   email: string
   total: string
   payment?: OrderPay | null
-  fallback?: { kind?: "cod" | "bank"; bank: string | null }
+  fallback?: { kind?: "cod" | "bank" | "net"; bank: string | null }
 }) {
   const kind = (payment && payKind(payment.provider_id)) ?? fallback?.kind
   const bank = payment?.bank_details || fallback?.bank
@@ -113,8 +113,12 @@ export function PaymentPanel({ t, n, email, total, payment, fallback }: {
   return (
     <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
       <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("payment")}</h2>
-      <p className="m-0 font-medium">{t(`pay.${kind === "bank" ? "bank" : "cod"}`)}</p>
-      {kind !== "bank" ? (
+      <p className="m-0 font-medium">{t(`pay.${kind ?? "cod"}`)}</p>
+      {kind === "net" ? (
+        <p className="m-0 text-[14px] text-ink-muted">
+          {t("netHow")} <Link href="/account/credit" className="text-brand-ink underline underline-offset-2">{t("netLink")}</Link>
+        </p>
+      ) : kind !== "bank" ? (
         <p className="m-0 text-[14px] text-ink-muted">{t("codHow")}</p>
       ) : payment?.status === "canceled" ? (
         <p className="m-0 text-[14px] text-ink-muted">{t("payCanceled")}</p>

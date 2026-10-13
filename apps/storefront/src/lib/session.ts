@@ -55,7 +55,7 @@ export type Customer = Awaited<ReturnType<typeof sdk.store.customer.retrieve>>["
 export type Order = Awaited<ReturnType<typeof sdk.store.order.retrieve>>["order"]
 
 const CART_FIELDS = [
-  "id", "email", "currency_code", "region_id", "customer_id", "completed_at",
+  "id", "email", "currency_code", "sales_channel_id", "region_id", "customer_id", "completed_at",
   "item_subtotal", "shipping_total", "total",
   "*items", "*shipping_address", "*shipping_methods",
   "*payment_collection", "*payment_collection.payment_sessions",

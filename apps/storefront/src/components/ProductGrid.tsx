@@ -1,8 +1,11 @@
-import { useLocale, useTranslations } from "next-intl"
-import { AddToCartButton, Badge, ProductCard, qtyUnit } from "@icommerce/ui"
+import { getLocale, getTranslations } from "next-intl/server"
+import { Badge, ProductCard, qtyUnit } from "@icommerce/ui"
+import { Link } from "@/i18n/navigation"
+import { buyingMode } from "@/lib/p3/mode"
+import { wholesaleRanges } from "@/lib/p3/pricing"
 import type { SearchDoc } from "@/lib/search"
-import { addToCart } from "@/lib/cart-actions"
 import { compareAtOf, isFractional, isRetail, isVerified, priceOf, type Product } from "@/lib/store"
+import { CartAdd } from "./CartAdd"
 
 export type Tile = {
   id: string
@@ -54,50 +57,64 @@ export const tileFromDoc = (d: SearchDoc): Tile => ({
 
 const PLACEHOLDER = "/samples/placeholder.svg"
 
-export function ProductGrid({ tiles }: { tiles: Tile[] }) {
-  const t = useTranslations("product")
-  const tu = useTranslations("units")
-  const locale = useLocale()
+/** Product tiles. Wholesale mode: verified members see tier ranges; others a sign-in note and quote links. */
+export async function ProductGrid({ tiles }: { tiles: Tile[] }) {
+  const [t, tu, locale, { mode, wholesale }] = await Promise.all([getTranslations("product"), getTranslations("units"), getLocale(), buyingMode()])
+  const ranges = wholesale ? await wholesaleRanges(tiles.map((p) => p.id)) : new Map<string, { min: number; max: number }>()
+  const b2bMode = mode === "wholesale"
   return (
-    <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:gap-6">
-      {tiles.map((p) => {
-        const href = `/${locale}/p/${p.handle}`
-        const off = p.compareAt && p.price ? Math.round((1 - p.price / p.compareAt) * 100) : 0
-        return (
-          <li key={p.id} className="flex">
-            <ProductCard
-              className="w-full"
-              href={href}
-              image={p.image ?? PLACEHOLDER}
-              imageAlt={p.title}
-              vendor={p.vendor}
-              verified={p.verified ? t("verified") : undefined}
-              title={p.title}
-              currency="USD"
-              price={p.price ?? 0}
-              priceMax={p.priceMax}
-              compareAt={p.compareAt}
-              unit={p.unit ?? undefined}
-              flags={!p.retail ? <Badge variant="b2b">B2B</Badge> : off > 0 ? <Badge variant="sale"><bdi>−{off}%</bdi></Badge> : undefined}
-              facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.unit ? qtyUnit(tu, p.moq, p.unit) : p.moq}</bdi></b></span>] : undefined}
-              cta={t("requestQuote")}
-              action={
-                p.retail && p.quick ? (
-                  <AddToCartButton block className="ic-card__cta" onAdd={addToCart.bind(null, p.id, 1)} label={t("addToCart")} doneLabel={t("added")} errorLabel={t("addFailed")} />
-                ) : p.retail ? (
-                  <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${t("chooseQty")}: ${p.title}`}>
-                    {t("chooseQty")}
-                  </a>
-                ) : (
-                  <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${t("requestQuote")}: ${p.title}`}>
-                    {t("requestQuote")}
-                  </a>
-                )
-              }
-            />
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      {b2bMode && !wholesale && <WholesaleGate />}
+      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:gap-6">
+        {tiles.map((p) => {
+          const href = `/${locale}/p/${p.handle}`
+          const range = ranges.get(p.id)
+          const off = !b2bMode && p.compareAt && p.price ? Math.round((1 - p.price / p.compareAt) * 100) : 0
+          const link = (label: string) => (
+            <a href={href} className="ic-btn ic-btn--block ic-card__cta no-underline" aria-label={`${label}: ${p.title}`}>{label}</a>
+          )
+          return (
+            <li key={p.id} className="flex">
+              <ProductCard
+                className="w-full"
+                href={href}
+                image={p.image ?? PLACEHOLDER}
+                imageAlt={p.title}
+                vendor={p.vendor}
+                verified={p.verified ? t("verified") : undefined}
+                title={p.title}
+                currency="USD"
+                price={range?.min ?? p.price ?? 0}
+                priceMax={range ? (range.max !== range.min ? range.max : undefined) : p.priceMax}
+                compareAt={b2bMode ? undefined : p.compareAt}
+                unit={p.unit ?? undefined}
+                flags={!p.retail || b2bMode ? <Badge variant="b2b">B2B</Badge> : off > 0 ? <Badge variant="sale"><bdi>−{off}%</bdi></Badge> : undefined}
+                facts={p.moq ? [<span key="moq">{t("moq")} <b><bdi>{p.unit ? qtyUnit(tu, p.moq, p.unit) : p.moq}</bdi></b></span>] : undefined}
+                cta={t("requestQuote")}
+                action={
+                  wholesale ? link(t("chooseQty"))
+                  : b2bMode || !p.retail ? link(t("requestQuote"))
+                  : p.quick ? <CartAdd block className="ic-card__cta" productId={p.id} label={t("addToCart")} doneLabel={t("added")} errorLabel={t("addFailed")} />
+                  : link(t("chooseQty"))
+                }
+              />
+            </li>
+          )
+        })}
+      </ul>
+    </>
+  )
+}
+
+/** Wholesale mode without a verified company: say why prices are retail and how to unlock wholesale. */
+export async function WholesaleGate() {
+  const [t, { membership }] = await Promise.all([getTranslations("b2b"), buyingMode()])
+  return (
+    <p className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-line bg-brand-tint px-4 py-3 text-[14px] text-brand-ink">
+      <span className="font-semibold">{t("gate")}</span>
+      <Link href={membership ? "/account/company" : "/login?next=/account/company"} className="text-brand-ink underline underline-offset-2">
+        {membership ? t("gateVerify") : t("gateSignIn")}
+      </Link>
+    </p>
   )
 }
