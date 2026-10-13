@@ -280,6 +280,7 @@ Envs: `dev` → `staging` → `prod`, GitHub Actions CI.
 | 13 | Guests may pay by bank transfer; proof upload + tracking via order number + email |
 | 14 | Vendor cancels → buyer emailed; all vendor orders cancelled → parent order cancelled |
 | 15 | One "Storefront" publishable key (Retail + Wholesale); cart channel = Retail for consumers, Wholesale for verified company members |
+| 16 | Free-text RFQ lines: buyer picks suppliers OR "Let iCommerce find suppliers" (staff route from admin) |
 
 ## Open questions
 1. Payment gateway (parked).
