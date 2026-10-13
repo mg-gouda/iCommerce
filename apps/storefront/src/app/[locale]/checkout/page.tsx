@@ -30,8 +30,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
     getCustomer(),
     productsById(c.items!.map((i) => i.product_id)),
   ])
-  const net = providers.some((id) => payKind(id) === "net") ? await netTerms(c.total) : null
-  const offered = providers.filter((id) => payKind(id) !== "net" || net)
+  // Net terms: the backend lists the provider only to eligible members; a company with a credit account it hides
+  // (on hold / overdue) still gets a disabled row saying why. Over-limit → listed but greyed out here.
+  const net = await netTerms(c.total)
+  const NET = "pp_net-terms_net-terms"
+  const offered = [...providers.filter((id) => payKind(id) !== "net" || net), ...(net?.refusal && !providers.includes(NET) ? [NET] : [])]
   const currency = c.currency_code.toUpperCase()
   const a = c.shipping_address
   const session = c.payment_collection?.payment_sessions?.[0]
@@ -80,7 +83,6 @@ export default async function CheckoutPage({ searchParams }: Props) {
       <PaymentForm
         providers={offered.map((id) => ({ id, kind: payKind(id)! }))}
         selected={session?.provider_id}
-        signedIn={!!customer}
         net={net && { ...net, available: money(net.available, currency) }}
       />
     ),

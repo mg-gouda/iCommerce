@@ -38,6 +38,8 @@ module.exports = defineConfig({
   modules: [
     { resolve: "./src/modules/vendor" },
     { resolve: "./src/modules/product-extra" },
+    { resolve: "./src/modules/company" },
+    { resolve: "./src/modules/quote" },
     {
       resolve: "@medusajs/medusa/file",
       options: {
@@ -52,12 +54,13 @@ module.exports = defineConfig({
       },
     },
     {
-      // Offline payments: ids pp_cod_cod, pp_bank-transfer_bank-transfer (pp_system_default stays registered).
+      // Offline payments: ids pp_cod_cod, pp_bank-transfer_bank-transfer, pp_net-terms_net-terms (pp_system_default stays registered).
       resolve: "@medusajs/medusa/payment",
       options: {
         providers: [
           { resolve: "./src/modules/offline-payment/cod", id: "cod" },
           { resolve: "./src/modules/offline-payment/bank-transfer", id: "bank-transfer" },
+          { resolve: "./src/modules/offline-payment/net-terms", id: "net-terms" },
         ],
       },
     },

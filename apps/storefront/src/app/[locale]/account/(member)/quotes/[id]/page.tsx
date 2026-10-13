@@ -141,7 +141,7 @@ export default async function QuotePage({ params }: Props) {
           {(q.messages ?? []).map((msg) =>
             msg.author === "system" ? (
               <li key={msg.id} className="text-center text-[13px] text-ink-muted">
-                <bdi>{msg.body}</bdi> · <time dateTime={msg.created_at}>{time.format(new Date(msg.created_at))}</time>
+                {t.has(`event.${msg.body}`) ? t(`event.${msg.body}`) : <bdi>{msg.body}</bdi>} · <time dateTime={msg.created_at}>{time.format(new Date(msg.created_at))}</time>
               </li>
             ) : (
               <li key={msg.id} className={`flex max-w-[85%] flex-col gap-1 rounded-lg border p-3 ${msg.author === "buyer" ? "self-end border-brand-tint bg-brand-tint" : "self-start border-line bg-surface"}`}>

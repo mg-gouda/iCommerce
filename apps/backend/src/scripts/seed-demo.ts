@@ -3,7 +3,9 @@ import { resolve } from "node:path"
 import type { CreateProductWorkflowInputDTO, ExecArgs } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { createProductCategoriesWorkflow, uploadFilesWorkflow } from "@medusajs/medusa/core-flows"
+import { companySvc, syncCompanyGroups } from "../lib/company"
 import { syncProduct } from "../lib/search"
+import { setTiers } from "../lib/wholesale"
 import { createVendorOption, ensureVendorShipping, listVendorOptions } from "../lib/vendor-shipping"
 import { salesChannelsFor } from "../api/vendors/products/helpers"
 import { VENDOR_MODULE } from "../modules/vendor"
@@ -125,4 +127,48 @@ export default async function seedDemo({ container }: ExecArgs) {
     }
   }
   logger.info(`seed-demo: ${created} demo products created (${VENDORS.length} demo vendors)`)
+  await seedDemoB2b(container)
+}
+
+// Wholesale tiers (by product handle) + one verified demo company. Login: <email> / DemoPass1!
+const TIERS: Record<string, { min_qty: number; unit_price_usd: number }[]> = {
+  "demo-czech-pot-sets-carton-of-4-wholesale": [{ min_qty: 200, unit_price_usd: 10.6 }, { min_qty: 1000, unit_price_usd: 9.9 }],
+  "demo-wool-kilim-bedouin-stripe-2-3-m": [{ min_qty: 100, unit_price_usd: 8.9 }, { min_qty: 500, unit_price_usd: 8.2 }],
+  "demo-aluminum-frying-pan-28-cm": [{ min_qty: 50, unit_price_usd: 7.4 }, { min_qty: 200, unit_price_usd: 6.9 }],
+}
+const DEMO_COMPANY = { handle: "demo-delta-trading", name: "Delta Trading (demo)", country: "EG", city: "Alexandria", address: "Demo St 1", phone: "+20 100 000 0000" }
+const DEMO_MEMBERS = [
+  { email: "demo-buyer-admin@icommerce.test", first_name: "Demo", last_name: "Admin", role: "admin" as const },
+  { email: "demo-approver@icommerce.test", first_name: "Demo", last_name: "Approver", role: "approver" as const },
+]
+
+async function seedDemoB2b(container: ExecArgs["container"]) {
+  const product = container.resolve(Modules.PRODUCT)
+  for (const [handle, tiers] of Object.entries(TIERS)) {
+    const [p] = await product.listProducts({ handle }, { select: ["id"] })
+    if (p) await setTiers(container, p.id, tiers)
+  }
+  const svc = companySvc(container)
+  let [company] = await svc.listCompanies({ handle: DEMO_COMPANY.handle })
+  if (!company) {
+    company = await svc.createCompanies({ ...DEMO_COMPANY, tax_id: "DEMO-TAX", commercial_reg_no: "DEMO-CR", kyc_status: "verified", verified_at: new Date(), payment_mode: "net_terms" })
+  }
+  const customers = container.resolve(Modules.CUSTOMER)
+  const auth = container.resolve(Modules.AUTH)
+  for (const m of DEMO_MEMBERS) {
+    let [c] = await customers.listCustomers({ email: m.email })
+    if (!c) {
+      c = await customers.createCustomers({ email: m.email, first_name: m.first_name, last_name: m.last_name, has_account: true, metadata: { locale: "en", demo: true } })
+      const { authIdentity } = await auth.register("emailpass", { body: { email: m.email, password: "DemoPass1!" } } as never)
+      await auth.updateAuthIdentities({ id: authIdentity!.id, app_metadata: { customer_id: c.id } })
+    }
+    if (!(await svc.listCompanyMembers({ customer_id: c.id })).length) {
+      await svc.createCompanyMembers({ company_id: company.id, customer_id: c.id, email: m.email, first_name: m.first_name, last_name: m.last_name, role: m.role })
+    }
+  }
+  if (!(await svc.listCreditAccounts({ company_id: company.id })).length) {
+    await svc.createCreditAccounts({ company_id: company.id, limit_usd: 50000, terms_days: 30 })
+  }
+  await syncCompanyGroups(container, company.id)
+  container.resolve(ContainerRegistrationKeys.LOGGER).info(`seed-demo: demo company ${DEMO_COMPANY.handle} (verified, net 30, USD 50k); logins ${DEMO_MEMBERS.map((m) => m.email).join(", ")} / DemoPass1!`)
 }

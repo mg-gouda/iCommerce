@@ -7,8 +7,7 @@ import { sdk } from "@icommerce/sdk"
 import { EMAIL, routeLocale, str, type FormState } from "../forms"
 import { auth, cartId, status, token } from "../session"
 import { call, upload, vendorByHandle } from "./api"
-import { cartSalesChannel } from "./channel"
-import { MODE_COOKIE, rfqDraft, saveDraft } from "./mode"
+import { cartSalesChannel, MODE_COOKIE, rfqDraft, saveDraft } from "./mode"
 import { ROLES, type Role } from "./types"
 
 const go = (fd: FormData, path: string): never => redirect(`/${routeLocale(fd)}${path}`)

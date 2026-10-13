@@ -1,62 +1,57 @@
-import { ExternalLink, Package, Truck } from "lucide-react"
+import { CircleCheck, ExternalLink, Package, Truck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { Badge, money } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
-import { orderPayment, vendorOrders, type VendorOrder } from "@/lib/checkout"
+import { orderPayment, orderStatusOrNull, payKind, type OrderPay, type OrderStatus, type VendorOrder } from "@/lib/checkout"
 import { AddressLines } from "./AddressLines"
 import type { Order } from "@/lib/session"
-import { byVendor, productsById } from "@/lib/store"
 import { ProofForm, ReturnForm } from "./OrderForms"
 import { VendorLines } from "./VendorLines"
 
+type T = Awaited<ReturnType<typeof getTranslations<"order">>>
 const STATUS_BADGE = { pending: "neutral", shipped: "neutral", delivered: "success", canceled: "danger" } as const
 // Badge carries icons for success/danger; neutral states get theirs here (status is never colour alone).
 const STATUS_ICON = { pending: Package, shipped: Truck, delivered: null, canceled: null }
 
+/** Status by order number + email. Right after checkout the vendor split runs async (seconds with the Redis event bus) → retry up to ~6 s while empty. */
+async function loadStatus(order: Order) {
+  const fresh = Date.now() - new Date(order.created_at).getTime() < 2 * 60 * 1000
+  for (let i = 0; ; i++) {
+    const s = await orderStatusOrNull(order.display_id ?? "", order.email ?? "")
+    if (!s || s.vendor_orders.length || !fresh || i >= 12) return s
+    await new Promise((r) => setTimeout(r, 500))
+  }
+}
+
 /** Order page body (confirmation + account detail): per-vendor shipments, payment instructions, totals. */
 export async function OrderView({ order, signedIn }: { order: Order; signedIn: boolean }) {
-  const [t, locale] = await Promise.all([getTranslations("order"), getLocale()])
+  const [t, locale, status] = await Promise.all([getTranslations("order"), getLocale(), loadStatus(order)])
   const currency = order.currency_code.toUpperCase()
-  const pay = orderPayment(order)
-  const split = signedIn ? await vendorOrders(order.id) : null
-  const bank = split?.payment.bank_details ?? pay.bank
   const a = order.shipping_address
-  // Returnable = delivered vendor orders with no open request (one open request per vendor order).
+  // Returns are customer-only: delivered vendor orders with no open request (one open request per vendor order).
   const open = new Set(
-    split?.vendor_orders
-      .filter((v) => v.status === "delivered" && (!v.return_request || v.return_request.status === "rejected"))
-      .flatMap((v) => v.items.map((i) => i.parent_item_id))
+    signedIn
+      ? status?.vendor_orders
+          .filter((v) => v.status === "delivered" && (!v.return_request || v.return_request.status === "rejected"))
+          .flatMap((v) => v.items.map((i) => i.parent_item_id))
+      : []
   )
   const returnable = (order.items ?? []).filter((i) => open.has(i.id))
-
-  let shipments
-  if (split?.vendor_orders.length) {
-    shipments = split.vendor_orders.map((v) => <Shipment key={v.id} v={v} currency={currency} t={t} />)
-  } else {
-    // Guest (vendor-orders needs an account) or split not done yet: group lines by product vendor.
-    const products = await productsById(order.items?.map((i) => i.product_id) ?? [])
-    const methodOf = (handle?: string) =>
-      order.shipping_methods?.find((m) => (m.data as { vendor_handle?: string } | null)?.vendor_handle === (handle ?? ""))
-    shipments = (
-      <div className="rounded-lg border border-line bg-surface p-4 md:p-6">
-        <VendorLines
-          groups={byVendor(order.items ?? [], products)}
-          currency={currency}
-          extra={(v) => {
-            const m = methodOf(v?.handle)
-            return m && <p className="m-0 text-[13px] text-ink-muted"><bdi>{m.name}</bdi> · <bdi>{money(m.amount, currency)}</bdi></p>
-          }}
-        />
-      </div>
-    )
-  }
+  const fallback = orderPayment(order)
 
   return (
     <div className="flex flex-wrap items-start gap-6">
       <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
         <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("shipments")}</h2>
         <p className="m-0 text-[14px] text-ink-muted">{t("shipNote")}</p>
-        {shipments}
+        {status?.vendor_orders.length ? (
+          <Shipments status={status} t={t} />
+        ) : (
+          // Split not visible yet (or lookup rate-limited): plain lines.
+          <div className="rounded-lg border border-line bg-surface p-4 md:p-6">
+            <VendorLines groups={[{ vendor: null, items: order.items ?? [] }]} currency={currency} />
+          </div>
+        )}
 
         {returnable.length > 0 && (
           <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 md:p-6">
@@ -71,28 +66,14 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
       </div>
 
       <aside className="flex min-w-0 flex-[1_1_340px] flex-col gap-4">
-        <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
-          <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("payment")}</h2>
-          <p className="m-0 font-medium">{t(`pay.${pay.kind ?? "cod"}`)}</p>
-          {pay.kind === "net" ? (
-            <p className="m-0 text-[14px] text-ink-muted">
-              {t("netHow")} <Link href="/account/credit" className="text-brand-ink underline underline-offset-2">{t("netLink")}</Link>
-            </p>
-          ) : pay.kind === "bank" ? (
-            <>
-              <p className="m-0 text-[14px] text-ink-muted">{t("bankHow", { n: order.display_id ?? "", total: money(order.total, currency) })}</p>
-              {bank ? (
-                <pre dir="auto" className="m-0 rounded-md bg-ground p-3 font-[inherit] text-[14px] whitespace-pre-wrap">{bank}</pre>
-              ) : (
-                <p className="m-0 text-[14px] text-ink-muted">{t("bankByEmail")}</p>
-              )}
-              {split?.payment.proof_uploaded_at && <Badge variant="success">{t("proofReceived")}</Badge>}
-              {signedIn && <ProofForm orderId={order.id} />}
-            </>
-          ) : (
-            <p className="m-0 text-[14px] text-ink-muted">{t("codHow")}</p>
-          )}
-        </section>
+        <PaymentPanel
+          t={t}
+          n={order.display_id ?? 0}
+          email={order.email ?? ""}
+          total={money(order.total, currency)}
+          payment={status?.payment}
+          fallback={{ kind: fallback.kind, bank: fallback.bank }}
+        />
 
         <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
           <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("summary")}</h2>
@@ -117,7 +98,56 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
   )
 }
 
-function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: Awaited<ReturnType<typeof getTranslations<"order">>> }) {
+/** Payment method + what to do next. Bank transfer awaiting confirmation → bank details + receipt upload. */
+export function PaymentPanel({ t, n, email, total, payment, fallback }: {
+  t: T
+  n: number
+  email: string
+  total: string
+  payment?: OrderPay | null
+  fallback?: { kind?: "cod" | "bank" | "net"; bank: string | null }
+}) {
+  const kind = (payment && payKind(payment.provider_id)) ?? fallback?.kind
+  const bank = payment?.bank_details || fallback?.bank
+  const awaiting = !payment || payment.status === "authorized"
+  return (
+    <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
+      <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("payment")}</h2>
+      <p className="m-0 font-medium">{t(`pay.${kind ?? "cod"}`)}</p>
+      {kind === "net" ? (
+        <p className="m-0 text-[14px] text-ink-muted">
+          {t("netHow")} <Link href="/account/credit" className="text-brand-ink underline underline-offset-2">{t("netLink")}</Link>
+        </p>
+      ) : kind !== "bank" ? (
+        <p className="m-0 text-[14px] text-ink-muted">{t("codHow")}</p>
+      ) : payment?.status === "canceled" ? (
+        <p className="m-0 text-[14px] text-ink-muted">{t("payCanceled")}</p>
+      ) : !awaiting ? (
+        <p role="status" className="m-0 flex items-center gap-1.5 text-[14px] text-success">
+          <CircleCheck size={16} aria-hidden /> {t("payConfirmed")}
+        </p>
+      ) : (
+        <>
+          <p className="m-0 text-[14px] text-ink-muted">{t("bankHow", { n, total })}</p>
+          {bank ? (
+            <pre dir="auto" className="m-0 rounded-md bg-ground p-3 font-[inherit] text-[14px] whitespace-pre-wrap">{bank}</pre>
+          ) : (
+            <p className="m-0 text-[14px] text-ink-muted">{t("bankByEmail")}</p>
+          )}
+          {payment?.proof_uploaded_at && <Badge variant="success">{t("proofReceived")}</Badge>}
+          {payment && <ProofForm n={n} email={email} replace={!!payment.proof_uploaded_at} />}
+        </>
+      )}
+    </section>
+  )
+}
+
+export function Shipments({ status, t }: { status: OrderStatus; t: T }) {
+  const currency = status.order.currency_code.toUpperCase()
+  return status.vendor_orders.map((v) => <Shipment key={v.id} v={v} currency={currency} t={t} />)
+}
+
+function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: T }) {
   const Icon = STATUS_ICON[v.status]
   const f = v.fulfillment
   return (
@@ -139,6 +169,9 @@ function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: Awa
         </ul>
         {v.shipping_method && (
           <p className="m-0 text-ink-muted"><bdi>{v.shipping_method.name}</bdi> · <bdi>{money(v.shipping_method.amount, currency)}</bdi></p>
+        )}
+        {v.status === "canceled" && v.cancel_reason && (
+          <p className="m-0 text-ink-muted">{t("canceledBecause", { reason: v.cancel_reason })}</p>
         )}
         {f && (
           <p className="m-0">

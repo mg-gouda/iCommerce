@@ -9,8 +9,9 @@ import {
   createOrderShipmentWorkflow,
   markOrderFulfillmentAsDeliveredWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { sendEmail, type Template } from "../../../../../lib/emails"
+import { sendEmail, type EmailData, type Template } from "../../../../../lib/emails"
 import {
+  afterVendorCancel,
   getVendorOrderOr404,
   parentPayments,
   patchOrderMetadata,
@@ -31,14 +32,15 @@ const need = (ok: boolean, msg: string) => {
   if (!ok) throw new MedusaError(MedusaError.Types.INVALID_DATA, msg)
 }
 
-async function emailBuyer(scope: MedusaContainer, o: VendorOrder, template: Template, vendor_name: string) {
+async function emailBuyer(scope: MedusaContainer, o: VendorOrder, template: Template, vendor_name: string, extra?: Partial<EmailData>) {
   const parent = (await parentPayments(scope, [o.parent_order_id])).get(o.parent_order_id)
   const f = o.fulfillment
   await sendEmail(scope, {
     to: o.email,
     template,
     locale: parent?.customer?.metadata?.locale,
-    data: { display_id: o.display_id, currency_code: o.currency_code, vendor_name, carrier: f?.carrier, tracking_number: f?.tracking_number, tracking_url: f?.tracking_url },
+    // Buyers only ever see the parent order number, never the vendor sub-order one.
+    data: { display_id: parent?.display_id ?? o.display_id, currency_code: o.currency_code, vendor_name, carrier: f?.carrier, tracking_number: f?.tracking_number, tracking_url: f?.tracking_url, ...extra },
     key: `${template}-${o.id}`,
   })
 }
@@ -86,6 +88,12 @@ const ACTIONS: Record<string, (c: Ctx) => Promise<VendorOrderStatus | void>> = {
     await cancelOrderWorkflow(scope).run({ input: { order_id: order.id } })
     await patchOrderMetadata(scope, order.id, { cancel_reason: reason })
     await setVendorOrderStatus(scope, vendor.id, order.id, "canceled")
+    await afterVendorCancel(scope, order.parent_order_id)
+    await emailBuyer(scope, order, "order-canceled", vendor.name, {
+      reason,
+      items: order.items.map((i) => ({ title: i.title, quantity: Number(i.quantity), total: Number(i.total) })),
+      refund: order.payment.provider_id === BANK_PROVIDER ? "bank" : "cod",
+    })
   },
 
   async "return-request"({ scope, order, body }) {

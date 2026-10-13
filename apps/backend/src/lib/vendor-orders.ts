@@ -1,5 +1,6 @@
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
+import { cancelOrderWorkflow } from "@medusajs/medusa/core-flows"
 import VendorOrderLink from "../links/vendor-order"
 import { VENDOR_MODULE } from "../modules/vendor"
 
@@ -25,7 +26,7 @@ export async function parentPayments(scope: MedusaContainer, parentIds: string[]
   const { data } = await query(scope).graph({
     entity: "order",
     fields: [
-      "id", "customer_id", "email", "metadata", "customer.metadata",
+      "id", "display_id", "status", "customer_id", "email", "metadata", "customer.metadata",
       "payment_collections.payments.id", "payment_collections.payments.provider_id", "payment_collections.payments.amount",
       "payment_collections.payments.captured_at", "payment_collections.payments.canceled_at", "payment_collections.payments.captures.amount",
     ],
@@ -117,4 +118,21 @@ export async function patchOrderMetadata(scope: MedusaContainer, id: string, pat
   const svc = scope.resolve(Modules.ORDER)
   const o = await svc.retrieveOrder(id, { select: ["id", "metadata"] })
   await svc.updateOrders(id, { metadata: { ...o.metadata, ...patch } })
+}
+
+/**
+ * After a vendor cancels its part: money already captured (bank transfer confirmed) → `refund_required` on the parent
+ * for admin; every vendor order canceled → the parent is canceled too (authorization voided via cancelOrderWorkflow).
+ */
+export async function afterVendorCancel(scope: MedusaContainer, parentId: string) {
+  const parent = (await parentPayments(scope, [parentId])).get(parentId)
+  if (!parent || parent.status === "canceled") return
+  const captured = (parent.payment?.captures ?? []).length > 0
+  if (captured) await patchOrderMetadata(scope, parentId, { refund_required: true })
+  const ids = (parent.metadata?.vendor_order_ids ?? []) as string[]
+  const links = ids.length ? await vendorOrderLinks(scope, { order_id: ids }) : []
+  if (!ids.length || links.length < ids.length || links.some((l) => l.status !== "canceled")) return
+  // ponytail: captured money stays captured (refund is manual); cancelOrderWorkflow would record an automatic refund → plain cancel.
+  if (captured) await scope.resolve(Modules.ORDER).cancel(parentId)
+  else await cancelOrderWorkflow(scope).run({ input: { order_id: parentId } })
 }

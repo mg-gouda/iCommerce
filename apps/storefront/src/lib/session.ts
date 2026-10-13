@@ -1,4 +1,4 @@
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { sdk } from "@icommerce/sdk"
 
 // Server-only session: cart id + customer JWT live in httpOnly cookies, never in the browser's JS.
@@ -6,6 +6,8 @@ import { sdk } from "@icommerce/sdk"
 
 export const CART_COOKIE = "ic_cart"
 export const TOKEN_COOKIE = "ic_token"
+/** Guest tracking lookup `{ n, email }` (JSON), so the email never sits in a URL. */
+export const TRACK_COOKIE = "ic_track"
 
 const opts = (maxAge: number) => ({
   httpOnly: true,
@@ -16,8 +18,8 @@ const opts = (maxAge: number) => ({
 })
 
 export async function setCookie(name: string, value: string) {
-  // Medusa customer JWTs expire after 1 day by default; carts live a month.
-  ;(await cookies()).set(name, value, opts(name === TOKEN_COOKIE ? 60 * 60 * 24 : 60 * 60 * 24 * 30))
+  // Medusa customer JWTs expire after 1 day by default (tracking lookups too); carts live a month.
+  ;(await cookies()).set(name, value, opts(name === CART_COOKIE ? 60 * 60 * 24 * 30 : 60 * 60 * 24))
 }
 export const clearCookie = async (name: string) => (await cookies()).delete(name)
 
@@ -28,6 +30,12 @@ export const cartId = async () => (await cookies()).get(CART_COOKIE)?.value
 export async function auth(): Promise<Record<string, string>> {
   const t = await token()
   return t ? { authorization: `Bearer ${t}` } : {}
+}
+
+/** Shopper's IP for backend rate limits (guest order lookups), forwarded as X-Forwarded-For. */
+export async function clientIp(): Promise<Record<string, string>> {
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim()
+  return ip ? { "x-forwarded-for": ip } : {}
 }
 
 export const status = (e: unknown) => (e as { status?: number }).status
@@ -47,7 +55,7 @@ export type Customer = Awaited<ReturnType<typeof sdk.store.customer.retrieve>>["
 export type Order = Awaited<ReturnType<typeof sdk.store.order.retrieve>>["order"]
 
 const CART_FIELDS = [
-  "id", "email", "currency_code", "region_id", "customer_id", "completed_at",
+  "id", "email", "currency_code", "sales_channel_id", "region_id", "customer_id", "completed_at",
   "item_subtotal", "shipping_total", "total",
   "*items", "*shipping_address", "*shipping_methods",
   "*payment_collection", "*payment_collection.payment_sessions",

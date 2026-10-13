@@ -1,12 +1,9 @@
-import { getTiers } from "./api"
+import { getTiersBatch } from "./api"
 
-/**
- * Wholesale price range (lowest–highest tier) per product id, for grids.
- * ponytail: one tiers call per tile (≤48); a batch endpoint if grids grow.
- */
+/** Wholesale price range (lowest–highest tier) per product id, for grids. Products without tiers are absent. */
 export async function wholesaleRanges(ids: string[]) {
-  const all = await Promise.all(ids.map(async (id) => [id, await getTiers(id).catch(() => null)] as const))
-  return new Map(
-    all.flatMap(([id, t]) => (t?.length ? [[id, { min: t[t.length - 1].unit_price_usd, max: t[0].unit_price_usd }] as const] : []))
-  )
+  const ranges = new Map<string, { min: number; max: number }>()
+  if (!ids.length) return ranges
+  for (const [id, t] of await getTiersBatch(ids)) if (t.length) ranges.set(id, { min: t[t.length - 1].unit_price_usd, max: t[0].unit_price_usd })
+  return ranges
 }

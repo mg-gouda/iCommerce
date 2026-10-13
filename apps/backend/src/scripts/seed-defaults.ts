@@ -8,14 +8,16 @@ import {
   updateRegionsWorkflow,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { BANK_PROVIDER, COD_PROVIDER } from "../modules/offline-payment/service"
+import { B2B_GROUP, ensureGroup } from "../lib/company"
+import { BANK_PROVIDER, COD_PROVIDER, NET_TERMS_PROVIDER } from "../modules/offline-payment/service"
 
 const CHANNELS = ["Retail", "Wholesale"]
-// Gateway parked → v1 checkout = cash on delivery + bank transfer.
-const PAYMENT_PROVIDERS = [COD_PROVIDER, BANK_PROVIDER]
+// Gateway parked → v1 checkout = cash on delivery + bank transfer; net terms for verified companies with credit.
+const PAYMENT_PROVIDERS = [COD_PROVIDER, BANK_PROVIDER, NET_TERMS_PROVIDER]
 
 // medusa exec ./src/scripts/seed-defaults.ts — idempotent (matches by name/title).
-// Store currencies USD (default) + EGP, region "Egypt" (payment: COD + bank transfer), sales channels Retail + Wholesale, one publishable key each.
+// Store currencies USD (default) + EGP, region "Egypt" (payment: COD + bank transfer), sales channels Retail + Wholesale,
+// one publishable key each + key "Storefront" on both (the storefront browses with it; carts pass sales_channel_id).
 export default async function seedDefaults({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
@@ -55,16 +57,21 @@ export default async function seedDefaults({ container }: ExecArgs) {
   }
 
   const apiKeys = container.resolve(Modules.API_KEY)
-  for (const channel of have) {
-    const title = `${channel.name} storefront`
+  const ensureKey = async (title: string, channelIds: string[]) => {
     let [key] = await apiKeys.listApiKeys({ title, type: "publishable" })
     if (!key) {
       const { result } = await createApiKeysWorkflow(container).run({
         input: { api_keys: [{ title, type: "publishable", created_by: "" }] },
       })
       key = result[0]
-      await linkSalesChannelsToApiKeyWorkflow(container).run({ input: { id: key.id, add: [channel.id] } })
     }
-    logger.info(`seed-defaults: ${channel.name} sales_channel=${channel.id} publishable_key=${key.token}`)
+    // Re-linking an already linked channel is a no-op → safe on every run.
+    await linkSalesChannelsToApiKeyWorkflow(container).run({ input: { id: key.id, add: channelIds } })
+    return key.token
   }
+  for (const channel of have) {
+    logger.info(`seed-defaults: ${channel.name} sales_channel=${channel.id} publishable_key=${await ensureKey(`${channel.name} storefront`, [channel.id])}`)
+  }
+  logger.info(`seed-defaults: Storefront (Retail + Wholesale) publishable_key=${await ensureKey("Storefront", have.map((c) => c.id))}`)
+  await ensureGroup(container, B2B_GROUP)
 }

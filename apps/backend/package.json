@@ -16,6 +16,7 @@
     "@medusajs/cli": "2.21.2",
     "@medusajs/framework": "2.21.2",
     "@medusajs/medusa": "2.21.2",
+    "@medusajs/ui": "4.2.6",
     "cors": "2.8.6",
     "csv-parse": "7.0.3",
     "ioredis": "5.11.1",

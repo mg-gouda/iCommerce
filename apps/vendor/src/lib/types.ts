@@ -86,6 +86,40 @@ export type VendorOrder = {
 
 export type ShippingOption = { id: string; name: string; kind: "flat" | "free_over" | "pickup"; amount: number; free_over: number | null }
 
+// Shapes from project_docs/api/p3-backend.md §2–3.
+export type QuoteStatus = "requested" | "vendor_review" | "offered" | "negotiating" | "pending_approval" | "accepted" | "ordered" | "rejected" | "expired"
+
+export type QuoteItem = {
+  id: string
+  product_id: string | null
+  title: string
+  quantity: number
+  unit: string | null
+  target_price: number | null
+  offered_unit_price: number | null
+  lead_time_days: number | null
+}
+
+export type Quote = {
+  id: string
+  rfq_id: string
+  status: QuoteStatus
+  currency_code: string
+  company: { id: string; name: string; country: string; city: string | null } | null
+  requester: { email: string; first_name: string | null; last_name: string | null } | null
+  notes: string | null
+  incoterm: string | null
+  validity_until: string | null
+  total: number | null
+  order_id: string | null
+  items: QuoteItem[]
+  messages?: { id: string; author: "buyer" | "vendor" | "system"; author_name: string | null; body: string; created_at: string }[]
+  created_at: string
+  updated_at: string
+}
+
+export type WholesaleTier = { min_qty: number; unit_price_usd: number }
+
 /** Server-action result: field errors are message keys under `errors.*`, `message` is a raw API message. */
 export type FormState = {
   ok?: boolean

@@ -30,7 +30,9 @@
     "password": "Password",
     "submit": "Sign in",
     "newHere": "New here?",
-    "create": "Create account"
+    "create": "Create account",
+    "guestOrder": "Ordered as a guest?",
+    "track": "Track your order"
   },
   "cart": {
     "title": "Your cart",
@@ -101,7 +103,8 @@
     "visitStore": "Visit store",
     "showImage": "Show image {n} of {total}",
     "addFailed": "Couldn't add. Try again",
-    "chooseQty": "Choose quantity"
+    "chooseQty": "Choose quantity",
+    "signInWholesale": "Sign in for wholesale prices"
   },
   "category": {
     "home": "Home",
@@ -187,7 +190,10 @@
     "price": "Enter a price of 0 or more, e.g. 10.50.",
     "pickSupplier": "Tick at least one supplier for this item.",
     "rfqEmpty": "Your quote request has no items.",
-    "netRefused": "Net terms aren't available for this order. Choose another payment method."
+    "netRefused": "Net terms aren't available for this order. Choose another payment method.",
+    "tooMany": "Too many attempts. Wait an hour and try again.",
+    "trackNotFound": "No order matches this number and email. Check both: the number is in your confirmation email.",
+    "orderNumber": "Enter the order number, digits only, e.g. 1042."
   },
   "address": {
     "firstName": "First name",
@@ -297,7 +303,12 @@
     "myOrders": "My orders",
     "createAccount": "Create an account",
     "netHow": "Invoiced to your company; pay by the due date.",
-    "netLink": "See invoices"
+    "netLink": "See invoices",
+    "payConfirmed": "Transfer confirmed. Suppliers are preparing your items.",
+    "payCanceled": "This order was cancelled. If you already sent the transfer, iCommerce support will contact you about your refund.",
+    "proofReplace": "Replace the receipt",
+    "canceledBecause": "Cancelled by the supplier: {reason}",
+    "trackLater": "Track this order"
   },
   "account": {
     "title": "My account",
@@ -532,6 +543,30 @@
       "paid": "Paid",
       "overdue": "Overdue"
     },
-    "noInvoices": "No invoices yet."
+    "noInvoices": "No invoices yet.",
+    "event": {
+      "requested": "Quote request sent to the supplier.",
+      "viewed": "The supplier opened your request.",
+      "offered": "The supplier sent an offer.",
+      "countered": "You sent a counter-offer.",
+      "pending_approval": "A buyer accepted; waiting for approval.",
+      "ordered": "Offer accepted. Order placed.",
+      "rejected": "Quote rejected.",
+      "expired": "The offer expired."
+    }
+  },
+  "track": {
+    "title": "Track your order",
+    "sub": "Ordered without an account? Enter your order number and the email you used at checkout.",
+    "number": "Order number",
+    "numberHelp": "In your confirmation email, e.g. #1042.",
+    "email": "Email",
+    "submit": "Find order",
+    "orderN": "Order #{n}",
+    "another": "Track another order",
+    "preparing": "Your order is being split by supplier. Refresh in a moment.",
+    "expired": "We couldn't load that order again. Enter its number and email once more.",
+    "haveAccount": "Have an account?",
+    "signIn": "Sign in to see all your orders"
   }
 }

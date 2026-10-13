@@ -106,7 +106,7 @@ export function ShippingForm({ groups, currency }: { groups: ShipGroup[]; curren
 
 type Net = { days: number; available: string; refusal: "limit" | "overdue" | "hold" | null }
 
-export function PaymentForm({ providers, selected, signedIn, net }: { providers: { id: string; kind: PayKind }[]; selected?: string; signedIn: boolean; net?: Net | null }) {
+export function PaymentForm({ providers, selected, net }: { providers: { id: string; kind: PayKind }[]; selected?: string; net?: Net | null }) {
   const t = useTranslations("checkout")
   return (
     <StepForm action={savePayment} submit={t("continue")}>
@@ -123,14 +123,6 @@ export function PaymentForm({ providers, selected, signedIn, net }: { providers:
                   {p.kind === "net" && net?.refusal && (
                     <span className="mt-1 flex items-start gap-1.5 text-[13px] text-danger">
                       <CircleAlert size={14} aria-hidden className="mt-0.5 flex-none" /> {t(`pay.net_${net.refusal}`, { available: net.available })}
-                    </span>
-                  )}
-                  {/* Proof upload needs an account (own orders only) → guests sign in right here; the cart follows them. */}
-                  {p.kind === "bank" && !signedIn && (
-                    <span className="mt-2 hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-surface p-2.5 text-[13px] group-has-[:checked]:flex">
-                      <span className="w-full font-medium text-ink">{t("bankAccount")}</span>
-                      <Link href="/login?next=/checkout" className="text-brand-ink underline underline-offset-2">{t("signIn")}</Link>
-                      <Link href="/register?next=/checkout" className="text-brand-ink underline underline-offset-2">{t("createAccount")}</Link>
                     </span>
                   )}
                 </span>

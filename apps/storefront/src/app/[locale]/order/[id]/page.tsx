@@ -34,7 +34,10 @@ export default async function OrderPlacedPage({ params }: Props) {
           {signedIn ? (
             <Link href="/account" className="ic-btn ic-btn--ghost no-underline">{t("myOrders")}</Link>
           ) : (
-            <Link href="/register" className="ic-btn ic-btn--ghost no-underline">{t("createAccount")}</Link>
+            <>
+              <Link href="/track" className="ic-btn ic-btn--ghost no-underline">{t("trackLater")}</Link>
+              <Link href="/register" className="ic-btn ic-btn--ghost no-underline">{t("createAccount")}</Link>
+            </>
           )}
         </div>
       </main>

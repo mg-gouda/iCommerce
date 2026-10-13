@@ -2,8 +2,7 @@
 
 import { refresh } from "next/cache"
 import { sdk } from "@icommerce/sdk"
-import { cartSalesChannel } from "./p3/channel"
-import { buyingMode } from "./p3/mode"
+import { buyingMode, cartSalesChannel } from "./p3/mode"
 import { auth, CART_COOKIE, countOf, getCart, setCookie, status } from "./session"
 import { fitQty, isFractional, isRetail, listProducts, region } from "./store"
 
@@ -25,16 +24,19 @@ export async function addToCart(productId: string, qty: number): Promise<AddResu
   const quantity = wholesale ? qty : fitQty(qty, p.product_extra)
   const headers = await auth()
   try {
-    let id = (await getCart())?.id
+    const [open, channel] = await Promise.all([getCart(), cartSalesChannel()])
+    let id = open?.id
     if (!id) {
-      const body = { region_id: await region(), sales_channel_id: await cartSalesChannel() }
-      id = (await sdk.store.cart.create(body, { fields: "id" }, headers)).cart.id
+      id = (await sdk.store.cart.create({ region_id: await region(), sales_channel_id: channel }, { fields: "id" }, headers)).cart.id
       await setCookie(CART_COOKIE, id)
+    } else if (open!.sales_channel_id !== channel) {
+      // Mode / verification changed since the cart was made → move it (prices recompute).
+      await sdk.store.cart.update(id, { sales_channel_id: channel }, { fields: "id" }, headers)
     }
     const { cart } = await sdk.store.cart.createLineItem(id, { variant_id: variant.id, quantity }, { fields: "items.quantity" }, headers)
     return { count: countOf(cart) }
   } catch (e) {
-    if (status(e) === 400) return { error: (e as Error).message }
+    if ([400, 403].includes(status(e) ?? 0)) return { error: (e as Error).message }
     throw e
   }
 }

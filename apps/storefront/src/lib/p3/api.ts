@@ -8,19 +8,15 @@ import type { Credit, Invitation, Member, Membership, Quote, QuoteStatus, Tier }
 type Init = { method?: "GET" | "POST" | "DELETE"; body?: Record<string, unknown>; query?: Record<string, string | number | undefined> }
 
 const BACKEND = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
-// Dev only: typed fixtures stand in for the backend while it's being built. Never on in production builds.
-const FIXTURES = process.env.NODE_ENV !== "production" && process.env.P3_FIXTURES === "1"
 
 export async function call<T>(path: string, init: Init = {}): Promise<T> {
   const headers = await auth()
-  if (FIXTURES) return (await import("./__dev__/fixtures")).fixture(path, init, headers.authorization) as T
   return sdk.client.fetch<T>(path, { method: init.method, body: init.body, query: init.query, headers })
 }
 
 /** Multipart POST (sdk JSON-encodes bodies). Returns status + parsed body. */
 export async function upload(path: string, body: FormData): Promise<{ status: number; message?: string }> {
   const headers = await auth()
-  if (FIXTURES) return (await import("./__dev__/fixtures")).fixtureUpload(path, body, headers.authorization)
   const res = await fetch(`${BACKEND}${path}`, {
     method: "POST",
     body,
@@ -45,6 +41,17 @@ export const getCredit = cache(() => call<Credit>("/store/companies/me/credit"))
 export async function getTiers(productId: string): Promise<Tier[] | null> {
   const r = await call<{ tiers: Tier[] | null }>(`/store/products/${encodeURIComponent(productId)}/wholesale-tiers`)
   return r.tiers?.map((t) => ({ min_qty: Number(t.min_qty), unit_price_usd: Number(t.unit_price_usd) })) ?? null
+}
+
+/** Tiers for many products (grids; ≤50 ids per call). Empty map when the caller isn't a verified member. */
+export async function getTiersBatch(ids: string[]): Promise<Map<string, Tier[]>> {
+  const out = new Map<string, Tier[]>()
+  for (let i = 0; i < ids.length; i += 50) {
+    const r = await call<{ tiers: Record<string, Tier[]> | null }>("/store/products/wholesale-tiers", { query: { ids: ids.slice(i, i + 50).join(",") } })
+    if (!r.tiers) break
+    for (const [id, t] of Object.entries(r.tiers)) out.set(id, t.map((x) => ({ min_qty: Number(x.min_qty), unit_price_usd: Number(x.unit_price_usd) })))
+  }
+  return out
 }
 
 export const listQuotes = (q: { status?: QuoteStatus; rfq_id?: string; limit?: number } = {}) =>
