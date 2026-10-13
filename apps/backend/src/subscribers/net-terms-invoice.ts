@@ -21,7 +21,7 @@ export default async function netTermsInvoice({ event, container }: SubscriberAr
   await svc.createInvoices({
     company_id,
     order_id: o.id,
-    display_id: o.display_id,
+    display_id: Number(o.display_id),
     amount: Number(o.total),
     currency_code: o.currency_code,
     due_date: new Date(Date.now() + (account?.terms_days ?? 30) * 86_400_000),
