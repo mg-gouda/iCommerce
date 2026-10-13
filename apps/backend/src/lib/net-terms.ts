@@ -39,6 +39,26 @@ export async function assertNetTerms(scope: MedusaContainer, customer_id: string
   return { company: member.company, account: c.account }
 }
 
+/** May see/choose net terms: member of a verified company with an active credit account (limit checked at checkout). */
+export async function netTermsEligible(scope: MedusaContainer, customer_id?: string | null) {
+  if (!customer_id) return false
+  const [member] = await companySvc(scope).listCompanyMembers({ customer_id }, { relations: ["company"] })
+  if (member?.company.kyc_status !== "verified") return false
+  const [account] = await companySvc(scope).listCreditAccounts({ company_id: member.company.id })
+  return account?.status === "active"
+}
+
+/** Drops `provider_id` from every `payment_providers` array in a response body (regions, carts, provider lists). */
+export function stripProvider(body: unknown, provider_id: string, depth = 0): void {
+  if (!body || typeof body !== "object" || depth > 5) return
+  for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
+    if (k === "payment_providers" && Array.isArray(v)) {
+      ;(body as Record<string, unknown>)[k] = v.filter((p) => (p as { id?: string })?.id !== provider_id)
+      if (typeof (body as Record<string, unknown>).count === "number") (body as Record<string, number>).count = (body as Record<string, unknown[]>)[k].length
+    } else stripProvider(v, provider_id, depth + 1)
+  }
+}
+
 /**
  * Daily: open invoices past due → overdue, account → on_hold, reminder to company admins for every overdue invoice
  * (idempotency key per invoice per day → at most one reminder a day).

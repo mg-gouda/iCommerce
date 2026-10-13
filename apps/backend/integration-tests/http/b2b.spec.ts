@@ -216,11 +216,14 @@ medusaIntegrationTestRunner({
       expect(c.items[0]).toMatchObject({ quantity: 50, unit_price: 8 })
       await expect(api.post(`/store/carts/${wc}/line-items/${c.items[0].id}`, { quantity: 52 }, auth(buyer.token, wholesale))).rejects.toMatchObject(status(400))
 
-      // Retail cart: no tiers, no server MOQ. Non-member wholesale cart: list price.
+      // Retail cart: no tiers, no server MOQ. Non-members can't use Wholesale carts (create, switch, add).
       const rc = await cart(buyer.token, retail, [{ variant_id: p.variant_id, quantity: 50 }])
       expect((await api.get(`/store/carts/${rc}`, auth(buyer.token))).data.cart.items[0].unit_price).toBe(10)
-      const sc = await cart(stranger.token, wholesale, [{ variant_id: p.variant_id, quantity: 50 }])
-      expect((await api.get(`/store/carts/${sc}`, auth(stranger.token, wholesale))).data.cart.items[0].unit_price).toBe(10)
+      await expect(cart(stranger.token, wholesale, [])).rejects.toMatchObject({ response: { status: 403, data: { message: "Wholesale carts are for signed-in members of verified companies." } } })
+      await expect(cart(undefined as never, wholesale, [])).rejects.toMatchObject(status(403))
+      const [wsc] = await getContainer().resolve(Modules.SALES_CHANNEL).listSalesChannels({ name: "Wholesale" })
+      const strangerRetail = await cart(stranger.token, retail, [])
+      await expect(api.post(`/store/carts/${strangerRetail}`, { sales_channel_id: wsc.id }, auth(stranger.token))).rejects.toMatchObject(status(403))
 
       // Contract price list (admin API) beats nothing below tiers for this company only.
       const contract = await api.post(`/admin/companies/${kyc.id}/price-list`, { prices: [{ variant_id: p.variant_id, amount: 7 }] }, auth(admin))
@@ -354,6 +357,13 @@ medusaIntegrationTestRunner({
       const { admin: buyer } = co.members
       const outsider = await customer("outsider")
 
+      // Net terms is only listed for verified members with an active credit account.
+      const region = (await api.get("/store/regions", auth())).data.regions.find((r: { name: string }) => r.name === "Egypt")
+      const listed = async (token?: string) =>
+        (await api.get(`/store/payment-providers?region_id=${region.id}`, auth(token))).data.payment_providers.map((p: { id: string }) => p.id)
+      expect(await listed()).not.toContain("pp_net-terms_net-terms")
+      expect(await listed(buyer.token)).not.toContain("pp_net-terms_net-terms")
+
       // No credit account yet → refused.
       let res = await checkout(buyer.token, wholesale, await cart(buyer.token, wholesale, [{ variant_id: p.variant_id, quantity: 1 }]), "pp_net-terms_net-terms")
         .catch((e) => e.response)
@@ -363,6 +373,12 @@ medusaIntegrationTestRunner({
       const acc = (await api.post(`/admin/companies/${co.id}/credit-account`, { limit_usd: 1000, terms_days: 30 }, auth(admin))).data.credit_account
       expect(acc).toMatchObject({ limit_usd: 1000, terms_days: 30, status: "active" })
       await api.post(`/admin/companies/${co.id}`, { payment_mode: "net_terms" }, auth(admin))
+      expect(await listed(buyer.token)).toContain("pp_net-terms_net-terms")
+      expect(await listed(outsider.token)).not.toContain("pp_net-terms_net-terms")
+      const regionProviders = async (token?: string) =>
+        (await api.get(`/store/regions/${region.id}?fields=*payment_providers`, auth(token))).data.region.payment_providers.map((p: { id: string }) => p.id)
+      expect(await regionProviders(buyer.token)).toContain("pp_net-terms_net-terms")
+      expect(await regionProviders()).not.toContain("pp_net-terms_net-terms")
 
       res = await checkout(buyer.token, wholesale, await cart(buyer.token, wholesale, [{ variant_id: p.variant_id, quantity: 5 }]), "pp_net-terms_net-terms")
       expect(res.data.type).toBe("order")
@@ -376,15 +392,21 @@ medusaIntegrationTestRunner({
 
       res = await checkout(buyer.token, wholesale, await cart(buyer.token, wholesale, [{ variant_id: p.variant_id, quantity: 5 }]), "pp_net-terms_net-terms").catch((e) => e.response)
       expect(res).toMatchObject({ status: 400, data: { message: "Credit limit exceeded: available USD 495.00." } })
-      res = await checkout(outsider.token, wholesale, await cart(outsider.token, wholesale, [{ variant_id: p.variant_id, quantity: 1 }]), "pp_net-terms_net-terms").catch((e) => e.response)
+      res = await checkout(outsider.token, retail, await cart(outsider.token, retail, [{ variant_id: p.variant_id, quantity: 1 }]), "pp_net-terms_net-terms").catch((e) => e.response)
       expect(res.status).toBe(400)
 
       // Quote on credit (net_terms company, admin accepts directly — no approvers).
       const rfq = (await api.post("/store/quotes", { items: [{ variant_id: p.variant_id, quantity: 2 }] }, auth(buyer.token))).data
       const qid = rfq.quotes[0].id
       await api.post(`/vendors/quotes/${qid}/offer`, { items: [{ id: rfq.quotes[0].items[0].id, offered_unit_price: 90 }], validity_until: new Date(Date.now() + day) }, auth(v.token))
-      const q = (await api.post(`/store/quotes/${qid}/accept`, {}, auth(buyer.token))).data.quote
+      // Double-click / concurrent accepts → exactly one order, both requests see it.
+      const both = await Promise.all([1, 2].map(() => api.post(`/store/quotes/${qid}/accept`, {}, auth(buyer.token))))
+      const q = both[0].data.quote
       expect(q.status).toBe("ordered")
+      expect(both[1].data.quote).toMatchObject({ status: "ordered", order_id: q.order_id })
+      expect((await api.post(`/store/quotes/${qid}/accept`, {}, auth(buyer.token))).data.quote.order_id).toBe(q.order_id)
+      const quoteOrders = (await getContainer().resolve(Modules.ORDER).listOrders({}, { select: ["id", "metadata"] })).filter((o) => o.metadata?.quote_id === qid)
+      expect(quoteOrders.map((o) => o.id)).toEqual([q.order_id])
       await waitFor(async () => (await getContainer().resolve<CompanyModuleService>(COMPANY_MODULE).listInvoices({ order_id: q.order_id }))[0])
       const [child] = await childIds(q.order_id)
       expect((await api.get(`/vendors/orders/${child}`, auth(v.token))).data.order.payment.provider_id).toBe("pp_net-terms_net-terms")
@@ -395,6 +417,7 @@ medusaIntegrationTestRunner({
       expect(await flagOverdue(getContainer())).toEqual({ flagged: 1, overdue: 1 })
       credit = (await api.get("/store/companies/me/credit", auth(buyer.token))).data
       expect(credit.credit_account.status).toBe("on_hold")
+      expect(await listed(buyer.token)).not.toContain("pp_net-terms_net-terms")
       expect(emails().some((f) => f.includes("invoice-overdue") && f.includes(buyer.email))).toBe(true)
       res = await checkout(buyer.token, wholesale, await cart(buyer.token, wholesale, [{ variant_id: p.variant_id, quantity: 1 }]), "pp_net-terms_net-terms").catch((e) => e.response)
       expect(res.status).toBe(400)

@@ -91,7 +91,8 @@ Implementation: one Medusa price list **"B2B wholesale"** (type `override`) with
   - anyone else → `{ tiers: null, gated: true }` · 400 when `ids` empty or > 50
 
 ### Direct B2B checkout (Wholesale cart)
-Create the cart with the **Wholesale** publishable key (or `sales_channel_id` of Wholesale). Standard cart/checkout flow (P2). For Wholesale carts the server enforces on `POST /store/carts/:id/line-items` and `POST /store/carts/:id/line-items/:line_id` (line quantity after the change):
+Create the cart with the **Wholesale** publishable key (or `sales_channel_id` of Wholesale; with the shared "Storefront" key you must pass it). Standard cart/checkout flow (P2).
+**Wholesale carts are for signed-in members of verified companies only**: creating one, switching a cart to Wholesale (`POST /store/carts/:id {sales_channel_id}`) or adding lines to one otherwise → **403** `forbidden` `Wholesale carts are for signed-in members of verified companies.` (guests included). Retail carts are open to everyone. For Wholesale carts the server enforces on `POST /store/carts/:id/line-items` and `POST /store/carts/:id/line-items/:line_id` (line quantity after the change):
 - `quantity ≥ product_extra.min_qty` → 400 `Minimum order quantity for "<title>" is 200.`
 - `(quantity − min_qty) % qty_step = 0` → 400 `Quantity for "<title>" must be 200 plus multiples of 50.`
 - `quantity ≤ max_qty` → 400 `Maximum order quantity for "<title>" is 20.`
@@ -159,7 +160,7 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
 - `GET /store/quotes/:id` → `{ quote }`
 - `POST /store/quotes/:id/messages` `{ body }` → `{ quote }` (any open status)
 - `POST /store/quotes/:id/counter` `{ message, items?: [{ id, target_price }] }` → `{ quote }` status `negotiating` (from `offered`)
-- `POST /store/quotes/:id/accept` → `{ quote }` status `pending_approval` or `ordered`
+- `POST /store/quotes/:id/accept` → `{ quote }` status `pending_approval` or `ordered`. **Idempotent + race-safe**: actions on one quote are serialized by a lock (Locking module, key `quote-<id>`) and the status is re-read inside it; a repeat or concurrent accept returns `200` with the same quote/`order_id` (never a second order). Same for `approve`.
 - `POST /store/quotes/:id/approve` (approver or admin) → `{ quote }` status `ordered` (from `pending_approval`); 403 for buyers
 - `POST /store/quotes/:id/reject` `{ reason? }` → `{ quote }` status `rejected`
 
@@ -188,7 +189,7 @@ Shipping: the order gets one shipping method on the vendor's first shipping opti
 `CreditAccount = { "id": "cred_01...", "company_id", "limit_usd": 50000, "terms_days": 30, "status": "active" | "on_hold" }`
 `Invoice = { "id": "inv_01...", "company_id", "order_id", "display_id": 12, "amount": 8885.55, "currency_code": "usd", "due_date": "...", "status": "open" | "paid" | "overdue", "paid_at": null, "created_at" }`
 
-Payment provider **`pp_net-terms_net-terms`** (region Egypt). Usable only when the cart's customer is a member of a **verified** company with an **active** credit account, no **overdue** invoice, and `outstanding (open + overdue invoices) + cart total ≤ limit_usd`. Checked when the cart completes (`POST /store/carts/:id/complete` → 400 `invalid_data`, e.g. `Credit limit exceeded: available USD 1200.00.` / `Net terms not available: overdue invoice.` / `Net terms not available for this account.`), and on quote acceptance for `net_terms` companies. The storefront should only show the option when `GET /store/companies/me/credit` says `available ≥ total`.
+Payment provider **`pp_net-terms_net-terms`** (region Egypt). **Listed only to eligible callers**: `GET /store/payment-providers`, `GET /store/regions*` and `/store/carts*` responses drop it from every `payment_providers` array unless the caller (customer token) is a member of a verified company with an `active` credit account. Hidden ≠ enforced: the checks below still run. Usable only when the cart's customer is a member of a **verified** company with an **active** credit account, no **overdue** invoice, and `outstanding (open + overdue invoices) + cart total ≤ limit_usd`. Checked when the cart completes (`POST /store/carts/:id/complete` → 400 `invalid_data`, e.g. `Credit limit exceeded: available USD 1200.00.` / `Net terms not available: overdue invoice.` / `Net terms not available for this account.`), and on quote acceptance for `net_terms` companies. The storefront can additionally grey it out when `GET /store/companies/me/credit` says `available < total`.
 On `order.placed` with net terms → invoice `open`, `due_date = now + terms_days`.
 
 - `GET /store/companies/me/credit` (member) →

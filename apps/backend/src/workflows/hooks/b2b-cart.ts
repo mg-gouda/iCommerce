@@ -1,7 +1,7 @@
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
-import { addToCartWorkflow, completeCartWorkflow, updateLineItemInCartWorkflow } from "@medusajs/medusa/core-flows"
-import { wholesaleChannelId } from "../../lib/company"
+import { addToCartWorkflow, completeCartWorkflow, createCartWorkflow, updateCartWorkflow, updateLineItemInCartWorkflow } from "@medusajs/medusa/core-flows"
+import { isB2bVerified, wholesaleChannelId } from "../../lib/company"
 import { assertNetTerms } from "../../lib/net-terms"
 import { NET_TERMS_PROVIDER } from "../../modules/offline-payment/service"
 
@@ -45,7 +45,28 @@ async function assertMoq(container: MedusaContainer, cart_id: string, lines: { v
   }
 }
 
+/** Wholesale channel = verified company members only (403 otherwise). */
+async function assertWholesaleBuyer(container: MedusaContainer, sales_channel_id?: string | null, customer_id?: string | null) {
+  if (!sales_channel_id || sales_channel_id !== (await wholesaleChannelId(container))) return
+  if (!(await isB2bVerified(container, customer_id))) {
+    throw new MedusaError(MedusaError.Types.FORBIDDEN, "Wholesale carts are for signed-in members of verified companies.")
+  }
+}
+
+createCartWorkflow.hooks.validate(async ({ cart }, { container }) => {
+  const c = cart as Row
+  await assertWholesaleBuyer(container, c.sales_channel_id, c.customer_id)
+})
+
+// Moving an existing cart onto the Wholesale channel.
+updateCartWorkflow.hooks.validate(async ({ input, cart }, { container }) => {
+  const i = input as Row
+  if (i.sales_channel_id) await assertWholesaleBuyer(container, i.sales_channel_id, i.customer_id ?? (cart as Row)?.customer_id)
+})
+
 addToCartWorkflow.hooks.validate(async ({ input }, { container }) => {
+  const cart = await loadCart(container, input.cart_id, ["id", "sales_channel_id", "customer_id"])
+  await assertWholesaleBuyer(container, cart?.sales_channel_id, cart?.customer_id)
   await assertMoq(container, input.cart_id, (input.items ?? []).map((i) => ({ variant_id: i.variant_id ?? undefined, quantity: Number(i.quantity) })))
 })
 

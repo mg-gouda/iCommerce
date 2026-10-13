@@ -1,6 +1,6 @@
 import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import type { MedusaContainer } from "@medusajs/framework/types"
-import { MedusaError } from "@medusajs/framework/utils"
+import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { z } from "@medusajs/framework/zod"
 import { money, parse } from "../../../../../lib/parse"
 import { bad, getQuoteOr404, need, notify, quoteSvc, shapeQuotes, transition } from "../../../../../lib/quotes"
@@ -66,8 +66,13 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const run = ACTIONS[req.params.action]
   if (!run) throw new MedusaError(MedusaError.Types.NOT_FOUND, `Unknown action "${req.params.action}"`)
   const { vendor } = await getCaller(req)
-  const q = await getQuoteOr404(req.scope, req.params.id, { vendor_id: vendor.id })
-  await run({ scope: req.scope, q, body: req.body, name: vendor.name })
+  await getQuoteOr404(req.scope, req.params.id, { vendor_id: vendor.id }) // 404 before locking
+  // Same per-quote lock as the buyer routes: an offer can't interleave with an accept.
+  await req.scope.resolve(Modules.LOCKING).execute(
+    `quote-${req.params.id}`,
+    async () => run({ scope: req.scope, q: await getQuoteOr404(req.scope, req.params.id, { vendor_id: vendor.id }), body: req.body, name: vendor.name }),
+    { timeout: 30 },
+  )
   const fresh = await getQuoteOr404(req.scope, req.params.id, { vendor_id: vendor.id })
   res.json({ quote: (await shapeQuotes(req.scope, [fresh], true))[0] })
 }

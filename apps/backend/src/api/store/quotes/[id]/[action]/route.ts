@@ -1,6 +1,6 @@
 import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import type { MedusaContainer } from "@medusajs/framework/types"
-import { MedusaError } from "@medusajs/framework/utils"
+import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { z } from "@medusajs/framework/zod"
 import { callerMembership, companySvc, requireRole } from "../../../../../lib/company"
 import { money, parse } from "../../../../../lib/parse"
@@ -36,7 +36,9 @@ const ACTIONS: Record<string, (c: Ctx) => Promise<void>> = {
   },
 
   // Buyers need an approver when the company has one; admins/approvers order directly.
+  // Idempotent: a repeat (double-click / concurrent request, serialized by the lock below) is a no-op.
   async accept({ scope, q, member }) {
+    if (q.status === "ordered" || q.status === "pending_approval") return
     need(q, ["offered"], "accept")
     if (q.validity_until && new Date(q.validity_until) < new Date()) throw new MedusaError(MedusaError.Types.INVALID_DATA, "Offer expired.")
     const approvers = await companySvc(scope).listCompanyMembers({ company_id: q.company_id, role: "approver" } as never)
@@ -50,6 +52,7 @@ const ACTIONS: Record<string, (c: Ctx) => Promise<void>> = {
 
   async approve({ scope, q, member }) {
     requireRole(member, ["approver", "admin"])
+    if (q.status === "ordered") return
     need(q, ["pending_approval"], "approve")
     await acceptAndOrder(scope, q, { approved_by: member.id })
   },
@@ -67,9 +70,18 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const run = ACTIONS[req.params.action]
   if (!run) throw new MedusaError(MedusaError.Types.NOT_FOUND, `Unknown action "${req.params.action}"`)
   const { company, member } = await callerMembership(req)
-  const q = await getQuoteOr404(req.scope, req.params.id, { company_id: company.id })
+  await getQuoteOr404(req.scope, req.params.id, { company_id: company.id }) // 404 before locking
   const name = [member.first_name, member.last_name].filter(Boolean).join(" ") || member.email
-  await run({ scope: req.scope, q, member, body: req.body, name })
+  // One action per quote at a time; the quote is re-read inside the lock so status checks see the winner's write
+  // (two concurrent accepts → one order, the second request returns the ordered quote).
+  await req.scope.resolve(Modules.LOCKING).execute(
+    `quote-${req.params.id}`,
+    async () => {
+      const q = await getQuoteOr404(req.scope, req.params.id, { company_id: company.id })
+      await run({ scope: req.scope, q, member, body: req.body, name })
+    },
+    { timeout: 30 },
+  )
   const fresh = await getQuoteOr404(req.scope, req.params.id, { company_id: company.id })
   res.json({ quote: (await shapeQuotes(req.scope, [fresh], true))[0] })
 }
