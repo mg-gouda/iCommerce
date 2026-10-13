@@ -26,7 +26,7 @@ export async function parentPayments(scope: MedusaContainer, parentIds: string[]
   const { data } = await query(scope).graph({
     entity: "order",
     fields: [
-      "id", "status", "customer_id", "email", "metadata", "customer.metadata",
+      "id", "display_id", "status", "customer_id", "email", "metadata", "customer.metadata",
       "payment_collections.payments.id", "payment_collections.payments.provider_id", "payment_collections.payments.amount",
       "payment_collections.payments.captured_at", "payment_collections.payments.canceled_at", "payment_collections.payments.captures.amount",
     ],

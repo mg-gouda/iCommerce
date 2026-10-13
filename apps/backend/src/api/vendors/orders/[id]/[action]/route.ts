@@ -39,7 +39,8 @@ async function emailBuyer(scope: MedusaContainer, o: VendorOrder, template: Temp
     to: o.email,
     template,
     locale: parent?.customer?.metadata?.locale,
-    data: { display_id: o.display_id, currency_code: o.currency_code, vendor_name, carrier: f?.carrier, tracking_number: f?.tracking_number, tracking_url: f?.tracking_url, ...extra },
+    // Buyers only ever see the parent order number, never the vendor sub-order one.
+    data: { display_id: parent?.display_id ?? o.display_id, currency_code: o.currency_code, vendor_name, carrier: f?.carrier, tracking_number: f?.tracking_number, tracking_url: f?.tracking_url, ...extra },
     key: `${template}-${o.id}`,
   })
 }
