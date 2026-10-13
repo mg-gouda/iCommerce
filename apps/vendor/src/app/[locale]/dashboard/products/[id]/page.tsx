@@ -30,7 +30,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       </nav>
       <PageHeader title={product.title} actions={<Badge variant={productBadge(product.status)}>{ts(product.status)}</Badge>} />
       <ProductForm key={product.updated_at} product={product} categories={categories} approved={vendor.status === "approved"} />
-      <section aria-labelledby="tiers" className={`${panel} mt-6 max-w-[720px]`}>
+      <section aria-labelledby="tiers" className={`${panel} mt-6`}>
         <h2 id="tiers" className="m-0 text-[16px] leading-[22px] font-semibold">{tt("title")}</h2>
         <p className="m-0 mt-1 mb-4 max-w-[65ch] text-[13px] text-ink-muted">{tt("sub")}</p>
         <WholesaleTiers productId={product.id} tiers={tiers} unit={product.product_extra?.unit ?? tt("units")} />
