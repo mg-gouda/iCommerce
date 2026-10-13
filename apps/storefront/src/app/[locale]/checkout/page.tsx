@@ -73,7 +73,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     ) : (
       <p role="alert" className="ic-error m-0">{t("noShipping")}</p>
     ),
-    payment: <PaymentForm providers={providers.map((id) => ({ id, kind: payKind(id)! }))} selected={session?.provider_id} signedIn={!!customer} />,
+    payment: <PaymentForm providers={providers.map((id) => ({ id, kind: payKind(id)! }))} selected={session?.provider_id} />,
     review: (
       <div className="flex flex-col gap-4">
         <VendorLines groups={byVendor(c.items!, products)} currency={currency} />

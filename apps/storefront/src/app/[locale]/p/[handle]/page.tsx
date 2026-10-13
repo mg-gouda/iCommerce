@@ -9,6 +9,7 @@ import { Breadcrumbs, Header } from "@/components/Header"
 import { VendorMark } from "@/components/VendorMark"
 import { Link } from "@/i18n/navigation"
 import { descriptionHtml, descriptionText } from "@/lib/html"
+import { token } from "@/lib/session"
 import { compareAtOf, getProduct, isRetail, isVerified, priceOf } from "@/lib/store"
 
 type Props = { params: Promise<{ handle: string }> }
@@ -30,6 +31,7 @@ export default async function ProductPage({ params }: Props) {
   const compareAt = compareAtOf(p)
   const retail = isRetail(e)
   const verified = isVerified(v)
+  const signedIn = !!(await token())
   const unit = e?.unit ?? t("unitDefault")
   const cat = p.categories[0]
   const images = p.images.length ? p.images.map((i) => i.url) : [p.thumbnail ?? "/samples/placeholder.svg"]
@@ -88,6 +90,12 @@ export default async function ProductPage({ params }: Props) {
             {/* PriceTiers render once wholesale tier price lists exist (P3); none yet → hidden. */}
 
             <BuyBox productId={p.id} price={price} unit={e?.unit ?? null} min={e?.min_qty ?? null} step={e?.qty_step ?? null} max={e?.max_qty ?? null} retail={retail} />
+            {/* B2B-only: visible to all, bought by companies (P3: wholesale prices for verified members). */}
+            {!retail && !signedIn && (
+              <p className="m-0 text-[14px]">
+                <Link href={`/login?next=/p/${p.handle}`} className="text-brand-ink underline underline-offset-2">{t("signInWholesale")}</Link>
+              </p>
+            )}
 
             {p.description && (
               <div className="flex flex-col gap-1">

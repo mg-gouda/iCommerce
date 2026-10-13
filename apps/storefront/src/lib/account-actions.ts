@@ -4,7 +4,8 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { sdk } from "@icommerce/sdk"
 import { EMAIL, parseAddress, routeLocale, str, type FormState } from "./forms"
-import { auth, CART_COOKIE, cartId, clearCookie, setCookie, status, TOKEN_COOKIE } from "./session"
+import { orderStatus } from "./checkout"
+import { auth, CART_COOKIE, cartId, clearCookie, clientIp, setCookie, status, TOKEN_COOKIE, TRACK_COOKIE } from "./session"
 
 const BACKEND = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 
@@ -98,29 +99,52 @@ export async function deleteAddress(fd: FormData) {
   refresh()
 }
 
-/** Multipart passthrough: sdk.client.fetch JSON-encodes bodies, so plain fetch here. */
-async function upload(path: string, body: FormData): Promise<number> {
-  const res = await fetch(`${BACKEND}${path}`, {
-    method: "POST",
-    body,
-    headers: { "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? "", ...(await auth()) },
-    cache: "no-store",
-  })
-  return res.status
-}
-
-/** Bank-transfer proof → POST /store/orders/:id/payment-proof (multipart `file`, own orders; p2-backend.md §4). */
+/**
+ * Bank-transfer proof → POST /store/orders/guest-payment-proof (multipart `file` + `display_id` + `email`; p2-backend.md §4).
+ * Same route for guests and signed-in buyers. Plain fetch: sdk.client.fetch JSON-encodes bodies.
+ */
 export async function uploadProof(_: FormState, fd: FormData): Promise<FormState> {
   const file = fd.get("file")
   if (!(file instanceof File) || !file.size) return { fieldErrors: { file: "fileRequired" } }
   if (file.size > 10 * 1024 * 1024) return { fieldErrors: { file: "fileTooBig" } }
   const body = new FormData()
+  body.append("display_id", str(fd, "display_id"))
+  body.append("email", str(fd, "email"))
   body.append("file", file)
-  const code = await upload(`/store/orders/${encodeURIComponent(str(fd, "order"))}/payment-proof`, body)
-  if (code === 404) return { message: "proofNotReady" }
-  if (code >= 400) return { message: "proofFailed" }
+  const res = await fetch(`${BACKEND}/store/orders/guest-payment-proof`, {
+    method: "POST",
+    body,
+    headers: { "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? "", ...(await clientIp()) },
+    cache: "no-store",
+  })
+  if (res.status === 404) return { message: "proofNotReady" }
+  if (res.status === 429) return { message: "tooMany" }
+  if (!res.ok) return { message: "proofFailed" }
   refresh()
   return { ok: true }
+}
+
+/** Track page lookup: order number + email → remembered in an httpOnly cookie (not the URL) → /track shows the order. */
+export async function trackOrder(_: FormState, fd: FormData): Promise<FormState> {
+  const values = { n: str(fd, "n").replace(/^#/, ""), email: str(fd, "email") }
+  const fieldErrors: Record<string, string> = {}
+  if (!/^\d{1,9}$/.test(values.n)) fieldErrors.n = "orderNumber"
+  if (!EMAIL.test(values.email)) fieldErrors.email = "email"
+  if (Object.keys(fieldErrors).length) return { values, fieldErrors }
+  try {
+    await orderStatus(values.n, values.email)
+  } catch (e) {
+    if (status(e) === 404) return { values, message: "trackNotFound" }
+    if (status(e) === 429) return { values, message: "tooMany" }
+    throw e
+  }
+  await setCookie(TRACK_COOKIE, JSON.stringify(values))
+  redirect(`/${routeLocale(fd)}/track`)
+}
+
+export async function forgetTrack(fd: FormData) {
+  await clearCookie(TRACK_COOKIE)
+  redirect(`/${routeLocale(fd)}/track`)
 }
 
 /** Return request → POST /store/orders/:id/return-request { reason, items: [{ item_id, quantity }] } (parent line ids; p2-backend.md §4). */

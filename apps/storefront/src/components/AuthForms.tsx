@@ -21,9 +21,14 @@ export function LoginForm({ next }: { next?: string }) {
       noValidate
       sub={t("sub")}
       meta={
-        <span>
-          {t("newHere")} <Link href={withNext("/register", next)}>{t("create")}</Link>
-        </span>
+        <>
+          <span>
+            {t("newHere")} <Link href={withNext("/register", next)}>{t("create")}</Link>
+          </span>
+          <span>
+            {t("guestOrder")} <Link href="/track">{t("track")}</Link>
+          </span>
+        </>
       }
     >
       <input type="hidden" name="locale" value={useLocale()} />
