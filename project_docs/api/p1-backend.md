@@ -398,7 +398,7 @@ The store API still lists published products of a later-suspended vendor; the st
 ## 6. Seeded defaults (`medusa exec ./src/scripts/seed-defaults.ts`)
 - Store currencies: USD (default), EGP.
 - Region `Egypt`: currency **USD**, country `eg`, payment provider `pp_system_default`.
-- Sales channels `Retail`, `Wholesale`, each with a publishable key titled `Retail storefront` / `Wholesale storefront` (tokens printed by the script). Storefront uses the key as `x-publishable-api-key` for `/store/*`.
+- Sales channels `Retail`, `Wholesale`, each with a publishable key titled `Retail storefront` / `Wholesale storefront`, plus key `Storefront` linked to **both** (tokens + channel ids printed by the script; idempotent, existing keys kept). The storefront browses with `Storefront`; since that key spans two channels, `POST /store/carts` must pass `sales_channel_id` (else 400) — the storefront sends Retail (`RETAIL_SALES_CHANNEL_ID`). B2B-only products live only in Wholesale → listed, but can't be added to a Retail cart.
 
 Demo data (local dev / E2E only): `medusa exec ./src/scripts/seed-demo.ts` → categories `carpets-rugs`, `cookware`; approved vendors `demo-nile-looms`, `demo-helwan-metal` × 6 published products each (handles `demo-*`, `metadata.demo = true`). Idempotent by handle. Then run `sync-search`.
 

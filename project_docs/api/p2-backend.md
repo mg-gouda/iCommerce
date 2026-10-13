@@ -1,7 +1,7 @@
 # P2 Backend API — B2C checkout, vendor orders, shipping, payments, emails
 
 Base URL `http://localhost:9000`. Medusa 2.21.2. Conventions (errors, auth headers, money in major units, 404-never-403 isolation) as in [p1-backend.md](p1-backend.md).
-All `/store/*` calls need `x-publishable-api-key` (Retail key from `seed-defaults`).
+All `/store/*` calls need `x-publishable-api-key` (`Storefront` key from `seed-defaults`, Retail + Wholesale; carts are created with an explicit `sales_channel_id` = Retail, see p1-backend.md §6).
 
 ## 0. Setup (per environment)
 ```
@@ -16,7 +16,7 @@ Env: `BANK_TRANSFER_DETAILS` (free text shown to buyers, newlines ok), `RESEND_A
 ## 1. Customers (standard Medusa, actor `customer`)
 - Register: `POST /auth/customer/emailpass/register {email,password}` → `{token}` → `POST /store/customers {email, first_name, last_name, phone?, metadata: {locale: "en"|"ar"}}` (Bearer = registration token) → login `POST /auth/customer/emailpass` → `{token}`.
 - `metadata.locale` picks the email language (default `en`). Update later with `POST /store/customers/me {metadata:{locale}}`.
-- Addresses, `GET /store/customers/me`, `GET /store/orders` (own parent orders) are core routes.
+- Addresses, `GET /store/customers/me`, `GET /store/orders` are core routes. `GET /store/orders` returns **parent orders only** (middleware adds `metadata.parent_order_id IS NULL`; vendor sub-orders share the customer but never list; `count` matches).
 
 ## 2. Multi-vendor shipping (the cart needs **one shipping method per vendor**)
 Each vendor has its own shipping profile `vendor_<handle>`, stock location `vendor_<handle>`, fulfillment set and service zone (country `eg`), all named `vendor_<handle>`, provider `manual_manual`. Every vendor product belongs to its vendor's shipping profile.
@@ -89,6 +89,18 @@ Per-vendor progress for the order page. Each entry = `VendorOrder` (§6) without
 Field `file`: one pdf/png/jpeg/webp, ≤10 MB. Only for `pp_bank-transfer_bank-transfer` orders not yet captured (else 400). Re-upload replaces.
 `200 { "payment_proof": { "filename": "receipt.pdf", "mime_type": "application/pdf", "uploaded_at": "…" } }` · 404 not yours.
 
+### Guest routes (no auth; order number + checkout email)
+Match = a **parent** order with that `display_id` and email (case-insensitive, trimmed). Wrong number, wrong email, a vendor sub-order's number → the same `404 { "message": "Order not found" }` (no enumeration).
+Rate limit: 10 per hour per IP (first `X-Forwarded-For` hop, else socket IP) and per `display_id` → `429 { "type": "too_many_requests", "message": "Too many attempts. Try again later." }`. `guest-status` counts failed lookups only; `guest-payment-proof` counts every attempt. ponytail: in-memory per process.
+
+- `GET /store/orders/guest-status?display_id=12&email=buyer@x.com` → same body as `GET /store/orders/:id/vendor-orders` plus `order`:
+  ```json
+  { "order": { "display_id": 12, "created_at": "…", "currency_code": "usd", "total": 167 },
+    "vendor_orders": [ … ], "payment": { … } }
+  ```
+  No order id, address, names or buyer email in the response. Works for signed-in buyers' orders too (the storefront uses it for every order page).
+- `POST /store/orders/guest-payment-proof` (**multipart**: `file` + `display_id` + `email`) → `200 { "payment_proof": {…} }` as below. Only bank-transfer orders not yet confirmed; anything else (COD, captured, mismatch) → the same 404.
+
 ### `POST /store/orders/:id/return-request` (customer auth, own orders)
 ```json
 // req — item_id = parent order line item id (what the customer sees)
@@ -134,7 +146,7 @@ ponytail: no edit; delete + create.
 - `GET /vendors/orders/:id` → `{ order: VendorOrder }`
 - `POST /vendors/orders/:id/fulfill` `{ carrier, tracking_number, tracking_url? }` → `{ order }` status `shipped` (fulfillment + shipment created, buyer emailed). 400 unless `pending`.
 - `POST /vendors/orders/:id/deliver` → `{ order }` status `delivered`; COD captured for this vendor order's total; buyer emailed. 400 unless `shipped`.
-- `POST /vendors/orders/:id/cancel` `{ reason }` → `{ order }` status `canceled`. 400 unless `pending`.
+- `POST /vendors/orders/:id/cancel` `{ reason }` → `{ order }` status `canceled`. 400 unless `pending`. Buyer emailed (`order-canceled`). If the parent's bank transfer was already captured → parent `metadata.refund_required = true` (admin refunds manually). When **every** vendor order of the parent is canceled, the parent is canceled too: `cancelOrderWorkflow` (authorization canceled) — or, if money was captured, a plain order cancel that leaves the payment captured (ponytail: the workflow would record an automatic refund).
 - `POST /vendors/orders/:id/return-request` `{ action: "approve"|"reject", note? }` → `{ order }`. 400 unless a `requested` return exists.
 
 ## 7. Emails (Notification module, channel `email`)
@@ -145,4 +157,5 @@ ponytail: no edit; delete + create.
 | order placed | each vendor owner | `vendor-new-order` |
 | vendor fulfils | customer | `order-shipped` (carrier + tracking) |
 | vendor delivers | customer | `order-delivered` |
+| vendor cancels | customer | `order-canceled` (that vendor's items, reason; COD: nothing charged · bank transfer: support will contact you about the refund) |
 EN/AR by customer `metadata.locale` (AR = `dir="rtl"`). Provider: Resend when `RESEND_API_KEY` set, else files in `apps/backend/.emails/<timestamp>-<template>-<to>.html`.

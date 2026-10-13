@@ -7,6 +7,16 @@ import { fitQty, isFractional, isRetail, listProducts, region } from "./store"
 
 const product = async (id: string) => (await listProducts({ id: [id], limit: 1 })).products[0]
 
+/**
+ * Sales channel for new carts. The Storefront key spans Retail + Wholesale, so Medusa needs it explicitly.
+ * Retail for everyone today; P3 returns Wholesale for verified company members.
+ */
+async function cartSalesChannel() {
+  const id = process.env.RETAIL_SALES_CHANNEL_ID
+  if (!id) throw new Error("RETAIL_SALES_CHANNEL_ID is not set (Retail sales_channel id from seed-defaults)")
+  return id
+}
+
 /** Adds a retail product (first variant) to the cookie cart, creating the cart if needed. Returns the new item count. */
 export async function addToCart(productId: string, qty: number) {
   const p = await product(productId)
@@ -17,7 +27,7 @@ export async function addToCart(productId: string, qty: number) {
   const headers = await auth()
   let id = (await getCart())?.id
   if (!id) {
-    id = (await sdk.store.cart.create({ region_id: await region() }, { fields: "id" }, headers)).cart.id
+    id = (await sdk.store.cart.create({ region_id: await region(), sales_channel_id: await cartSalesChannel() }, { fields: "id" }, headers)).cart.id
     await setCookie(CART_COOKIE, id)
   }
   const { cart } = await sdk.store.cart.createLineItem(id, { variant_id: variant.id, quantity }, { fields: "items.quantity" }, headers)
