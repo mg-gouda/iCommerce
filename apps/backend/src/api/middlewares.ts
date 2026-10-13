@@ -43,6 +43,15 @@ export default defineMiddlewares({
     { matcher: "/store/orders/:id/vendor-orders", method: ["GET"], middlewares: [customerAuth] },
     { matcher: "/store/orders/:id/return-request", method: ["POST"], middlewares: [customerAuth] },
     { matcher: "/store/orders/:id/payment-proof", method: ["POST"], middlewares: [customerAuth, proofUpload.single("file")] },
+    // B2B: company + quote routes need a signed-in customer; handlers 404 non-members / other companies.
+    { matcher: "/store/companies*", middlewares: [customerAuth] },
+    { matcher: "/store/companies/me/kyc", method: ["POST"], middlewares: [kycUpload.array("files", 10)] },
+    { matcher: "/store/quotes*", middlewares: [customerAuth] },
+    {
+      matcher: "/store/products/:id/wholesale-tiers",
+      method: ["GET"],
+      middlewares: [authenticate("customer", ["session", "bearer"], { allowUnauthenticated: true })],
+    },
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.

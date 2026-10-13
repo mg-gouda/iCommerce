@@ -8,11 +8,12 @@ import {
   updateRegionsWorkflow,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { BANK_PROVIDER, COD_PROVIDER } from "../modules/offline-payment/service"
+import { B2B_GROUP, ensureGroup } from "../lib/company"
+import { BANK_PROVIDER, COD_PROVIDER, NET_TERMS_PROVIDER } from "../modules/offline-payment/service"
 
 const CHANNELS = ["Retail", "Wholesale"]
-// Gateway parked → v1 checkout = cash on delivery + bank transfer.
-const PAYMENT_PROVIDERS = [COD_PROVIDER, BANK_PROVIDER]
+// Gateway parked → v1 checkout = cash on delivery + bank transfer; net terms for verified companies with credit.
+const PAYMENT_PROVIDERS = [COD_PROVIDER, BANK_PROVIDER, NET_TERMS_PROVIDER]
 
 // medusa exec ./src/scripts/seed-defaults.ts — idempotent (matches by name/title).
 // Store currencies USD (default) + EGP, region "Egypt" (payment: COD + bank transfer), sales channels Retail + Wholesale, one publishable key each.
@@ -67,4 +68,5 @@ export default async function seedDefaults({ container }: ExecArgs) {
     }
     logger.info(`seed-defaults: ${channel.name} sales_channel=${channel.id} publishable_key=${key.token}`)
   }
+  await ensureGroup(container, B2B_GROUP)
 }

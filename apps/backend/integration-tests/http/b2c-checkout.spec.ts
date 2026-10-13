@@ -67,7 +67,7 @@ medusaIntegrationTestRunner({
 
     async function checkout(token: string, lines: string[], provider_id: string) {
       const region = (await api.get("/store/regions?fields=*payment_providers", auth())).data.regions.find((r: { name: string }) => r.name === "Egypt")
-      expect(region.payment_providers.map((p: { id: string }) => p.id).sort()).toEqual(["pp_bank-transfer_bank-transfer", "pp_cod_cod"])
+      expect(region.payment_providers.map((p: { id: string }) => p.id).sort()).toEqual(["pp_bank-transfer_bank-transfer", "pp_cod_cod", "pp_net-terms_net-terms"])
       let cart = (await api.post("/store/carts", { region_id: region.id }, auth(token))).data.cart
       for (const variant_id of lines) await api.post(`/store/carts/${cart.id}/line-items`, { variant_id, quantity: 2 }, auth(token))
       await api.post(

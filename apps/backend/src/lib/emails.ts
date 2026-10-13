@@ -1,5 +1,6 @@
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+import { B2B_STR, type B2bData, type B2bTemplate } from "./emails-b2b"
 
 export type Locale = "en" | "ar"
 type Item = { title: string; quantity: number; total: number }
@@ -13,7 +14,7 @@ export type EmailData = {
   carrier?: string
   tracking_number?: string
   tracking_url?: string | null
-}
+} & B2bData
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const money = (n: number | undefined, cur: string, l: Locale) =>
@@ -43,10 +44,10 @@ const STR = {
     seller: "البائع", carrier: "شركة الشحن", tracking: "رقم التتبع", track: "تتبع الشحنة", amount: "المبلغ", bank: "بيانات الحساب البنكي",
   },
 }
-export type Template = "order-placed" | "bank-transfer" | "vendor-new-order" | "order-shipped" | "order-delivered"
+export type Template = "order-placed" | "bank-transfer" | "vendor-new-order" | "order-shipped" | "order-delivered" | B2bTemplate
 
 export function render(template: Template, d: EmailData, l: Locale) {
-  const s = STR[l]
+  const s = { ...STR[l], ...B2B_STR[l] }
   const row = (k: string, v: string) => `<p style="margin:4px 0"><b>${esc(k)}:</b> <bdi>${v}</bdi></p>`
   const table = d.items?.length
     ? `<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">
@@ -62,6 +63,11 @@ ${d.items.map((i) => `<tr><td style="padding:8px;border-top:1px solid #e3e7ee">$
     d.carrier && row(s.carrier, esc(d.carrier)),
     d.tracking_number && row(s.tracking, esc(d.tracking_number)),
     d.tracking_url && `<p style="margin:16px 0"><a href="${esc(d.tracking_url)}" style="background:#2a74ba;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${s.track}</a></p>`,
+    d.company_name && row(s.company, esc(d.company_name)),
+    d.body && `<p style="margin:12px 0 4px"><b>${s.message}:</b></p><blockquote style="margin:0;white-space:pre-wrap;background:#f3f5f9;padding:12px;border-radius:6px">${esc(d.body)}</blockquote>`,
+    d.note && row(s.note, esc(d.note)),
+    d.due_date && row(s.due, esc(d.due_date)),
+    d.url && `<p style="margin:16px 0"><a href="${esc(d.url)}" style="background:#2a74ba;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${template === "company-invite" ? s.accept : s.open}</a></p>`,
   ]
     .filter(Boolean)
     .join("\n")
