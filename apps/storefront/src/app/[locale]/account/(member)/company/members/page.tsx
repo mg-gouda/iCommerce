@@ -25,7 +25,6 @@ export default async function MembersPage() {
             <tr className="border-b border-line bg-ground text-[12px] text-ink-muted">
               <th scope="col" className="px-4 py-2 text-start font-medium">{t("member")}</th>
               <th scope="col" className="px-4 py-2 text-start font-medium">{t("role")}</th>
-              {admin && <th scope="col" className="px-4 py-2 text-end font-medium"><span className="sr-only">{t("actions")}</span></th>}
             </tr>
           </thead>
           <tbody>
@@ -35,10 +34,9 @@ export default async function MembersPage() {
                 <tr key={x.id} className="border-b border-line last:border-b-0">
                   <td className="px-4 py-3">
                     <div className="font-medium"><bdi>{name(x)}</bdi>{self && <span className="text-ink-muted"> ({t("you")})</span>}</div>
-                    <bdi dir="ltr" className="text-[13px] text-ink-muted">{x.email}</bdi>
+                    <bdi dir="ltr" className="text-[13px] break-all text-ink-muted">{x.email}</bdi>
                   </td>
-                  <td className="px-4 py-3">{admin ? <RoleForm id={x.id} role={x.role} label={name(x)} /> : t(`roles.${x.role}`)}</td>
-                  {admin && <td className="px-4 py-3 text-end">{!self && <RemoveForm id={x.id} label={name(x)} />}</td>}
+                  <td className="px-4 py-3">{admin ? <div className="flex flex-wrap items-center gap-2"><RoleForm id={x.id} role={x.role} label={name(x)} />{!self && <RemoveForm id={x.id} label={name(x)} />}</div> : t(`roles.${x.role}`)}</td>
                 </tr>
               )
             })}
@@ -54,7 +52,7 @@ export default async function MembersPage() {
               <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14px]">
                 {invitations.map((i) => (
                   <li key={i.id}>
-                    <bdi dir="ltr">{i.email}</bdi> · {t(`roles.${i.role}`)} · <span className="text-ink-muted">{t("expires", { date: date.format(new Date(i.expires_at)) })}</span>
+                    <bdi dir="ltr" className="break-all">{i.email}</bdi> · {t(`roles.${i.role}`)} · <span className="text-ink-muted">{t("expires", { date: date.format(new Date(i.expires_at)) })}</span>
                   </li>
                 ))}
               </ul>

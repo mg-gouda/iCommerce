@@ -48,7 +48,25 @@ export default async function QuotePage({ params }: Props) {
 
       <section aria-labelledby="offer" className="flex flex-col gap-3">
         <h3 id="offer" className="m-0 text-[16px] leading-[22px] font-semibold">{offered ? t("offerTitle") : t("requestTitle")}</h3>
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        {/* Phones: one block per item (a 6-column table would hide the offer price off-screen). */}
+        <ul className="m-0 flex list-none flex-col gap-2 p-0 sm:hidden">
+          {q.items.map((i) => (
+            <li key={i.id} className="flex flex-col gap-1.5 rounded-lg border border-line bg-surface p-3 text-[14px] tabular-nums">
+              <span dir="auto" className="text-start font-semibold">{i.title}</span>
+              <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
+                <dt className="text-ink-muted">{t("qty")}</dt><dd className="m-0"><bdi>{qty(i.quantity, i.unit)}</bdi></dd>
+                {i.target_price != null && <><dt className="text-ink-muted">{t("target")}</dt><dd className="m-0"><bdi>{money(i.target_price, cur)}</bdi></dd></>}
+                {i.offered_unit_price != null && <><dt className="text-ink-muted">{t("offerUnit")}</dt><dd className="m-0 font-semibold"><bdi>{money(i.offered_unit_price, cur)}</bdi></dd></>}
+                {i.lead_time_days != null && <><dt className="text-ink-muted">{t("leadTime")}</dt><dd className="m-0">{t("days", { n: i.lead_time_days })}</dd></>}
+                {i.offered_unit_price != null && <><dt className="text-ink-muted">{t("lineTotal")}</dt><dd className="m-0"><bdi>{money(i.offered_unit_price * i.quantity, cur)}</bdi></dd></>}
+              </dl>
+            </li>
+          ))}
+          {q.total != null && (
+            <li className="flex justify-between px-3 font-semibold"><span>{t("total")}</span><bdi className="tabular-nums">{money(q.total, cur)}</bdi></li>
+          )}
+        </ul>
+        <div className="overflow-x-auto rounded-lg border border-line bg-surface max-sm:hidden">
           <table className="w-full min-w-[640px] border-collapse text-[14px] tabular-nums">
             <thead>
               <tr className="border-b border-line bg-ground text-[12px] text-ink-muted">

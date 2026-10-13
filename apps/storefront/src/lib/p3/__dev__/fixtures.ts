@@ -14,7 +14,13 @@ const now = () => new Date().toISOString()
 const claims = (authz?: string) => {
   if (!authz) throw fail(401, "Unauthorized")
   const c = JSON.parse(Buffer.from(authz.split(".")[1], "base64url").toString())
-  return { customer_id: c.actor_id as string, email: (c.app_metadata?.email ?? c.user_metadata?.email ?? `${c.actor_id}@example.com`) as string }
+  return { customer_id: c.actor_id as string, email: `${c.actor_id}@example.com` }
+}
+// Real names/emails for new members (the JWT carries neither).
+async function person(authz: string) {
+  const { sdk } = await import("@icommerce/sdk")
+  const { customer } = await sdk.store.customer.retrieve({ fields: "email,first_name,last_name" }, { authorization: authz })
+  return { email: customer.email, first_name: customer.first_name ?? null, last_name: customer.last_name ?? null }
 }
 const TIERS: Tier[] = [{ min_qty: 10, unit_price_usd: 9.5 }, { min_qty: 50, unit_price_usd: 8.9 }, { min_qty: 200, unit_price_usd: 8.1 }]
 
@@ -34,19 +40,19 @@ export async function fixture(path: string, init: { method?: string; body?: Reco
 
   if (m === "GET /store/companies/me") { const { c, member } = me(); return { company: c.company, member } }
   if (m === "POST /store/companies") {
-    const { customer_id, email } = claims(authz)
+    const { customer_id } = claims(authz)
     if (db.companies.some((x) => x.members.some((y) => y.customer_id === customer_id))) throw fail(400, "You already belong to a company.")
     const company: Company = {
       id: id("comp"), name: String(b.name), handle: String(b.name).toLowerCase().replace(/\W+/g, "-"), country: String(b.country),
       city: (b.city as string) ?? null, address: (b.address as string) ?? null, phone: (b.phone as string) ?? null,
       tax_id: null, commercial_reg_no: null, export_card_no: null, kyc_status: "none", kyc_note: null, kyc_files: null, verified_at: null, payment_mode: "upfront",
     }
-    const member: Member = { id: id("cmem"), customer_id, email, first_name: null, last_name: null, role: "admin", created_at: now() }
+    const member: Member = { id: id("cmem"), customer_id, ...(await person(authz!)), role: "admin", created_at: now() }
     db.companies.push({ company, members: [member], invitations: [], credit: { credit_account: null, used: 0, available: 0, invoices: [] } })
     return done({ company, member })
   }
   if (m === "POST /store/companies/me") { const { c, member } = admin(); Object.assign(c.company, b); return done({ company: c.company, member }) }
-  if (m === "GET /store/companies/me/members") { const { c, member } = me(); return { members: c.members, invitations: member.role === "admin" ? c.invitations : [] } }
+  if (m === "GET /store/companies/me/members") { const { c, member } = me(); return { members: c.members, invitations: member.role === "admin" ? c.invitations.filter((i) => !i.accepted_at) : [] } }
   if (m === "POST /store/companies/me/invitations") {
     const { c } = admin()
     if (c.members.some((x) => x.email === b.email)) throw fail(400, "This email is already a member.")
@@ -55,13 +61,13 @@ export async function fixture(path: string, init: { method?: string; body?: Reco
     return done({ invitation })
   }
   if (m === "POST /store/companies/invitations/accept") {
-    const { customer_id, email } = claims(authz)
+    const { customer_id } = claims(authz)
     const c = db.companies.find((x) => x.invitations.some((i) => i.id === b.token && !i.accepted_at))
     const inv = c?.invitations.find((i) => i.id === b.token)
     if (!c || !inv) throw fail(400, "This invitation is invalid, expired or already used.")
     if (db.companies.some((x) => x.members.some((y) => y.customer_id === customer_id))) throw fail(400, "You already belong to a company.")
     inv.accepted_at = now()
-    const member: Member = { id: id("cmem"), customer_id, email, first_name: null, last_name: null, role: inv.role, created_at: now() }
+    const member: Member = { id: id("cmem"), customer_id, ...(await person(authz!)), role: inv.role, created_at: now() }
     c.members.push(member)
     return done({ company: c.company, member })
   }

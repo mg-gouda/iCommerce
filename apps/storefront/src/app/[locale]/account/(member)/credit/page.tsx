@@ -51,24 +51,24 @@ export default async function CreditPage() {
         <h2 id="invoices" className="m-0 text-[20px] leading-[26px] font-semibold">{t("invoices")}</h2>
         {invoices.length ? (
           <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-            <table className="w-full min-w-[560px] border-collapse text-[14px] tabular-nums">
+            <table className="w-full border-collapse text-[14px] tabular-nums">
               <thead>
                 <tr className="border-b border-line bg-ground text-[12px] text-ink-muted">
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("order")}</th>
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("issued")}</th>
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("due")}</th>
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("statusCol")}</th>
-                  <th scope="col" className="px-4 py-2 text-end font-medium">{t("amount")}</th>
+                  <th scope="col" className="px-3 py-2 text-start font-medium">{t("order")}</th>
+                  <th scope="col" className="px-3 py-2 text-start font-medium max-sm:hidden">{t("issued")}</th>
+                  <th scope="col" className="px-3 py-2 text-start font-medium">{t("due")}</th>
+                  <th scope="col" className="px-3 py-2 text-start font-medium">{t("statusCol")}</th>
+                  <th scope="col" className="px-3 py-2 text-end font-medium">{t("amount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((i) => (
                   <tr key={i.id} className="border-b border-line last:border-b-0">
-                    <td className="px-4 py-3"><Link href={`/account/orders/${i.order_id}`} className="text-brand-ink underline underline-offset-2">#{i.display_id}</Link></td>
-                    <td className="px-4 py-3">{date.format(new Date(i.created_at))}</td>
-                    <td className="px-4 py-3">{date.format(new Date(i.due_date))}</td>
-                    <td className="px-4 py-3"><Badge variant={INVOICE_BADGE[i.status]}>{t(`invoice.${i.status}`)}</Badge></td>
-                    <td className="px-4 py-3 text-end font-semibold"><bdi>{money(i.amount, i.currency_code.toUpperCase())}</bdi></td>
+                    <td className="px-3 py-3"><Link href={`/account/orders/${i.order_id}`} className="text-brand-ink underline underline-offset-2">#{i.display_id}</Link></td>
+                    <td className="px-3 py-3 max-sm:hidden">{date.format(new Date(i.created_at))}</td>
+                    <td className="px-3 py-3">{date.format(new Date(i.due_date))}</td>
+                    <td className="px-3 py-3"><Badge variant={INVOICE_BADGE[i.status]}>{t(`invoice.${i.status}`)}</Badge></td>
+                    <td className="px-3 py-3 text-end font-semibold"><bdi>{money(i.amount, i.currency_code.toUpperCase())}</bdi></td>
                   </tr>
                 ))}
               </tbody>
