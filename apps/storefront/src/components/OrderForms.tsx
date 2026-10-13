@@ -2,9 +2,9 @@
 
 import { Check, CircleAlert } from "lucide-react"
 import { useActionState, useId } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Button, Field, Textarea } from "@icommerce/ui"
-import { requestReturn, uploadProof } from "@/lib/account-actions"
+import { requestReturn, trackOrder, uploadProof } from "@/lib/account-actions"
 import type { FormState } from "@/lib/forms"
 import { FormMessage, useFieldError } from "./FormMessage"
 
@@ -16,17 +16,37 @@ function Done({ children }: { children: string }) {
   )
 }
 
-export function ProofForm({ orderId }: { orderId: string }) {
+/** Receipt upload by order number + email (works for guests; signed-in buyers use the same route). */
+export function ProofForm({ n, email, replace }: { n: number; email: string; replace?: boolean }) {
   const t = useTranslations("order")
   const [state, run, pending] = useActionState(uploadProof, {} as FormState)
   const err = useFieldError(state)
   if (state.ok) return <Done>{t("proofSent")}</Done>
   return (
     <form action={run} className="flex flex-col gap-3">
-      <input type="hidden" name="order" value={orderId} />
+      <input type="hidden" name="display_id" value={n} />
+      <input type="hidden" name="email" value={email} />
       <FormMessage state={state} />
-      <Field label={t("proofLabel")} name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" help={t("proofHelp")} error={err("file")} className="py-1.5" />
+      <Field label={t(replace ? "proofReplace" : "proofLabel")} name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" help={t("proofHelp")} error={err("file")} className="py-1.5" />
       <Button type="submit" busy={pending} className="self-start">{t("proofSubmit")}</Button>
+    </form>
+  )
+}
+
+/** Guest order lookup (track page): order number + the email used at checkout. */
+export function TrackForm() {
+  const t = useTranslations("track")
+  const [state, run, pending] = useActionState(trackOrder, {} as FormState)
+  const err = useFieldError(state)
+  return (
+    <form action={run} noValidate className="flex flex-col gap-4">
+      <input type="hidden" name="locale" value={useLocale()} />
+      <FormMessage state={state} />
+      <Field label={t("number")} name="n" inputMode="numeric" autoComplete="off" dir="ltr" required help={t("numberHelp")}
+        defaultValue={state.values?.n} error={err("n")} />
+      <Field label={t("email")} name="email" type="email" autoComplete="email" dir="ltr" required placeholder="you@example.com"
+        defaultValue={state.values?.email} error={err("email")} />
+      <Button type="submit" variant="primary" busy={pending} className="self-start">{t("submit")}</Button>
     </form>
   )
 }

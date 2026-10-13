@@ -10,7 +10,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const body = PostReturnRequest.safeParse(req.body)
   if (!body.success) throw new MedusaError(MedusaError.Types.INVALID_DATA, body.error.message)
   const parent = await ownParentOr404(req)
-  const children = await childOrders(req, parent)
+  const children = await childOrders(req.scope, parent)
   const bad = (msg: string) => new MedusaError(MedusaError.Types.INVALID_DATA, msg)
 
   const byChild = new Map<string, { item_id: string; quantity: number }[]>()

@@ -1,5 +1,5 @@
 import { sdk } from "@icommerce/sdk"
-import { auth, status, type Order } from "./session"
+import { auth, clientIp, status, type Order } from "./session"
 
 export type ShipOption = { id: string; name: string; amount: number; kind: "flat" | "free_over" | "pickup"; free_over: number | null }
 export type ShipGroup = {
@@ -65,18 +65,31 @@ export type VendorOrder = {
   total: number
   fulfillment: { carrier: string; tracking_number: string; tracking_url: string | null; shipped_at: string; delivered_at: string | null } | null
   return_request: { status: "requested" | "approved" | "rejected"; reason: string; note: string | null } | null
+  cancel_reason: string | null
 }
-export type VendorOrders = {
+export type OrderPay = { provider_id: string; status: "authorized" | "captured" | "partially_captured" | "canceled"; bank_details: string | null; proof_uploaded_at: string | null }
+export type OrderStatus = {
+  order: { display_id: number; created_at: string; currency_code: string; total: number }
   vendor_orders: VendorOrder[]
-  payment: { provider_id: string; status: string; bank_details: string | null; proof_uploaded_at: string | null }
+  payment: OrderPay | null
 }
 
-/** Per-vendor progress (customer's own orders only). null = not available (guest, or P1 backend). */
-export async function vendorOrders(orderId: string): Promise<VendorOrders | null> {
-  try {
-    return await sdk.client.fetch<VendorOrders>(`/store/orders/${orderId}/vendor-orders`, { headers: await auth() })
-  } catch (e) {
-    if ([401, 404].includes(status(e) ?? 0)) return null
-    throw e
-  }
+/**
+ * Per-vendor progress by order number + email (`GET /store/orders/guest-status`, p2-backend.md §4) — guests and
+ * signed-in buyers alike. Throws on 404 (no match) / 429 (rate-limited); callers decide.
+ */
+export async function orderStatus(n: number | string, email: string) {
+  // Own signal = opt out of Next's per-render fetch memoization (the confirmation page re-polls while the split runs).
+  return sdk.client.fetch<OrderStatus>("/store/orders/guest-status", {
+    query: { display_id: n, email },
+    headers: await clientIp(),
+    signal: new AbortController().signal,
+  })
 }
+
+/** Same, null when unavailable (no match, rate-limited). */
+export const orderStatusOrNull = (n: number | string, email: string) =>
+  orderStatus(n, email).catch((e) => {
+    if ([404, 429].includes(status(e) ?? 0)) return null
+    throw e
+  })

@@ -30,7 +30,9 @@
     "password": "Password",
     "submit": "Sign in",
     "newHere": "New here?",
-    "create": "Create account"
+    "create": "Create account",
+    "guestOrder": "Ordered as a guest?",
+    "track": "Track your order"
   },
   "cart": {
     "title": "Your cart",
@@ -101,7 +103,8 @@
     "visitStore": "Visit store",
     "showImage": "Show image {n} of {total}",
     "addFailed": "Couldn't add. Try again",
-    "chooseQty": "Choose quantity"
+    "chooseQty": "Choose quantity",
+    "signInWholesale": "Sign in for wholesale prices"
   },
   "category": {
     "home": "Home",
@@ -176,7 +179,9 @@
     "proofFailed": "Upload failed. Use a PDF, PNG, JPEG or WebP under 10 MB.",
     "pickItems": "Set a quantity for at least one item.",
     "returnNotReady": "Return requests aren't available for this order yet.",
-    "bankNeedsAccount": "Sign in or create an account to pay by bank transfer, or choose cash on delivery."
+    "tooMany": "Too many attempts. Wait an hour and try again.",
+    "trackNotFound": "No order matches this number and email. Check both: the number is in your confirmation email.",
+    "orderNumber": "Enter the order number, digits only, e.g. 1042."
   },
   "address": {
     "firstName": "First name",
@@ -228,9 +233,7 @@
     "subtotal": "Items",
     "shipping": "Shipping",
     "nextStep": "Next step",
-    "total": "Total",
-    "bankAccount": "Bank transfer needs an account so you can upload the receipt and follow the order. Your cart stays.",
-    "createAccount": "Create account"
+    "total": "Total"
   },
   "order": {
     "placed": "Order placed",
@@ -278,7 +281,12 @@
     "returnSent": "Return requested. The supplier will reply by email.",
     "keepShopping": "Continue shopping",
     "myOrders": "My orders",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "payConfirmed": "Transfer confirmed. Suppliers are preparing your items.",
+    "payCanceled": "This order was cancelled. If you already sent the transfer, iCommerce support will contact you about your refund.",
+    "proofReplace": "Replace the receipt",
+    "canceledBecause": "Cancelled by the supplier: {reason}",
+    "trackLater": "Track this order"
   },
   "account": {
     "title": "My account",
@@ -297,5 +305,19 @@
     "addressNote": "Checkout fills in your first saved address.",
     "addAddress": "Add an address",
     "saveAddress": "Save address"
+  },
+  "track": {
+    "title": "Track your order",
+    "sub": "Ordered without an account? Enter your order number and the email you used at checkout.",
+    "number": "Order number",
+    "numberHelp": "In your confirmation email, e.g. #1042.",
+    "email": "Email",
+    "submit": "Find order",
+    "orderN": "Order #{n}",
+    "another": "Track another order",
+    "preparing": "Your order is being split by supplier. Refresh in a moment.",
+    "expired": "We couldn't load that order again. Enter its number and email once more.",
+    "haveAccount": "Have an account?",
+    "signIn": "Sign in to see all your orders"
   }
 }

@@ -36,6 +36,12 @@ const allowStoreProductFields = (req: MedusaRequest, _res: MedusaResponse, next:
   next()
 }
 
+// Runs after core's validateAndTransformQuery (which sets filterableFields) → adds a JSON filter on metadata.
+const parentOrdersOnly = (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
+  req.filterableFields = { ...req.filterableFields, metadata: { parent_order_id: null } }
+  next()
+}
+
 export default defineMiddlewares({
   routes: [
     { matcher: "/store/products*", method: ["GET"], middlewares: [allowStoreProductFields] },
@@ -43,6 +49,10 @@ export default defineMiddlewares({
     { matcher: "/store/orders/:id/vendor-orders", method: ["GET"], middlewares: [customerAuth] },
     { matcher: "/store/orders/:id/return-request", method: ["POST"], middlewares: [customerAuth] },
     { matcher: "/store/orders/:id/payment-proof", method: ["POST"], middlewares: [customerAuth, proofUpload.single("file")] },
+    // Guest routes: public, matched by display_id + email, rate-limited in the handlers.
+    { matcher: "/store/orders/guest-payment-proof", method: ["POST"], middlewares: [proofUpload.single("file")] },
+    // Customer order list = parent orders only (vendor sub-orders share the customer).
+    { matcher: "/store/orders", method: ["GET"], middlewares: [parentOrdersOnly] },
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.

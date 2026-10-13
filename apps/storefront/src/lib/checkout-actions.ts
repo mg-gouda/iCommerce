@@ -2,9 +2,9 @@
 
 import { redirect } from "next/navigation"
 import { sdk } from "@icommerce/sdk"
-import { payKind, paymentProviders, shippingGroups } from "./checkout"
+import { paymentProviders, shippingGroups } from "./checkout"
 import { EMAIL, parseAddress, routeLocale, str, type FormState } from "./forms"
-import { auth, CART_COOKIE, clearCookie, getCart, token } from "./session"
+import { auth, CART_COOKIE, clearCookie, getCart } from "./session"
 
 // Each checkout section posts here; success → back to /checkout, which opens the next unfinished section.
 
@@ -45,10 +45,8 @@ export async function saveShipping(_: FormState, fd: FormData): Promise<FormStat
   if (!groups.length || groups.some((g) => !g.options.length)) return { message: "noShipping" }
   if (Object.keys(fieldErrors).length) return { fieldErrors, values: Object.fromEntries(picks.map(({ g, id }) => [`ship_${g.profileId}`, id])) }
   const headers = await auth()
-  // One method per vendor; re-adding for a profile replaces its old method. `data.vendor_handle` rides along to the
-  // order's shipping method so a guest confirmation can name each vendor's method (vendor-orders needs an account).
-  for (const { g, id } of picks)
-    await sdk.store.cart.addShippingMethod(cart.id, { option_id: id, data: { vendor_handle: g.vendor?.handle ?? "" } }, { fields: "id" }, headers)
+  // One method per vendor; re-adding for a profile replaces its old method.
+  for (const { id } of picks) await sdk.store.cart.addShippingMethod(cart.id, { option_id: id }, { fields: "id" }, headers)
   return back(fd)
 }
 
@@ -57,8 +55,6 @@ export async function savePayment(_: FormState, fd: FormData): Promise<FormState
   const cart = await openCart()
   if (!cart) return { message: "cartGone" }
   if (!(await paymentProviders(cart.region_id!)).includes(provider)) return { values: { provider }, fieldErrors: { provider: "pickPayment" } }
-  // Bank transfer needs an account: proof upload + order status are customer-only routes.
-  if (payKind(provider) === "bank" && !(await token())) return { values: { provider }, fieldErrors: { provider: "bankNeedsAccount" } }
   await sdk.store.payment.initiatePaymentSession(cart, { provider_id: provider }, { fields: "id" }, await auth())
   return back(fd)
 }

@@ -56,7 +56,7 @@ export function AddressForm({ address }: { address: Record<string, string | null
 /** A radio rendered as a selectable card (label wraps input → whole card clickable). */
 function Choice({ name, value, checked, children, describedBy }: { name: string; value: string; checked?: boolean; children: ReactNode; describedBy?: string }) {
   return (
-    <label className="group flex cursor-pointer items-start gap-3 rounded-md border border-line-strong bg-surface p-3 hover:border-ink-muted has-[:checked]:border-brand has-[:checked]:bg-brand-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus-ring">
+    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line-strong bg-surface p-3 hover:border-ink-muted has-[:checked]:border-brand has-[:checked]:bg-brand-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus-ring">
       <input type="radio" name={name} value={value} defaultChecked={checked} aria-describedby={describedBy} className="mt-1 size-4 flex-none accent-brand focus-visible:outline-none" />
       <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">{children}</span>
     </label>
@@ -104,7 +104,7 @@ export function ShippingForm({ groups, currency }: { groups: ShipGroup[]; curren
   )
 }
 
-export function PaymentForm({ providers, selected, signedIn }: { providers: { id: string; kind: PayKind }[]; selected?: string; signedIn: boolean }) {
+export function PaymentForm({ providers, selected }: { providers: { id: string; kind: PayKind }[]; selected?: string }) {
   const t = useTranslations("checkout")
   return (
     <StepForm action={savePayment} submit={t("continue")}>
@@ -118,14 +118,6 @@ export function PaymentForm({ providers, selected, signedIn }: { providers: { id
                 <span>
                   <span className="font-medium">{t(`pay.${p.kind}`)}</span>
                   <span className="block text-[13px] text-ink-muted">{t(`pay.${p.kind}Help`)}</span>
-                  {/* Proof upload needs an account (own orders only) → guests sign in right here; the cart follows them. */}
-                  {p.kind === "bank" && !signedIn && (
-                    <span className="mt-2 hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-surface p-2.5 text-[13px] group-has-[:checked]:flex">
-                      <span className="w-full font-medium text-ink">{t("bankAccount")}</span>
-                      <Link href="/login?next=/checkout" className="text-brand-ink underline underline-offset-2">{t("signIn")}</Link>
-                      <Link href="/register?next=/checkout" className="text-brand-ink underline underline-offset-2">{t("createAccount")}</Link>
-                    </span>
-                  )}
                 </span>
               </Choice>
             ))}
