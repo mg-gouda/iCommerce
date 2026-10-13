@@ -163,7 +163,7 @@ export async function submitRfq(_: FormState, fd: FormData): Promise<FormState> 
   const err = await attempt(async () => {
     const res = await call<{ rfq_id: string }>("/store/quotes", {
       method: "POST",
-      body: { items, notes: values.notes || undefined, incoterm: values.incoterm || null },
+      body: { items, notes: values.notes || undefined, incoterm: values.incoterm || undefined },
     })
     rfq = res.rfq_id
   }, values)
