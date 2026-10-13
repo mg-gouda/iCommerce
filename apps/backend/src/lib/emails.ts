@@ -25,6 +25,7 @@ const money = (n: number | undefined, cur: string, l: Locale) =>
 const STR = {
   en: {
     hello: "Hello,",
+    view: "View your order",
     team: "The iCommerce team",
     item: "Item", qty: "Qty", total: "Total",
     "order-placed": { subject: (d: EmailData) => `Order #${d.display_id} confirmed`, intro: "Thanks for your order. Each seller ships their items separately; we'll email you as they go out." },
@@ -42,6 +43,7 @@ const STR = {
   },
   ar: {
     hello: "مرحبًا،",
+    view: "عرض طلبك",
     team: "فريق iCommerce",
     item: "المنتج", qty: "الكمية", total: "الإجمالي",
     "order-placed": { subject: (d: EmailData) => `تم تأكيد الطلب رقم ${d.display_id}`, intro: "شكرًا لطلبك. يشحن كل بائع منتجاته بشكل منفصل، وسنراسلك عند شحن كل جزء." },
@@ -79,6 +81,9 @@ ${d.items.map((i) => `<tr><td style="padding:8px;border-top:1px solid #e3e7ee">$
     d.carrier && row(s.carrier, esc(d.carrier)),
     d.tracking_number && row(s.tracking, esc(d.tracking_number)),
     d.tracking_url && `<p style="margin:16px 0"><a href="${esc(d.tracking_url)}" style="background:#2a74ba;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${s.track}</a></p>`,
+    // Buyer emails link to the order tracking page (works for guests: order number + email). Needs STOREFRONT_URL.
+    template !== "vendor-new-order" && process.env.STOREFRONT_URL &&
+      `<p style="margin:16px 0"><a href="${esc(`${process.env.STOREFRONT_URL.replace(/\/$/, "")}/${l}/track`)}" style="color:#22609c">${s.view}</a></p>`,
   ]
     .filter(Boolean)
     .join("\n")

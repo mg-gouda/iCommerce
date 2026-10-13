@@ -252,9 +252,9 @@ medusaIntegrationTestRunner({
       for (let i = 0; i < 10; i++) await expect(status(String(800000 + i), "x@buyer.test", "10.6.6.6")).rejects.toMatchObject({ response: { status: 404 } })
       await expect(status(n, "guest@buyer.test", "10.6.6.6")).rejects.toMatchObject({ response: { status: 429 } })
       expect((await status(n, "guest@buyer.test", "10.7.7.7")).status).toBe(200)
-      // …and 10 per order number, whatever the IP.
-      for (let i = 0; i < 10; i++) await expect(status("777777", "x@buyer.test", `10.8.0.${i}`)).rejects.toMatchObject({ response: { status: 404 } })
-      await expect(status("777777", "x@buyer.test", "10.8.1.1")).rejects.toMatchObject({ response: { status: 429 } })
+      // No per-order lockout: wrong emails from many IPs must not lock the real buyer out of their own order.
+      for (let i = 0; i < 12; i++) await expect(status(n, "x@buyer.test", `10.8.0.${i}`)).rejects.toMatchObject({ response: { status: 404 } })
+      expect((await status(n, "guest@buyer.test", "10.9.9.9")).status).toBe(200)
     })
 
     it("vendors cancel every part → buyer emails, parent canceled; captured bank transfer → refund_required", async () => {

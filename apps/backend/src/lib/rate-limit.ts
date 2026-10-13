@@ -6,11 +6,13 @@ const hits = new Map<string, { n: number; reset: number }>()
 const WINDOW = 60 * 60 * 1000
 const MAX = 10
 
-/** Rate-limit keys for a guest order lookup: caller IP + the order number tried. */
-export function guestKeys(req: MedusaRequest, display_id: unknown) {
+/** Rate-limit key for a guest order lookup: the caller's IP.
+ *  No per-order-number key on purpose: order numbers are sequential, so a per-order cap would let anyone lock real
+ *  buyers out of tracking/receipt upload by guessing wrong emails. Guessing the exact email is the real barrier. */
+export function guestKeys(req: MedusaRequest, _display_id?: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
   // ponytail: first X-Forwarded-For hop (the storefront forwards the shopper's IP) is trusted as-is; the edge proxy must overwrite it.
   const ip = String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim() || req.ip || "?"
-  return [`ip:${ip}`, `order:${String(display_id ?? "").trim()}`]
+  return [`ip:${ip}`]
 }
 
 /** True when any key used up its `MAX` attempts in the current hour. */

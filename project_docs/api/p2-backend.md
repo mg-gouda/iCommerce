@@ -91,7 +91,7 @@ Field `file`: one pdf/png/jpeg/webp, ≤10 MB. Only for `pp_bank-transfer_bank-t
 
 ### Guest routes (no auth; order number + checkout email)
 Match = a **parent** order with that `display_id` and email (case-insensitive, trimmed). Wrong number, wrong email, a vendor sub-order's number → the same `404 { "message": "Order not found" }` (no enumeration).
-Rate limit: 10 per hour per IP (first `X-Forwarded-For` hop, else socket IP) and per `display_id` → `429 { "type": "too_many_requests", "message": "Too many attempts. Try again later." }`. `guest-status` counts failed lookups only; `guest-payment-proof` counts every attempt. ponytail: in-memory per process.
+Rate limit: 10 per hour per IP (first `X-Forwarded-For` hop, else socket IP) → `429 { "type": "too_many_requests", "message": "Too many attempts. Try again later." }`. `guest-status` counts failed lookups only; `guest-payment-proof` counts every attempt. No per-order-number limit on purpose: order numbers are sequential, so it would let anyone lock a real buyer out of their order by guessing wrong emails. ponytail: in-memory per process.
 
 - `GET /store/orders/guest-status?display_id=12&email=buyer@x.com` → same body as `GET /store/orders/:id/vendor-orders` plus `order`:
   ```json
@@ -159,3 +159,5 @@ ponytail: no edit; delete + create.
 | vendor delivers | customer | `order-delivered` |
 | vendor cancels | customer | `order-canceled` (that vendor's items, reason; COD: nothing charged · bank transfer: support will contact you about the refund) |
 EN/AR by customer `metadata.locale` (AR = `dir="rtl"`). Provider: Resend when `RESEND_API_KEY` set, else files in `apps/backend/.emails/<timestamp>-<template>-<to>.html`.
+
+- `STOREFRONT_URL` (backend env, optional): buyer emails link to `${STOREFRONT_URL}/<locale>/track`. Buyer emails always show the parent order number.
