@@ -68,5 +68,12 @@ export class BankTransferPayment extends OfflinePayment {
   }
 }
 
+// Credit (net terms). Eligibility + limit are checked by the completeCart `validate` hook and on quote acceptance
+// (lib/net-terms.ts): a provider can't read the company module. Invoice opens on order.placed, captured on mark-paid.
+export class NetTermsPayment extends OfflinePayment {
+  static identifier = "net-terms"
+}
+
 export const COD_PROVIDER = "pp_cod_cod"
+export const NET_TERMS_PROVIDER = "pp_net-terms_net-terms"
 export const BANK_PROVIDER = "pp_bank-transfer_bank-transfer"

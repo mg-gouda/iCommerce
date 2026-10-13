@@ -59,7 +59,9 @@ const planVendorOrdersStep = createStep("plan-vendor-orders", async ({ order_id 
 
   // ponytail: items of vendor-less products (admin-created) stay on the parent only. Managed-inventory reservations
   // are not moved to child lines: vendor products are unmanaged (no stock levels) until stock management lands.
-  const vendorIds = [...new Set(items.map((i) => vendorOf.get(i.product_id)).filter(Boolean))] as string[]
+  // Quote orders: free-text lines have no product → vendor from item metadata.
+  const vendorFor = (i: Row) => (vendorOf.get(i.product_id) ?? (i.metadata as Row | null)?.vendor_id) as string | undefined
+  const vendorIds = [...new Set(items.map(vendorFor).filter(Boolean))] as string[]
   const base = {
     ...pick(o, ["region_id", "customer_id", "sales_channel_id", "email", "currency_code"]),
     status: "pending",
@@ -72,7 +74,7 @@ const planVendorOrdersStep = createStep("plan-vendor-orders", async ({ order_id 
       ...base,
       metadata: { parent_order_id: o.id, vendor_id },
       items: items
-        .filter((i) => vendorOf.get(i.product_id) === vendor_id)
+        .filter((i) => vendorFor(i) === vendor_id)
         .map((i) => ({ ...pick(i, ITEM), ...copyLines(i), metadata: { ...(i.metadata as Row), parent_item_id: i.id } })),
       shipping_methods: methods
         .filter((m) => optionVendor.get(m.shipping_option_id as string) === vendor_id)

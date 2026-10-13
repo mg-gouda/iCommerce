@@ -5,6 +5,8 @@ import cors from "cors"
 import multer from "multer"
 import { PostVendorApply, PostVendorMe, PostVendorProduct } from "./vendors/validators"
 import { PostAdminVendorNote } from "./admin/vendors/validators"
+import { netTermsEligible, stripProvider } from "../lib/net-terms"
+import { NET_TERMS_PROVIDER } from "../modules/offline-payment/service"
 
 // Medusa only applies CORS to /store, /admin, /auth; /vendors is ours.
 const vendorCors = cors({ origin: parseCorsOrigins(process.env.VENDOR_CORS ?? ""), credentials: true })
@@ -25,6 +27,25 @@ const proofUpload = upload(10, /^(application\/pdf|image\/(png|jpeg|webp))$/)
 
 const vendorAuth = authenticate("vendor", ["session", "bearer"])
 const customerAuth = authenticate("customer", ["session", "bearer"])
+const optionalCustomer = authenticate("customer", ["session", "bearer"], { allowUnauthenticated: true })
+
+// Net terms is listed only to members of verified companies with an active credit account (checkout re-checks the limit).
+const hideNetTerms = (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
+  const json = res.json.bind(res)
+  res.json = ((body: unknown) => {
+    if (!JSON.stringify(body ?? null).includes(NET_TERMS_PROVIDER)) return json(body) // nothing to hide → no DB lookup
+    const actor = (req as MedusaRequest & { auth_context?: { actor_id?: string } }).auth_context?.actor_id
+    netTermsEligible(req.scope, actor).then(
+      (ok) => {
+        if (!ok) stripProvider(body, NET_TERMS_PROVIDER)
+        json(body)
+      },
+      next,
+    )
+    return res
+  }) as typeof res.json
+  next()
+}
 
 // Public storefront may read these linked fields on /store/products (exact paths → cost_price stays private).
 const STORE_PRODUCT_FIELDS = [
@@ -53,6 +74,16 @@ export default defineMiddlewares({
     { matcher: "/store/orders/guest-payment-proof", method: ["POST"], middlewares: [proofUpload.single("file")] },
     // Customer order list = parent orders only (vendor sub-orders share the customer).
     { matcher: "/store/orders", method: ["GET"], middlewares: [parentOrdersOnly] },
+    // B2B: company + quote routes need a signed-in customer; handlers 404 non-members / other companies.
+    { matcher: "/store/companies*", middlewares: [customerAuth] },
+    { matcher: "/store/companies/me/kyc", method: ["POST"], middlewares: [kycUpload.array("files", 10)] },
+    { matcher: "/store/quotes*", middlewares: [customerAuth] },
+    ...["/store/payment-providers*", "/store/regions*", "/store/carts*"].map((matcher) => ({ matcher, middlewares: [optionalCustomer, hideNetTerms] })),
+    ...["/store/products/:id/wholesale-tiers", "/store/products/wholesale-tiers"].map((matcher) => ({
+      matcher,
+      method: ["GET" as const],
+      middlewares: [optionalCustomer],
+    })),
     { matcher: "/vendors", middlewares: [corsMw] },
     {
       // Apply: caller has a registration token but no vendor actor yet.
