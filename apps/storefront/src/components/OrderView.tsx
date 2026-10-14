@@ -1,6 +1,6 @@
 import { CircleCheck, ExternalLink, Package, Truck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
-import { Badge, money } from "@icommerce/ui"
+import { Badge, bidi, money } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
 import { orderPayment, orderStatusOrNull, payKind, type OrderPay, type OrderStatus, type VendorOrder } from "@/lib/checkout"
 import { AddressLines } from "./AddressLines"
@@ -128,7 +128,7 @@ export function PaymentPanel({ t, n, email, total, payment, fallback }: {
         </p>
       ) : (
         <>
-          <p className="m-0 text-[14px] text-ink-muted">{t("bankHow", { n, total })}</p>
+          <p className="m-0 text-[14px] text-ink-muted">{t("bankHow", { n, total: bidi(total) })}</p>
           {bank ? (
             <pre dir="auto" className="m-0 rounded-md bg-ground p-3 font-[inherit] text-[14px] whitespace-pre-wrap">{bank}</pre>
           ) : (

@@ -28,7 +28,7 @@ export type Membership = { company: Company; member: Member }
 export type Tier = { min_qty: number; unit_price_usd: number }
 
 export type QuoteStatus =
-  | "requested" | "vendor_review" | "offered" | "negotiating" | "pending_approval"
+  | "routing" | "routed" | "requested" | "vendor_review" | "offered" | "negotiating" | "pending_approval"
   | "accepted" | "ordered" | "rejected" | "expired"
 export type QuoteItem = {
   id: string
@@ -41,13 +41,13 @@ export type QuoteItem = {
   offered_unit_price: number | null
   lead_time_days: number | null
 }
-export type QuoteMessage = { id: string; author: "buyer" | "vendor" | "system"; author_name: string | null; body: string; created_at: string }
+export type QuoteMessage = { id: string; author: "buyer" | "vendor" | "system" | "platform"; author_name: string | null; body: string; created_at: string }
 export type Quote = {
   id: string
   rfq_id: string
   status: QuoteStatus
   currency_code: string
-  vendor: { id: string; name: string; handle: string }
+  vendor: { id: string; name: string; handle: string } | null // null = iCommerce finding suppliers (routing / routed)
   requester: { id: string; email: string; first_name: string | null; last_name: string | null }
   notes: string | null
   incoterm: string | null

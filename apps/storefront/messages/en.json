@@ -7,7 +7,10 @@
     "searchLabel": "Search products",
     "searchPlaceholder": "Search rugs, cookware, textiles…",
     "signIn": "Sign in",
-    "cartLabel": "Cart, {count} items",
+    "cartLabel": {
+      "one": "Cart, 1 product",
+      "other": "Cart, {count} products"
+    },
     "heroTitle": "Made in Egypt. Bought by the piece or by the container.",
     "heroBody": "Furniture, carpets, cookware, textiles and building materials from Egyptian manufacturers. Buy retail with delivery, or source wholesale with MOQ, HS codes and quotes.",
     "shop": "Shop featured products",
@@ -188,7 +191,7 @@
     "notAllowed": "Your role can't do this. Ask a company admin.",
     "qtyDecimal": "Enter a quantity above 0, up to 3 decimals.",
     "price": "Enter a price of 0 or more, e.g. 10.50.",
-    "pickSupplier": "Tick at least one supplier for this item.",
+    "pickSupplier": "Tick at least one supplier, or let iCommerce find suppliers.",
     "rfqEmpty": "Your quote request has no items.",
     "netRefused": "Net terms aren't available for this order. Choose another payment method.",
     "tooMany": "Too many attempts. Wait an hour and try again.",
@@ -441,7 +444,7 @@
     "joinAccept": "Accept invitation",
     "joinAlready": "You already belong to {company}. An account can be in one company.",
     "joinNoToken": "This link is missing its invitation code. Open the link from the email again.",
-    "freeText": "Your description · pick suppliers below",
+    "freeText": "Your description · pick suppliers or let iCommerce find them",
     "moqLine": "MOQ {qty}",
     "removeLine": "Remove {title}",
     "qtyHelp": "Decimals allowed, e.g. 2.5",
@@ -473,7 +476,10 @@
       "accepted": "Accepted",
       "ordered": "Ordered",
       "rejected": "Rejected",
-      "expired": "Expired"
+      "expired": "Expired",
+      "routing": "Finding suppliers",
+      "routed": "Suppliers found",
+      "no_supplier": "No supplier found"
     },
     "itemsN": "{n, plural, one {# item} other {# items}}",
     "rfqSent": "Quote request sent to {n, plural, one {# supplier} other {# suppliers}}.",
@@ -552,8 +558,16 @@
       "pending_approval": "A buyer accepted; waiting for approval.",
       "ordered": "Offer accepted. Order placed.",
       "rejected": "Quote rejected.",
-      "expired": "The offer expired."
-    }
+      "expired": "The offer expired.",
+      "routing": "Sent to iCommerce to find suppliers.",
+      "routed": "iCommerce sent your request to suppliers.",
+      "no_supplier": "iCommerce couldn't find a supplier."
+    },
+    "findForMe": "Let iCommerce find suppliers",
+    "findForMeHelp": "Our team picks suitable suppliers and sends them your request.",
+    "sourcing": "iCommerce sourcing",
+    "routingBody": "We're finding suppliers for these items. Their quotes will appear in your quotes list, and we'll email you.",
+    "rfqRouting": "iCommerce will find suppliers for {n, plural, one {# item} other {# items}}."
   },
   "track": {
     "title": "Track your order",

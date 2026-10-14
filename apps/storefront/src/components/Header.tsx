@@ -35,7 +35,7 @@ export async function Header({ q }: { q?: string }) {
             {signedIn ? t("account") : t("signIn")}
           </Link>
           <LocaleSwitch />
-          <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} count={countOf(cart)} className="text-on-navy" />
+          <CartLink href={`/${locale}/cart`} label={t.raw("cartLabel")} lang={locale} count={countOf(cart)} className="text-on-navy" />
         </div>
       </div>
       <div className="border-t border-white/10">

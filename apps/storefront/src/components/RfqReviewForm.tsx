@@ -18,9 +18,10 @@ export type ReviewLine = {
   suggest?: { handle: string; name: string }[]
 }
 
+const CHIP = "flex cursor-pointer items-center gap-2 rounded-md border border-line-strong px-3 py-2 text-[14px] has-[:checked]:border-brand has-[:checked]:bg-brand-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus-ring"
 const INCOTERMS = ["EXW", "FCA", "FOB", "CFR", "CIF", "DAP", "DDP"]
 
-/** RFQ review: per-line quantity (decimals ok) + optional target price, suppliers for free-text lines, notes, Incoterm. */
+/** RFQ review: per-line quantity (decimals ok) + optional target price, suppliers (or "let iCommerce find") for free-text lines, notes, Incoterm. */
 export function RfqReviewForm({ lines, canSubmit }: { lines: ReviewLine[]; canSubmit: boolean }) {
   const t = useTranslations("b2b")
   const tu = useTranslations("units")
@@ -65,7 +66,7 @@ export function RfqReviewForm({ lines, canSubmit }: { lines: ReviewLine[]; canSu
                   {l.suggest.length ? (
                     <div className="flex flex-wrap gap-2">
                       {l.suggest.map((s) => (
-                        <label key={s.handle} className="flex cursor-pointer items-center gap-2 rounded-md border border-line-strong px-3 py-2 text-[14px] has-[:checked]:border-brand has-[:checked]:bg-brand-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus-ring">
+                        <label key={s.handle} className={CHIP}>
                           <input type="checkbox" name={`vendor_${i}`} value={s.handle} defaultChecked={picked?.includes(s.handle)} className="size-4 accent-brand" />
                           <bdi>{s.name}</bdi>
                         </label>
@@ -74,6 +75,11 @@ export function RfqReviewForm({ lines, canSubmit }: { lines: ReviewLine[]; canSu
                   ) : (
                     <p className="m-0 text-[14px] text-ink-muted">{t("noSuggest")}</p>
                   )}
+                  <label className={`${CHIP} self-start`}>
+                    <input type="checkbox" name={`find_${i}`} value="1" defaultChecked={v[`find_${i}`] === "1"} aria-describedby={`f${i}-help`} className="size-4 accent-brand" />
+                    {t("findForMe")}
+                  </label>
+                  <span id={`f${i}-help`} className="ic-help">{t("findForMeHelp")}</span>
                   {vendorErr && <span id={`v${i}-err`} className="ic-error"><CircleAlert aria-hidden /> {vendorErr}</span>}
                 </fieldset>
               )}

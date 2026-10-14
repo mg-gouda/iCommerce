@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { Check } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
-import { money } from "@icommerce/ui"
+import { bidi, money } from "@icommerce/ui"
 import { AddressForm, EmailForm, PaymentForm, PlaceOrderForm, ShippingForm } from "@/components/CheckoutForms"
 import { CheckoutHeader } from "@/components/Header"
 import { VendorLines } from "@/components/VendorLines"
@@ -83,13 +83,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
       <PaymentForm
         providers={offered.map((id) => ({ id, kind: payKind(id)! }))}
         selected={session?.provider_id}
-        net={net && { ...net, available: money(net.available, currency) }}
+        net={net && { ...net, available: bidi(money(net.available, currency)) }}
       />
     ),
     review: (
       <div className="flex flex-col gap-4">
         <VendorLines groups={byVendor(c.items!, products)} currency={currency} />
-        <PlaceOrderForm label={t("place", { total: money(c.total, currency) })} />
+        <PlaceOrderForm label={t("place", { total: bidi(money(c.total, currency)) })} />
       </div>
     ),
   }

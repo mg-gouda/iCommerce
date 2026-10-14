@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { ShieldCheck, ShoppingCart } from "lucide-react"
 import { getTranslations } from "next-intl/server"
-import { money } from "@icommerce/ui"
+import { bidi, money } from "@icommerce/ui"
 import { CheckoutCta } from "@/components/CheckoutCta"
 import { CheckoutHeader } from "@/components/Header"
 import { Link } from "@/i18n/navigation"
@@ -68,7 +68,7 @@ export default async function CartPage() {
                     {vendor ? <Link href={`/v/${vendor.handle}`} className="text-ink no-underline hover:underline">{vendor.name}</Link> : t("supplier")}
                   </span>
                   <span className="text-[13px] text-ink-muted">
-                    {from != null ? t("shipFrom", { price: money(from, currency) }) : t("shipsSeparately")}
+                    {from != null ? t("shipFrom", { price: bidi(money(from, currency)) }) : t("shipsSeparately")}
                   </span>
                 </div>
                 <ul className="m-0 list-none p-0">
@@ -116,7 +116,7 @@ export default async function CartPage() {
             <dt className="text-ink-muted">{t("subtotalN", { n: count })}</dt>
             <dd className="m-0"><bdi>{money(subtotal, currency)}</bdi></dd>
             <dt className="text-ink-muted">{t("shippingN", { n: vendors.length })}</dt>
-            <dd className="m-0">{groups.length ? <bdi>{t("from", { price: money(shipFrom, currency) })}</bdi> : t("atCheckout")}</dd>
+            <dd className="m-0">{groups.length ? <bdi>{t("from", { price: bidi(money(shipFrom, currency)) })}</bdi> : t("atCheckout")}</dd>
           </dl>
           <div className="flex items-baseline justify-between border-t border-line pt-3.5">
             <span className="font-semibold">{t("estTotal")}</span>
