@@ -44,7 +44,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
         {cards.map(([k, v, hint]) => (
           <div key={k} className={`${panel} flex flex-col gap-1 ${k === "owed" ? "border-danger" : ""}`}>
             <h2 className="m-0 text-[13px] leading-[18px] font-medium text-ink-muted">{t(`cards.${k}`)}</h2>
-            <p className={`m-0 text-[24px] leading-[32px] font-semibold tabular-nums ${k === "owed" ? "text-danger" : ""}`}><bdi>{usd(v)}</bdi></p>
+            <p className={`m-0 text-[24px] leading-[32px] font-semibold tabular-nums ${k === "owed" || v < 0 ? "text-danger" : ""}`}><bdi>{v < 0 ? signed(v) : usd(v)}</bdi></p>
             <p className="m-0 text-[13px] leading-[18px] text-ink-muted">{hint}</p>
           </div>
         ))}
