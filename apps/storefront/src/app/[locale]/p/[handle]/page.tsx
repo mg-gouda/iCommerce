@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
-import { Badge, money, qtyUnit } from "@icommerce/ui"
+import { Badge, bidi, money, qtyUnit } from "@icommerce/ui"
 import { BuyBox } from "@/components/BuyBox"
 import { Gallery } from "@/components/Gallery"
 import { Breadcrumbs, Header } from "@/components/Header"
@@ -83,7 +83,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {price != null && tiers?.length ? (
-              <p className="m-0 text-[14px] text-ink-muted">{tb("retailPrice", { price: money(price, "USD"), unit })}</p>
+              <p className="m-0 text-[14px] text-ink-muted">{tb("retailPrice", { price: bidi(money(price, "USD")), unit })}</p>
             ) : price != null && (
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <bdi className={`text-[24px] leading-[30px] font-semibold tabular-nums ${compareAt && !wholesale ? "text-accent" : ""}`}>{money(price, "USD")}</bdi>

@@ -15,7 +15,9 @@ export default async function QuotesPage({ searchParams }: Props) {
   // ponytail: newest 50; pagination when a company has more open quotes.
   const { quotes } = await listQuotes()
   const pending = approver ? quotes.filter((q) => q.status === "pending_approval") : []
-  const sent = rfq ? quotes.filter((q) => q.rfq_id === rfq).length : 0
+  const fromRfq = rfq ? quotes.filter((q) => q.rfq_id === rfq) : []
+  const sent = fromRfq.filter((q) => q.vendor).length
+  const routing = fromRfq.find((q) => q.status === "routing")?.items.length ?? 0
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" })
 
   const list = (items: Quote[]) => (
@@ -24,13 +26,13 @@ export default async function QuotesPage({ searchParams }: Props) {
         <li key={q.id}>
           <Link href={`/account/quotes/${q.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface p-4 text-ink no-underline hover:border-line-strong">
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="font-semibold"><bdi>{q.vendor.name}</bdi></span>
+              <span className="font-semibold">{q.vendor ? <bdi>{q.vendor.name}</bdi> : t("sourcing")}</span>
               <span dir="auto" className="truncate text-start text-[13px] text-ink-muted">{q.items.map((i) => i.title).join(", ")}</span>
               <span className="text-[13px] text-ink-muted">{date.format(new Date(q.created_at))} · {t("itemsN", { n: q.items.length })}</span>
             </span>
             <span className="flex items-center gap-3">
               {q.total != null && <bdi className="font-semibold tabular-nums">{money(q.total, q.currency_code.toUpperCase())}</bdi>}
-              <QuoteBadge status={q.status} />
+              <QuoteBadge quote={q} />
             </span>
           </Link>
         </li>
@@ -40,9 +42,9 @@ export default async function QuotesPage({ searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {sent > 0 && (
+      {sent + routing > 0 && (
         <p role="status" className="m-0 flex items-center gap-2 rounded-md bg-success-tint px-4 py-3 text-[14px] text-success">
-          <Check size={16} aria-hidden /> {t("rfqSent", { n: sent })}
+          <Check size={16} aria-hidden className="shrink-0" /> {[sent && t("rfqSent", { n: sent }), routing && t("rfqRouting", { n: routing })].filter(Boolean).join(" ")}
         </p>
       )}
       {pending.length > 0 && (

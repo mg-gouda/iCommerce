@@ -23,8 +23,8 @@ export const quoteRef = (q: Row) => `Q-${q.id.slice(-6).toUpperCase()}`
 const num = (n: unknown) => (n == null ? null : Number(n))
 export const bad = (msg: string) => new MedusaError(MedusaError.Types.INVALID_DATA, msg)
 
-/** Quote with items + messages, scoped to a company or a vendor. Anything else → 404. */
-export async function getQuoteOr404(scope: MedusaContainer, id: string, owner: { company_id: string } | { vendor_id: string }) {
+/** Quote with items + messages, scoped to a company or a vendor (admin: `{}`). Anything else → 404. */
+export async function getQuoteOr404(scope: MedusaContainer, id: string, owner: { company_id: string } | { vendor_id: string } | Record<string, never>) {
   const [q] = await quoteSvc(scope).listQuotes({ id, ...owner }, { relations: ["items", "messages"] })
   if (!q) throw new MedusaError(MedusaError.Types.NOT_FOUND, `Quote with id "${id}" not found`)
   return q as Row
@@ -37,7 +37,7 @@ export async function shapeQuotes(scope: MedusaContainer, quotes: Row[], withMes
   const companies = new Map((await cs.listCompanies({ id: [...new Set(quotes.map((q) => q.company_id))] })).map((c) => [c.id, c]))
   const members = new Map((await cs.listCompanyMembers({ id: [...new Set(quotes.map((q) => q.requester_id))] })).map((m) => [m.id, m]))
   const vendorSvc: VendorModuleService = scope.resolve(VENDOR_MODULE)
-  const vendors = new Map((await vendorSvc.listVendors({ id: [...new Set(quotes.map((q) => q.vendor_id))] })).map((v) => [v.id, v]))
+  const vendors = new Map((await vendorSvc.listVendors({ id: [...new Set(quotes.map((q) => q.vendor_id).filter(Boolean))] })).map((v) => [v.id, v]))
   return quotes.map((q) => {
     const c = companies.get(q.company_id)
     const v = vendors.get(q.vendor_id)
@@ -72,14 +72,14 @@ export function need(q: Row, from: QuoteStatus[], action: string) {
 
 /**
  * Status change + thread entries. System message body = event code (requested, viewed, offered, countered,
- * pending_approval, approved, ordered, rejected, expired) so clients can translate it.
+ * pending_approval, approved, ordered, rejected, expired, routing, routed, no_supplier) so clients can translate it.
  */
 export async function transition(
   scope: MedusaContainer,
   q: Row,
   patch: Row & { status?: QuoteStatus },
   event: string | null,
-  message?: { author: Party; author_name?: string | null; body?: string | null },
+  message?: { author: Party | "platform"; author_name?: string | null; body?: string | null },
 ) {
   const svc = quoteSvc(scope)
   await svc.updateQuotes({ id: q.id, ...patch })
@@ -179,6 +179,38 @@ export async function acceptAndOrder(scope: MedusaContainer, q: Row, patch: Row 
   const order_id = await placeQuoteOrder(scope, q)
   await transition(scope, q, { ...patch, status: "ordered", order_id }, "ordered")
   await notify(scope, q, "quote-accepted", ["vendor", "requester"])
+}
+
+/**
+ * Staff routing of a `find_suppliers` quote: one new `requested` quote per vendor (same rfq_id, items copied),
+ * vendors + buyer emailed, the routing quote → `routed` (hidden from the buyer's default list).
+ */
+export async function routeQuote(scope: MedusaContainer, q: Row, vendor_ids: string[]) {
+  need(q, ["routing"], "route")
+  const ids = [...new Set(vendor_ids)]
+  const vendors = await (scope.resolve(VENDOR_MODULE) as VendorModuleService).listVendors({ id: ids, status: "approved" })
+  if (vendors.length !== ids.length) throw bad("Every vendor must exist and be approved.")
+  const svc = quoteSvc(scope)
+  for (const vendor_id of ids) {
+    const n = await svc.createQuotes({
+      rfq_id: q.rfq_id, company_id: q.company_id, requester_id: q.requester_id, customer_id: q.customer_id, vendor_id,
+      notes: q.notes, incoterm: q.incoterm, currency_code: q.currency_code,
+    })
+    await svc.createQuoteItems((q.items as Row[]).map((i) => ({
+      quote_id: n.id, title: i.title, quantity: Number(i.quantity), unit: i.unit, target_price: num(i.target_price),
+    })))
+    await svc.createQuoteMessages({ quote_id: n.id, author: "system", body: "requested" })
+    await notify(scope, n, "quote-requested", ["vendor"], { body: q.notes })
+  }
+  await transition(scope, q, { status: "routed" }, "routed")
+  await notify(scope, q, "quote-routed", ["requester"])
+}
+
+/** Staff found no supplier: routing quote → `rejected` (event `no_supplier`) + staff note in the thread, buyer emailed. */
+export async function closeRouting(scope: MedusaContainer, q: Row, note: string) {
+  need(q, ["routing"], "close")
+  await transition(scope, q, { status: "rejected" }, "no_supplier", { author: "platform", author_name: "iCommerce", body: note })
+  await notify(scope, q, "quote-no-supplier", ["requester"], { note })
 }
 
 /** Hourly job: offers past validity → expired. */

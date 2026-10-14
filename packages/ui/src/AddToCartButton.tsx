@@ -8,7 +8,7 @@ import { bump, fly, sleep } from "./motion"
 
 /** Fired on window once the flight lands; CartLink listens and shows the new count. */
 export const CART_ADD_EVENT = "icommerce:cart-add"
-/** `count` = cart count confirmed by the server; without it CartLink adds `qty` to what it shows. */
+/** `count` = cart line count confirmed by the server; without it CartLink adds 1 to what it shows. */
 export type CartAddDetail = { qty: number; count?: number }
 
 export type AddToCartButtonProps = Omit<ButtonProps, "onClick"> & {

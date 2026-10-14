@@ -72,7 +72,8 @@ export async function getCart(): Promise<Cart | null> {
   return res.cart
 }
 
-export const countOf = (cart: Pick<Cart, "items"> | null) => cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0
+/** Distinct products (lines), not units: 1 product × 1000 units = 1. */
+export const countOf = (cart: Pick<Cart, "items"> | null) => cart?.items?.length ?? 0
 
 export async function getCustomer(): Promise<Customer | null> {
   if (!(await token())) return null

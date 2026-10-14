@@ -92,7 +92,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": null,
@@ -116,6 +116,8 @@
           "default": "'requested'",
           "comment": null,
           "enumItems": [
+            "routing",
+            "routed",
             "requested",
             "vendor_review",
             "offered",
@@ -701,7 +703,8 @@
           "enumItems": [
             "buyer",
             "vendor",
-            "system"
+            "system",
+            "platform"
           ],
           "mappedType": "enum"
         },

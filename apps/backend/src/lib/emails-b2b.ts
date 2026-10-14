@@ -23,6 +23,8 @@ export const B2B_STR: Record<"en" | "ar", Record<B2bTemplate, Copy> & Record<"co
     "quote-pending-approval": { subject: (d) => `Approval needed: ${d.ref}`, intro: "A buyer accepted this offer. An approver or company admin must approve it before the order is placed." },
     "quote-accepted": { subject: (d) => `Quote ${d.ref} accepted, order placed`, intro: "The offer was accepted and an order was created." },
     "quote-rejected": { subject: (d) => `Quote ${d.ref} declined`, intro: "This quote was declined." },
+    "quote-routed": { subject: (d) => `We found suppliers for ${d.ref}`, intro: "iCommerce sent your request to matching suppliers. Their offers will appear under Quotes in your account." },
+    "quote-no-supplier": { subject: (d) => `No supplier found for ${d.ref}`, intro: "We couldn't find a supplier for this request. Please read the note below; you can post a new request anytime." },
     "quote-expired": { subject: (d) => `Quote ${d.ref} expired`, intro: "The offer's validity date passed. Request a new quote if you still need these items." },
     "invoice-overdue": { subject: (d) => `Invoice for order #${d.display_id} is overdue`, intro: "This invoice is past its due date. Ordering on net terms is on hold until it is paid." },
   },
@@ -38,6 +40,8 @@ export const B2B_STR: Record<"en" | "ar", Record<B2bTemplate, Copy> & Record<"co
     "quote-pending-approval": { subject: (d) => `مطلوب اعتماد: ${d.ref}`, intro: "قبل أحد المشترين هذا العرض. يجب أن يعتمده معتمِد أو مسؤول الشركة قبل إنشاء الطلب." },
     "quote-accepted": { subject: (d) => `تم قبول عرض السعر ${d.ref} وإنشاء الطلب`, intro: "تم قبول العرض وإنشاء طلب." },
     "quote-rejected": { subject: (d) => `تم رفض عرض السعر ${d.ref}`, intro: "تم رفض عرض السعر هذا." },
+    "quote-routed": { subject: (d) => `وجدنا موردين لطلبك ${d.ref}`, intro: "أرسل فريق iCommerce طلبك إلى موردين مناسبين. ستظهر عروضهم في قسم عروض الأسعار في حسابك." },
+    "quote-no-supplier": { subject: (d) => `لم نجد موردًا لطلبك ${d.ref}`, intro: "لم نتمكن من العثور على مورّد لهذا الطلب. يرجى قراءة الملاحظة أدناه، ويمكنك نشر طلب جديد في أي وقت." },
     "quote-expired": { subject: (d) => `انتهت صلاحية عرض السعر ${d.ref}`, intro: "انتهى تاريخ صلاحية العرض. اطلب عرض سعر جديدًا إذا كنت لا تزال تحتاج هذه المنتجات." },
     "invoice-overdue": { subject: (d) => `فاتورة الطلب رقم ${d.display_id} متأخرة`, intro: "تجاوزت هذه الفاتورة تاريخ استحقاقها. الشراء بالآجل متوقف حتى سدادها." },
   },
@@ -46,4 +50,4 @@ export const B2B_STR: Record<"en" | "ar", Record<B2bTemplate, Copy> & Record<"co
 export type B2bTemplate =
   | "company-invite" | "company-verified" | "company-rejected"
   | "quote-requested" | "quote-offered" | "quote-countered" | "quote-message" | "quote-pending-approval"
-  | "quote-accepted" | "quote-rejected" | "quote-expired" | "invoice-overdue"
+  | "quote-accepted" | "quote-rejected" | "quote-expired" | "quote-routed" | "quote-no-supplier" | "invoice-overdue"

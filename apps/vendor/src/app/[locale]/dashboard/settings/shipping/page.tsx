@@ -1,7 +1,7 @@
 import { Truck } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 import { PageHeader } from "@/components/PageHeader"
-import { money } from "@icommerce/ui"
+import { bidi, money } from "@icommerce/ui"
 import { DeleteShippingOption, NewShippingOption } from "@/components/ShippingOptions"
 import { Link } from "@/i18n/navigation"
 import { vendorApi } from "@/lib/api"
@@ -41,7 +41,7 @@ export default async function ShippingPage() {
                 <tr key={o.id} className="border-b border-line last:border-b-0">
                   <td className="px-4 py-2.5 font-medium"><bdi>{o.name}</bdi></td>
                   <td className="px-4 py-2.5 whitespace-nowrap">{t(`kinds.${o.kind}`)}</td>
-                  <td className="px-4 py-2.5 whitespace-nowrap tabular-nums"><bdi>{o.kind === "pickup" ? t("free") : o.kind === "free_over" ? t("priceFreeOver", { amount: money(o.amount, "USD"), over: money(o.free_over ?? 0, "USD") }) : money(o.amount, "USD")}</bdi></td>
+                  <td className="px-4 py-2.5 whitespace-nowrap tabular-nums"><bdi>{o.kind === "pickup" ? t("free") : o.kind === "free_over" ? t("priceFreeOver", { amount: bidi(money(o.amount, "USD")), over: bidi(money(o.free_over ?? 0, "USD")) }) : money(o.amount, "USD")}</bdi></td>
                   <td className="px-4 py-2.5 text-end"><DeleteShippingOption option={o} /></td>
                 </tr>
               ))}

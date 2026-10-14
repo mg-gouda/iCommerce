@@ -108,6 +108,9 @@ Implementation: Medusa order + `vendor` link per line; workflow hook after `orde
 ```mermaid
 stateDiagram-v2
   [*] --> requested: buyer submits RFQ (items, qty, notes, target price)
+  [*] --> routing: free-text line, "Let iCommerce find suppliers"
+  routing --> routed: staff pick vendors → new requested quote per vendor
+  routing --> rejected: staff close, no supplier found
   requested --> vendor_review: auto-route to vendor
   vendor_review --> offered: vendor sets prices, lead time, validity
   vendor_review --> rejected
