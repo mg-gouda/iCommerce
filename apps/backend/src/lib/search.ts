@@ -1,5 +1,6 @@
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { hiddenVendorIds } from "./plans"
 
 // MEILI_INDEX lets parallel envs (e.g. a migration dry-run) share one Meili server.
 export const PRODUCTS_INDEX = process.env.MEILI_INDEX || "products"
@@ -14,6 +15,7 @@ const FIELDS = [
   "categories.name",
   "variants.prices.amount",
   "variants.prices.currency_code",
+  "vendor.id",
   "vendor.name",
   "vendor.handle",
   "product_extra.*",
@@ -28,7 +30,7 @@ type Product = {
   thumbnail: string | null
   categories?: { name: string }[]
   variants?: { prices?: { amount: number; currency_code: string }[] }[]
-  vendor?: { name: string; handle: string } | null
+  vendor?: { id: string; name: string; handle: string } | null
   product_extra?: Record<string, unknown> | null
 }
 
@@ -78,7 +80,8 @@ export async function syncProduct(container: MedusaContainer, id: string) {
   const idx = await index()
   if (!idx) return
   const [p] = await fetchProducts(container, { id })
-  if (p?.status === "published") await idx.addDocuments([toDoc(p)], { primaryKey: "id" })
+  // P4: vendors past due beyond the grace period are de-indexed (back on the next sync after payment).
+  if (p?.status === "published" && !(p.vendor && (await hiddenVendorIds(container)).includes(p.vendor.id))) await idx.addDocuments([toDoc(p)], { primaryKey: "id" })
   else await idx.deleteDocument(id)
 }
 
@@ -98,11 +101,12 @@ export async function reindexAll(container: MedusaContainer) {
     })
     .waitTask()
   await idx.deleteAllDocuments().waitTask()
+  const hidden = await hiddenVendorIds(container)
   let total = 0
   for (let skip = 0; ; skip += 500) {
     const batch = await fetchProducts(container, { status: "published" }, skip)
     if (!batch.length) break
-    await idx.addDocuments(batch.map(toDoc), { primaryKey: "id" }).waitTask()
+    await idx.addDocuments(batch.filter((p) => !hidden.includes(p.vendor?.id ?? "")).map(toDoc), { primaryKey: "id" }).waitTask()
     total += batch.length
   }
   return total

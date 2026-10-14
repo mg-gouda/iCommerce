@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 
 // ponytail: plain fetch on the admin session cookie (same origin) instead of the JS SDK + react-query.
-export async function api<T = Record<string, unknown>>(path: string, body?: unknown): Promise<T> {
+export async function api<T = Record<string, unknown>>(path: string, body?: unknown, method?: "DELETE"): Promise<T> {
   const res = await fetch(path, {
-    method: body === undefined ? "GET" : "POST",
+    method: method ?? (body === undefined ? "GET" : "POST"),
     credentials: "include",
     headers: body === undefined ? undefined : { "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -28,4 +28,8 @@ export function useGet<T>(path: string) {
 export const act = (fn: () => Promise<unknown>, reload: () => void) => () =>
   fn().then(reload, (e: Error) => window.alert(e.message))
 
-export const selectCls = "bg-ui-bg-field border border-ui-border-base rounded-md px-2 py-1 txt-compact-small"
+export const usd = (n: number | null | undefined) => (n == null ? "—" : `USD ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+/** "" → null, else Number (optional numeric inputs). */
+export const numOrNull = (s: string) => (s.trim() === "" ? null : Number(s))
+
+export const selectCls ="bg-ui-bg-field border border-ui-border-base rounded-md px-2 py-1 txt-compact-small"

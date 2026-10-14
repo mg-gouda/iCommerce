@@ -4,6 +4,8 @@ import { join } from "node:path"
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { Modules } from "@medusajs/framework/utils"
 import seedDefaults from "../../src/scripts/seed-defaults"
+import { FEE_MODULE } from "../../src/modules/fee"
+import type FeeModuleService from "../../src/modules/fee/service"
 
 jest.setTimeout(240 * 1000)
 
@@ -18,12 +20,17 @@ const emails = () => readdirSync(EMAILS)
 
 medusaIntegrationTestRunner({
   testSuite: ({ api, getContainer }) => {
+    const dropFeeTiers = async () => {
+      const fees = getContainer().resolve<FeeModuleService>(FEE_MODULE)
+      await fees.deleteFeeTiers((await fees.listFeeTiers({})).map((t) => t.id))
+    }
     let admin: string
     let key: string
     const auth = (token?: string) => ({ headers: { "x-publishable-api-key": key, ...(token && { authorization: `Bearer ${token}` }) } })
 
     beforeEach(async () => {
       await seedDefaults({ container: getContainer(), args: [] } as never)
+      await dropFeeTiers() // P2/P3 totals stay fee-free here; fees are covered in p4-money.spec
       key = (await getContainer().resolve(Modules.API_KEY).listApiKeys({ title: "Retail storefront" }))[0].token
       const email = "admin@test.com"
       const reg = await api.post("/auth/user/emailpass/register", { email, password: PASSWORD })
@@ -222,7 +229,7 @@ medusaIntegrationTestRunner({
         })
 
       const view = (await status(n, "  guest@BUYER.test ")).data
-      expect(view.order).toEqual({ display_id: order.display_id, created_at: expect.any(String), currency_code: "usd", total: order.total })
+      expect(view.order).toEqual({ display_id: order.display_id, created_at: expect.any(String), currency_code: "usd", total: order.total, fee: null })
       expect(view.vendor_orders.map((v: { vendor: { name: string } }) => v.vendor.name).sort()).toEqual(["Iota", "Theta"])
       expect(view.vendor_orders[0]).not.toHaveProperty("email")
       expect(view.vendor_orders[0]).not.toHaveProperty("shipping_address")

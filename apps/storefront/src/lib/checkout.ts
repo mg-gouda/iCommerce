@@ -1,5 +1,6 @@
 import { sdk } from "@icommerce/sdk"
 import { auth, clientIp, status, type Order } from "./session"
+import type { PlatformFee } from "./fee"
 
 export type ShipOption = { id: string; name: string; amount: number; kind: "flat" | "free_over" | "pickup"; free_over: number | null }
 export type ShipGroup = {
@@ -70,7 +71,7 @@ export type VendorOrder = {
 }
 export type OrderPay = { provider_id: string; status: "authorized" | "captured" | "partially_captured" | "canceled"; bank_details: string | null; proof_uploaded_at: string | null }
 export type OrderStatus = {
-  order: { display_id: number; created_at: string; currency_code: string; total: number }
+  order: { display_id: number; created_at: string; currency_code: string; total: number; fee?: PlatformFee | null }
   vendor_orders: VendorOrder[]
   payment: OrderPay | null
 }

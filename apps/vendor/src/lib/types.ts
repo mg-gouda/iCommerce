@@ -78,6 +78,9 @@ export type VendorOrder = {
   shipping_total: number
   tax_total: number
   total: number
+  /** P4: commission snapshot + share of the buyer platform fee (collected with COD). */
+  commission_total: number
+  fee_share: number
   payment: { provider_id: string | null; status: "awaiting" | "paid" | "canceled" }
   fulfillment: { carrier: string | null; tracking_number: string | null; tracking_url: string | null; shipped_at: string | null; delivered_at: string | null } | null
   return_request: ReturnRequest | null
@@ -126,4 +129,50 @@ export type FormState = {
   fieldErrors?: Record<string, string>
   message?: string
   values?: Record<string, string>
+}
+
+// Shapes from project_docs/api/p4-backend.md §3–4.
+export type LedgerType = "sale" | "commission" | "fee_collected" | "refund" | "payout" | "adjustment"
+export type LedgerStatus = "pending" | "available" | "paid"
+export type LedgerEntry = {
+  id: string
+  vendor_order_id: string | null
+  order_display_id: number | null
+  type: LedgerType
+  amount: number
+  currency_code: string
+  status: LedgerStatus
+  available_at: string | null
+  note: string | null
+  created_at: string
+}
+export type PayoutSummary = { pending: number; available: number; balance: number; owed: number; paid_total: number }
+export type PayoutBatch = { id: string; amount: number; status: "open" | "paid"; reference: string | null; paid_at: string | null; entry_count: number; created_at: string }
+
+export type Plan = {
+  id: string
+  handle: string
+  name_en: string
+  name_ar: string
+  price_usd: number
+  interval: "monthly" | "yearly"
+  product_limit: number | null
+  staff_limit: number | null
+  featured_slots: number
+  can_b2b: boolean
+  analytics_level: "basic" | "full"
+}
+export type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled"
+export type Subscription = {
+  id: string | null
+  plan: Plan | null
+  status: SubscriptionStatus
+  current_period_end: string | null
+  requested_plan_id: string | null
+  read_only: boolean
+}
+/** `plan` on GET /vendors/me (banners). */
+export type PlanState = {
+  handle: string | null; name_en: string | null; name_ar: string | null; status: SubscriptionStatus
+  current_period_end: string | null; read_only: boolean; past_due: boolean
 }

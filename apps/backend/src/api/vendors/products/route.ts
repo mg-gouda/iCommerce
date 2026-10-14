@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/util
 import type { CreateProductWorkflowInputDTO } from "@medusajs/framework/types"
 import { createVendorProductWorkflow } from "../../../workflows/vendor-products"
 import { ensureVendorShipping } from "../../../lib/vendor-shipping"
+import { assertProductLimit } from "../../../lib/plans"
 import { gateStatus, getCaller } from "../helpers"
 import { GetVendorProducts, type PostVendorProductType } from "../validators"
 import { retrieveVendorProduct, salesChannelsFor, VENDOR_PRODUCT_FIELDS, vendorProductIds } from "./helpers"
@@ -28,6 +29,7 @@ export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 export async function POST(req: AuthenticatedMedusaRequest<PostVendorProductType>, res: MedusaResponse) {
   const { vendor } = await getCaller(req)
   const { extra = {}, ...product } = req.validatedBody
+  await assertProductLimit(req.scope, vendor.id)
   const { result } = await createVendorProductWorkflow(req.scope).run({
     input: {
       vendor_id: vendor.id,

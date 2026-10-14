@@ -7,6 +7,7 @@ import { gateStatus, getCaller } from "../../helpers"
 import { salesChannelsFor } from "../helpers"
 import { ensureVendorShipping } from "../../../../lib/vendor-shipping"
 import { isQty } from "../../validators"
+import { productsLeft } from "../../../../lib/plans"
 
 const MAX_ROWS = 1000
 type Row = Record<string, string | undefined>
@@ -42,6 +43,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   if (rows.length > MAX_ROWS) throw new MedusaError(MedusaError.Types.INVALID_DATA, `Max ${MAX_ROWS} rows per file.`)
 
   const { vendor } = await getCaller(req)
+  const plan = await productsLeft(req.scope, vendor.id) // P4: rows past the plan's product limit fail
   const { shipping_profile_id } = await ensureVendorShipping(req.scope, vendor)
   const status = gateStatus(vendor.status, (req.body as { status?: string })?.status ?? "draft")
   const handles = [...new Set(rows.map((r) => r.category_handle).filter(Boolean))] as string[]
@@ -57,6 +59,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
     const row = i + 2 // 1-based CSV line, header is line 1
     const errs = rowErrors(r)
     if (r.category_handle && !catId.has(r.category_handle)) errs.push(`unknown category_handle "${r.category_handle}"`)
+    if (!errs.length && created.length >= plan.left) errs.push(plan.message)
     if (errs.length) {
       errors.push({ row, handle: r.handle, errors: errs })
       continue

@@ -7,6 +7,9 @@ import { PostVendorApply, PostVendorMe, PostVendorProduct } from "./vendors/vali
 import { PostAdminVendorNote } from "./admin/vendors/validators"
 import { netTermsEligible, stripProvider } from "../lib/net-terms"
 import { NET_TERMS_PROVIDER } from "../modules/offline-payment/service"
+import { assertWritable, hiddenProductIds } from "../lib/plans"
+import { VENDOR_MODULE } from "../modules/vendor"
+import type VendorModuleService from "../modules/vendor/service"
 
 // Medusa only applies CORS to /store, /admin, /auth; /vendors is ours.
 const vendorCors = cors({ origin: parseCorsOrigins(process.env.VENDOR_CORS ?? ""), credentials: true })
@@ -57,6 +60,36 @@ const allowStoreProductFields = (req: MedusaRequest, _res: MedusaResponse, next:
   next()
 }
 
+// P4: products of vendors past due beyond the grace period are filtered out (non-destructive; back once paid).
+const hideReadOnlyVendors = async (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
+  try {
+    const hidden = await hiddenProductIds(req.scope)
+    if (hidden.length) {
+      const f = (req.filterableFields ?? {}) as Record<string, unknown>
+      // Detail route spreads filterableFields over { id: params.id } → keep the requested id(s); empty must not mean "any".
+      const raw = f.id ?? req.params?.id
+      const want = raw == null ? null : ([] as string[]).concat(raw as string | string[]).filter((id) => !hidden.includes(id))
+      req.filterableFields = { ...f, id: want ? (want.length ? want : ["prod_hidden"]) : { $nin: hidden } }
+    }
+    next()
+  } catch (e) {
+    next(e)
+  }
+}
+
+// P4: read-only vendors (past due beyond grace) can't change products. Orders/quotes/payouts keep working.
+const productsWritable = async (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
+  if (req.method === "GET") return next()
+  try {
+    const actor = (req as MedusaRequest & { auth_context: { actor_id: string } }).auth_context.actor_id
+    const user = await req.scope.resolve<VendorModuleService>(VENDOR_MODULE).retrieveVendorUser(actor, { select: ["id", "vendor_id"] })
+    await assertWritable(req.scope, (user as unknown as { vendor_id: string }).vendor_id)
+    next()
+  } catch (e) {
+    next(e)
+  }
+}
+
 // Runs after core's validateAndTransformQuery (which sets filterableFields) → adds a JSON filter on metadata.
 const parentOrdersOnly = (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
   req.filterableFields = { ...req.filterableFields, metadata: { parent_order_id: null } }
@@ -66,6 +99,7 @@ const parentOrdersOnly = (req: MedusaRequest, _res: MedusaResponse, next: Medusa
 export default defineMiddlewares({
   routes: [
     { matcher: "/store/products*", method: ["GET"], middlewares: [allowStoreProductFields] },
+    ...["/store/products", "/store/products/:id"].map((matcher) => ({ matcher, method: ["GET" as const], middlewares: [hideReadOnlyVendors] })),
     // Own-order routes (handlers 404 on anyone else's order).
     { matcher: "/store/orders/:id/vendor-orders", method: ["GET"], middlewares: [customerAuth] },
     { matcher: "/store/orders/:id/return-request", method: ["POST"], middlewares: [customerAuth] },
@@ -97,6 +131,7 @@ export default defineMiddlewares({
     // Everything below /vendors/ needs a registered vendor actor. Handlers scope by auth_context.actor_id.
     { matcher: "/vendors/*", middlewares: [corsMw, vendorAuth] },
     { matcher: "/vendors/me", method: ["POST"], middlewares: [validateAndTransformBody(PostVendorMe)] },
+    { matcher: "/vendors/products*", middlewares: [productsWritable] },
     { matcher: "/vendors/me/kyc", method: ["POST"], middlewares: [kycUpload.array("files", 10)] },
     { matcher: "/vendors/uploads", method: ["POST"], middlewares: [imageUpload.array("files", 10)] },
     { matcher: "/vendors/products", method: ["POST"], middlewares: [validateAndTransformBody(PostVendorProduct)] },

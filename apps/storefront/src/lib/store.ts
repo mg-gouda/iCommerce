@@ -1,5 +1,6 @@
 import { connection } from "next/server"
 import { sdk } from "@icommerce/sdk"
+import { productLines } from "./fee"
 
 // Store API reads (server components only). Catalog changes must show up immediately → always dynamic.
 
@@ -123,9 +124,9 @@ export async function productsById(ids: (string | null | undefined)[]) {
 }
 
 /** Lines grouped by supplier, in first-seen order. Unknown vendor → handle "". */
-export function byVendor<T extends { product_id?: string | null }>(items: T[], products: Map<string, Product>) {
+export function byVendor<T extends { product_id?: string | null; metadata?: Record<string, unknown> | null }>(items: T[], products: Map<string, Product>) {
   const groups = new Map<string, { vendor: StoreVendor | null; items: T[] }>()
-  for (const it of items) {
+  for (const it of productLines(items)) {
     const v = products.get(it.product_id ?? "")?.vendor ?? null
     const key = v?.handle ?? ""
     if (!groups.has(key)) groups.set(key, { vendor: v, items: [] })

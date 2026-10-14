@@ -4,6 +4,8 @@ import { join } from "node:path"
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { Modules } from "@medusajs/framework/utils"
 import seedDefaults from "../../src/scripts/seed-defaults"
+import { FEE_MODULE } from "../../src/modules/fee"
+import type FeeModuleService from "../../src/modules/fee/service"
 import { flagOverdue } from "../../src/lib/net-terms"
 import { expireQuotes } from "../../src/lib/quotes"
 import { COMPANY_MODULE } from "../../src/modules/company"
@@ -27,6 +29,10 @@ type Extra = { min_qty?: number; qty_step?: number; max_qty?: number; unit?: str
 
 medusaIntegrationTestRunner({
   testSuite: ({ api, getContainer }) => {
+    const dropFeeTiers = async () => {
+      const fees = getContainer().resolve<FeeModuleService>(FEE_MODULE)
+      await fees.deleteFeeTiers((await fees.listFeeTiers({})).map((t) => t.id))
+    }
     let admin: string
     let retail: string
     let wholesale: string
@@ -34,6 +40,7 @@ medusaIntegrationTestRunner({
 
     beforeEach(async () => {
       await seedDefaults({ container: getContainer(), args: [] } as never)
+      await dropFeeTiers() // P2/P3 totals stay fee-free here; fees are covered in p4-money.spec
       const keys = getContainer().resolve(Modules.API_KEY)
       retail = (await keys.listApiKeys({ title: "Retail storefront" }))[0].token
       wholesale = (await keys.listApiKeys({ title: "Wholesale storefront" }))[0].token
@@ -49,6 +56,9 @@ medusaIntegrationTestRunner({
       const reg = await api.post("/auth/vendor/emailpass/register", { email, password: PASSWORD })
       const { data } = await api.post("/vendors", { name, country: "EG" }, auth(reg.data.token))
       await api.post(`/admin/vendors/${data.vendor.id}/approve`, {}, auth(admin))
+      // P4: B2B (wholesale tiers, RFQs) needs a plan with can_b2b → Business.
+      const business = (await api.get("/admin/plans", auth(admin))).data.plans.find((p: { handle: string }) => p.handle === "business")
+      await api.post("/admin/vendor-subscriptions", { vendor_id: data.vendor.id, plan_id: business.id }, auth(admin))
       const token = (await api.post("/auth/vendor/emailpass", { email, password: PASSWORD })).data.token as string
       const out: { product_id: string; variant_id: string }[] = []
       for (const [i, p] of products.entries()) {

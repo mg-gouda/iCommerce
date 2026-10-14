@@ -10,6 +10,9 @@ import { BANK_PROVIDER, NET_TERMS_PROVIDER } from "../modules/offline-payment/se
 import { companyRecipients, companySvc, customerLocale, wholesaleChannelId } from "./company"
 import { sendEmail } from "./emails"
 import type { B2bTemplate } from "./emails-b2b"
+import { feeOrderLine, resolveFee } from "./fees"
+import { vendorCanB2b } from "./plans"
+import { cents } from "./money"
 import { assertNetTerms } from "./net-terms"
 import { ensureVendorShipping, listVendorOptions } from "./vendor-shipping"
 
@@ -120,8 +123,10 @@ export async function notify(
 export async function placeQuoteOrder(scope: MedusaContainer, q: Row) {
   const company = await companySvc(scope).retrieveCompany(q.company_id)
   const total = (q.items as Row[]).reduce((s, i) => s + Number(i.quantity) * Number(i.offered_unit_price), 0)
+  // P4: platform fee (b2b tiers, company's monthly volume) as its own parent-order line, snapshot in metadata.
+  const fee = await resolveFee(scope, { channel: "b2b", customer_id: q.customer_id, subtotal: cents(total) })
   const net = company.payment_mode === "net_terms"
-  if (net) await assertNetTerms(scope, q.customer_id, total)
+  if (net) await assertNetTerms(scope, q.customer_id, total + (fee?.amount ?? 0))
   const [customer] = await scope.resolve(Modules.CUSTOMER).listCustomers({ id: q.customer_id }, { select: ["id", "email", "first_name", "last_name"] })
 
   const address = {
@@ -153,7 +158,7 @@ export async function placeQuoteOrder(scope: MedusaContainer, q: Row) {
         is_tax_inclusive: false,
         requires_shipping: !!option,
         metadata: { quote_id: q.id, quote_item_id: i.id, vendor_id: q.vendor_id, unit: i.unit },
-      })),
+      })).concat(fee ? [feeOrderLine(fee) as never] : []),
     } as never,
   })
 
@@ -186,6 +191,8 @@ export async function routeQuote(scope: MedusaContainer, q: Row, vendor_ids: str
   const ids = [...new Set(vendor_ids)]
   const vendors = await (scope.resolve(VENDOR_MODULE) as VendorModuleService).listVendors({ id: ids, status: "approved" })
   if (vendors.length !== ids.length) throw bad("Every vendor must exist and be approved.")
+  // P4: vendors on a plan without B2B take no RFQs.
+  for (const v of vendors) if (!(await vendorCanB2b(scope, v.id))) throw bad(`${v.name} does not accept quote requests (plan without B2B).`)
   const svc = quoteSvc(scope)
   for (const vendor_id of ids) {
     const n = await svc.createQuotes({

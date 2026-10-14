@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation"
 import { forgetTrack } from "@/lib/account-actions"
 import { orderStatusOrNull } from "@/lib/checkout"
 import { TRACK_COOKIE } from "@/lib/session"
+import { FeeRow } from "@/components/FeeRow"
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: `${(await getTranslations("track"))("title")} · iCommerce` }
@@ -49,6 +50,15 @@ export default async function TrackPage() {
               </div>
               <aside className="flex min-w-0 flex-[1_1_340px] flex-col gap-4">
                 <PaymentPanel t={to} n={status.order.display_id} email={lookup.email} total={money(status.order.total, status.order.currency_code.toUpperCase())} payment={status.payment} />
+                {status.order.fee && (
+                  <section className="rounded-lg border border-line bg-surface p-5">
+                    <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-[14px] tabular-nums">
+                      <FeeRow fee={status.order.fee} currency={status.order.currency_code.toUpperCase()} />
+                      <dt className="font-semibold">{to("total")}</dt>
+                      <dd className="m-0 font-semibold"><bdi>{money(status.order.total, status.order.currency_code.toUpperCase())}</bdi></dd>
+                    </dl>
+                  </section>
+                )}
               </aside>
             </div>
           </>

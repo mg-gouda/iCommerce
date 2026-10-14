@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { getLocale } from "next-intl/server"
 import { redirect } from "@/i18n/navigation"
-import type { Vendor, VendorUser } from "./types"
+import type { PlanState, Vendor, VendorUser } from "./types"
 
 // Server-only: the vendor JWT lives in an httpOnly cookie and never reaches the browser.
 export const BACKEND = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
@@ -41,7 +41,7 @@ export async function vendorApi<T>(path: string, init?: RequestInit): Promise<T>
   }
 }
 
-export const getMe = () => vendorApi<{ vendor: Vendor; user: VendorUser }>("/vendors/me")
+export const getMe = () => vendorApi<{ vendor: Vendor; user: VendorUser; plan: PlanState }>("/vendors/me")
 
 /** Uploads public images; returns their URLs in input order. */
 export async function uploadImages(files: File[]) {

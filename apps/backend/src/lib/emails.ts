@@ -17,6 +17,7 @@ export type EmailData = {
   reason?: string
   /** Order-canceled refund note: COD → nothing was charged; bank → support contacts the buyer. */
   refund?: "cod" | "bank"
+  plan_name?: string
 } & B2bData
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
@@ -34,6 +35,7 @@ const STR = {
     "vendor-new-order": { subject: (d: EmailData) => `New order #${d.display_id}`, intro: "You have a new order. Open the vendor portal to prepare and ship it." },
     "order-shipped": { subject: (d: EmailData) => `Order #${d.display_id} has shipped`, intro: "Good news: part of your order is on its way." },
     "order-delivered": { subject: (d: EmailData) => `Order #${d.display_id} delivered`, intro: "Your items were delivered. Something wrong? You can request a return from your order page." },
+    "plan-past-due": { subject: (d: EmailData) => `Payment due for your ${d.plan_name} plan`, intro: "Your plan period has ended and the payment is pending. Your products stay visible until the due date below; after that they are hidden from the store and product editing pauses until payment. Contact iCommerce to pay." },
     "order-canceled": { subject: (d: EmailData) => `Order #${d.display_id}: items cancelled by the seller`, intro: "Sorry, the seller below cancelled these items from your order. Items from other sellers are not affected." },
     reason: "Reason",
     refund: {
@@ -52,6 +54,7 @@ const STR = {
     "vendor-new-order": { subject: (d: EmailData) => `طلب جديد رقم ${d.display_id}`, intro: "لديك طلب جديد. افتح بوابة البائع لتجهيزه وشحنه." },
     "order-shipped": { subject: (d: EmailData) => `تم شحن الطلب رقم ${d.display_id}`, intro: "خبر سار: جزء من طلبك في الطريق إليك." },
     "order-delivered": { subject: (d: EmailData) => `تم توصيل الطلب رقم ${d.display_id}`, intro: "تم توصيل منتجاتك. هل هناك مشكلة؟ يمكنك طلب إرجاع من صفحة الطلب." },
+    "plan-past-due": { subject: (d: EmailData) => `مستحق دفع اشتراك باقة ${d.plan_name}`, intro: "انتهت فترة باقتك ولم يتم الدفع بعد. تظل منتجاتك ظاهرة حتى تاريخ الاستحقاق أدناه، وبعده تُخفى من المتجر ويتوقف تعديل المنتجات حتى الدفع. تواصل مع iCommerce للدفع." },
     "order-canceled": { subject: (d: EmailData) => `الطلب رقم ${d.display_id}: ألغى البائع بعض المنتجات`, intro: "نأسف، ألغى البائع التالي هذه المنتجات من طلبك. لا يتأثر ما طلبته من بائعين آخرين." },
     reason: "السبب",
     refund: {
@@ -61,7 +64,7 @@ const STR = {
     seller: "البائع", carrier: "شركة الشحن", tracking: "رقم التتبع", track: "تتبع الشحنة", amount: "المبلغ", bank: "بيانات الحساب البنكي",
   },
 }
-export type Template = "order-placed" | "bank-transfer" | "vendor-new-order" | "order-shipped" | "order-delivered" | "order-canceled" | B2bTemplate
+export type Template = "order-placed" | "bank-transfer" | "vendor-new-order" | "order-shipped" | "order-delivered" | "order-canceled" | "plan-past-due" | B2bTemplate
 
 export function render(template: Template, d: EmailData, l: Locale) {
   const s = { ...STR[l], ...B2B_STR[l] }

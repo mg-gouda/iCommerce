@@ -7,6 +7,8 @@ import { CheckoutHeader } from "@/components/Header"
 import { Link } from "@/i18n/navigation"
 import { setLineQty } from "@/lib/cart-actions"
 import { shippingGroups } from "@/lib/checkout"
+import { feeOf, productLines } from "@/lib/fee"
+import { FeeRow } from "@/components/FeeRow"
 import { countOf, getCart, token } from "@/lib/session"
 import { byVendor, isVerified, productsById } from "@/lib/store"
 
@@ -15,7 +17,8 @@ const PLACEHOLDER = "/samples/placeholder.svg"
 export default async function CartPage() {
   const t = await getTranslations("cart")
   const cart = await getCart()
-  const items = cart?.items ?? []
+  const items = productLines(cart?.items)
+  const fee = feeOf(cart?.items)
 
   if (!items.length) {
     const signedIn = !!(await token())
@@ -43,7 +46,7 @@ export default async function CartPage() {
   const vendors = byVendor(items, products)
   const count = countOf(cart)
   const currency = cart!.currency_code.toUpperCase()
-  const subtotal = cart!.item_subtotal ?? 0
+  const subtotal = (cart!.item_subtotal ?? 0) - (fee?.amount ?? 0) // item_subtotal includes the fee line
   // Cheapest option per vendor as a hint; the exact method is picked at checkout.
   const fromPrice = (handle: string | undefined) => groups.find((g) => g.vendor?.handle === handle)?.options[0]?.amount
   const shipFrom = groups.reduce((s, g) => s + (g.options[0]?.amount ?? 0), 0)
@@ -117,10 +120,11 @@ export default async function CartPage() {
             <dd className="m-0"><bdi>{money(subtotal, currency)}</bdi></dd>
             <dt className="text-ink-muted">{t("shippingN", { n: vendors.length })}</dt>
             <dd className="m-0">{groups.length ? <bdi>{t("from", { price: bidi(money(shipFrom, currency)) })}</bdi> : t("atCheckout")}</dd>
+            {fee && <FeeRow fee={fee} currency={currency} />}
           </dl>
           <div className="flex items-baseline justify-between border-t border-line pt-3.5">
             <span className="font-semibold">{t("estTotal")}</span>
-            <bdi className="text-[24px] leading-[30px] font-semibold tabular-nums">{money(subtotal + shipFrom, currency)}</bdi>
+            <bdi className="text-[24px] leading-[30px] font-semibold tabular-nums">{money(subtotal + shipFrom + (fee?.amount ?? 0), currency)}</bdi>
           </div>
           <CheckoutCta label={t("checkout")} packingLabel={t("packing")} doneLabel={t("packed")} />
           <p className="m-0 text-[13px] leading-[18px] text-ink-muted">{t("payNote")}</p>

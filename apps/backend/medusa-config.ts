@@ -40,6 +40,10 @@ module.exports = defineConfig({
     { resolve: "./src/modules/product-extra" },
     { resolve: "./src/modules/company" },
     { resolve: "./src/modules/quote" },
+    { resolve: "./src/modules/fee" },
+    { resolve: "./src/modules/commission" },
+    { resolve: "./src/modules/payout" },
+    { resolve: "./src/modules/vendor-plan" },
     {
       resolve: "@medusajs/medusa/file",
       options: {
@@ -66,7 +70,13 @@ module.exports = defineConfig({
     },
     {
       resolve: "@medusajs/medusa/notification",
-      options: { providers: [{ resolve: "./src/modules/email", id: "email", options: { channels: ["email"] } }] },
+      options: {
+        providers: [
+          { resolve: "./src/modules/email", id: "email", options: { channels: ["email"] } },
+          // Admin notification bell (upgrade requests).
+          { resolve: "@medusajs/medusa/notification-local", id: "local", options: { channels: ["feed"] } },
+        ],
+      },
     },
     ...redisModules,
   ],

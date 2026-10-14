@@ -1,3 +1,5 @@
+import type { PlatformFee } from "../fee"
+
 // Shapes from project_docs/api/p3-backend.md. Contract changes land here + in api.ts only.
 
 export type KycStatus = "none" | "submitted" | "verified" | "rejected"
@@ -53,6 +55,8 @@ export type Quote = {
   incoterm: string | null
   validity_until: string | null
   total: number | null
+  /** P4 platform fee: live preview on open offers, order snapshot once ordered. */
+  fee?: PlatformFee | null
   order_id: string | null
   approved_by: string | null
   items: QuoteItem[]

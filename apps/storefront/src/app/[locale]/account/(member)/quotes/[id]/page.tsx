@@ -6,6 +6,7 @@ import { AcceptForm, ApproveForm, CounterForm, MessageForm, RejectForm } from "@
 import { QuoteBadge } from "@/components/QuoteStatus"
 import { Link } from "@/i18n/navigation"
 import { getCredit, getMembership, getQuote } from "@/lib/p3/api"
+import { FeeRow } from "@/components/FeeRow"
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -16,6 +17,7 @@ export default async function QuotePage({ params }: Props) {
   if (!res || !m) notFound()
   const q = res.quote
   const cur = q.currency_code.toUpperCase()
+  const due = (q.total ?? 0) + (q.fee?.amount ?? 0) // P4: offer total + platform fee
   const role = m.member.role
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" })
   const time = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" })
@@ -104,6 +106,15 @@ export default async function QuotePage({ params }: Props) {
             )}
           </table>
         </div>
+        {q.fee && q.total != null && (
+          <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 self-end rounded-lg border border-line bg-surface p-4 text-[14px] tabular-nums sm:min-w-[360px]">
+            <dt className="text-ink-muted">{t("total")}</dt>
+            <dd className="m-0"><bdi>{money(q.total, cur)}</bdi></dd>
+            <FeeRow fee={q.fee} currency={cur} />
+            <dt className="font-semibold">{t("totalDue")}</dt>
+            <dd className="m-0 font-semibold"><bdi>{money(due, cur)}</bdi></dd>
+          </dl>
+        )}
         <dl className="m-0 flex flex-wrap gap-x-8 gap-y-2 text-[14px]">
           {q.validity_until && <div><dt className="text-ink-muted">{t("validity")}</dt><dd className="m-0 font-semibold">{date.format(new Date(q.validity_until))}</dd></div>}
           {q.incoterm && <div><dt className="text-ink-muted">{t("incoterm")}</dt><dd className="m-0 font-semibold">{q.incoterm}</dd></div>}
@@ -115,7 +126,7 @@ export default async function QuotePage({ params }: Props) {
       {q.status === "offered" && (
         <section aria-labelledby="decide" className="flex flex-col gap-4 rounded-lg border border-line-strong bg-surface p-4 md:p-6">
           <h3 id="decide" className="m-0 text-[16px] leading-[22px] font-semibold">{t("decide")}</h3>
-          <AcceptForm quote={q.id} label={t("accept", { total: bidi(money(q.total ?? 0, cur)) })} help={role === "buyer" ? t("acceptHelpBuyer") : t("acceptHelp")} />
+          <AcceptForm quote={q.id} label={t("accept", { total: bidi(money(due, cur)) })} help={role === "buyer" ? t("acceptHelpBuyer") : t("acceptHelp")} />
           <details className="flex flex-col gap-3 border-t border-line pt-4">
             <summary className="cursor-pointer font-semibold">{t("counter")}</summary>
             <div className="mt-3"><CounterForm quote={q.id} items={q.items} currency={cur} /></div>
@@ -131,7 +142,7 @@ export default async function QuotePage({ params }: Props) {
             <p className="m-0 text-[14px] text-ink-muted">{t("waitingApproval")}</p>
           ) : (
             <>
-              <p className="m-0 text-[14px] text-ink-muted">{t("approveHelp", { total: bidi(money(q.total ?? 0, cur)) })}</p>
+              <p className="m-0 text-[14px] text-ink-muted">{t("approveHelp", { total: bidi(money(due, cur)) })}</p>
               <ApproveForm quote={q.id} />
               <RejectForm quote={q.id} label={t("rejectOffer")} />
             </>
