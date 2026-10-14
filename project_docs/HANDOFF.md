@@ -1,6 +1,6 @@
 # iCommerce: handoff for Claude Code CLI
 
-Status as of **2026-10-14**. Read this first, then the docs it points to. Everything here was true at commit `f6d288c` on `main`.
+Status as of **2026-10-14**. Read this first, then the docs it points to. Everything here was true at commit `3df4d89` on `main`.
 
 ## 1. What this is
 
@@ -40,34 +40,21 @@ design-screens/   Claude Design screen sources
 | P1 Vendors + catalog + WP migration | ✅ merged |
 | P2 B2C (cart, checkout, order split, shipping, COD, bank transfer, emails, accounts) | ✅ merged |
 | P3 B2B (companies, KYC, wholesale tiers, RFQ/quotes, approvals, net terms, platform-routed RFQs) | ✅ merged |
-| **P4 Money** (platform fee, commission, payout ledger, vendor plans) | 🟡 **on branch, not merged** (see §4) |
+| **P4 Money** (platform fee, commission, payout ledger, vendor plans) | ✅ merged (`3df4d89`) |
 | P5 Chat + reports + sales org | ⬜ |
 | P6 ERP (Business Central + Odoo) | ⬜ |
 | P7 Hardening + launch | ⬜ |
 
-## 4. Resume here: finish P4
+## 4. Resume here: start P5
 
-Branch `worktree-agent-aeba1892c972e16f0`, worktree `.claude/worktrees/agent-aeba1892c972e16f0`. Seven commits ahead of main:
+P4 merged to `main` and pushed 2026-10-14 (`3df4d89`). The worktree `.claude/worktrees/agent-aeba1892c972e16f0` (branch `worktree-agent-aeba1892c972e16f0`) is still on disk — not deleted, in case its dev servers (backend :9104, storefront :3104, vendor :3105, DB `icommerce_p4`) are still in use; safe to remove once nobody needs it.
 
-```
-e98c308 docs: p4 money backend contract              (project_docs/api/p4-backend.md)
-a27bc5d feat(backend): p4 fee, commission, ledger, plans
-06b323d feat(backend): p4 admin screens + money tests
-4ed076c feat(vendor): payouts + plan pages, plan banner
-51c6d5e merge main
-7f9b03d fix(backend): p4 checks skip vendorless rfq lines
-33f9e76 feat(storefront): platform fee line in cart to quotes
-```
+P4 close-out notes, for the record:
+- The 4 files the prior agent left uncommitted were reviewed and split into two commits: the `FeeRow.tsx`/i18n fee-tier-text fix, and a vendor payouts sign-of-negative-balance fix (COD fee-owed-back can push "available" negative).
+- `integration-tests/http/p4-money.spec.ts` had a `pc.payment_collections` possibly-null typecheck error (pre-existing in the agent's own commit, unrelated to the uncommitted files) — fixed with the same `?.[0]?.` pattern used elsewhere in the suite.
+- Verified on main after merge: 15/15 typecheck/lint/build, 25/25 integration tests (incl. the P4 exact-cents matrix). Vendor payouts + plan pages screenshotted EN/AR via a throwaway Playwright script (not committed) — render correctly, RTL mirrors properly. Storefront cart fee-row screenshot was inconclusive (an unrelated dev-only quirk: this worktree's backend ran on port 9104, but the local file-storage provider bakes image URLs to the Medusa default of port 9000 at upload time, so product thumbnails 404'd and blocked "Add to cart" in the headless browser) — not a regression, just re-run it bound to the default port if a visual check is wanted. The `FeeRow.tsx` diff itself was read directly and its output matches the backend's passing fee-tier test assertions.
 
-The agent was cut off with **4 uncommitted files** in that worktree: `apps/storefront/messages/{en,ar}.json`, `apps/storefront/src/components/FeeRow.tsx` (it was making the tier text show only when `min_amount > 0`), and `apps/vendor/src/app/[locale]/dashboard/payouts/page.tsx`.
-
-To finish:
-1. `cd .claude/worktrees/agent-aeba1892c972e16f0`. Review and commit those 4 files.
-2. `git merge main`. Main has the P3 follow-ups: quote `vendor_id` is nullable, statuses `routing`/`routed`, `countOf` counts lines, `bidi()` money helper.
-3. Run the full verification (§7), including the P4 exact-cents matrix test and Playwright on storefront fee lines plus vendor payouts and plan pages (EN/AR).
-4. Merge into `main` with `--no-ff`, re-verify on main, push.
-
-P4 defaults (owner may change; all editable in admin):
+P4 defaults for reference (owner may change; all editable in admin):
 
 | Setting | Default |
 |---|---|
