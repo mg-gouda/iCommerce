@@ -29,7 +29,7 @@ export default async function QuotePage({ params }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="m-0 flex flex-wrap items-center gap-3 text-[20px] leading-[26px] font-semibold">
-            <bdi>{q.vendor.name}</bdi> <QuoteBadge status={q.status} />
+            {q.vendor ? <bdi>{q.vendor.name}</bdi> : t("sourcing")} <QuoteBadge quote={q} />
           </h2>
           <p className="m-0 text-[13px] text-ink-muted">
             {t("requestedOn", { date: date.format(new Date(q.created_at)) })}
@@ -44,6 +44,10 @@ export default async function QuotePage({ params }: Props) {
           <CircleCheck size={16} aria-hidden /> {t("ordered")}
           <Link href={`/account/orders/${q.order_id}`} className="font-semibold text-success underline underline-offset-2">{t("viewOrder")}</Link>
         </p>
+      )}
+
+      {q.status === "routing" && (
+        <p role="status" className="m-0 rounded-md border border-line bg-brand-tint px-4 py-3 text-[14px] text-brand-ink">{t("routingBody")}</p>
       )}
 
       <section aria-labelledby="offer" className="flex flex-col gap-3">
@@ -146,7 +150,7 @@ export default async function QuotePage({ params }: Props) {
             ) : (
               <li key={msg.id} className={`flex max-w-[85%] flex-col gap-1 rounded-lg border p-3 ${msg.author === "buyer" ? "self-end border-brand-tint bg-brand-tint" : "self-start border-line bg-surface"}`}>
                 <span className="text-[12px] text-ink-muted">
-                  <bdi>{msg.author === "buyer" ? (msg.author_name ?? t("you")) : q.vendor.name}</bdi> · <time dateTime={msg.created_at}>{time.format(new Date(msg.created_at))}</time>
+                  <bdi>{msg.author === "buyer" ? (msg.author_name ?? t("you")) : (q.vendor?.name ?? msg.author_name)}</bdi> · <time dateTime={msg.created_at}>{time.format(new Date(msg.created_at))}</time>
                 </span>
                 <p dir="auto" className="m-0 text-start whitespace-pre-line">{msg.body}</p>
               </li>

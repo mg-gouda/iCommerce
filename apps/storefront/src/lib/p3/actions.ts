@@ -131,7 +131,7 @@ export async function removeDraftLine(fd: FormData) {
 
 /**
  * Review page submit → POST /store/quotes (one quote per vendor). Free-text lines go to every ticked supplier
- * (`vendor_<i>` = vendor handles, resolved to ids here).
+ * (`vendor_<i>` = vendor handles, resolved to ids here) and/or to iCommerce staff (`find_<i>` → `find_suppliers`).
  */
 export async function submitRfq(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await rfqDraft()
@@ -149,8 +149,11 @@ export async function submitRfq(_: FormState, fd: FormData): Promise<FormState> 
     if (d.product_id) items.push({ product_id: d.product_id, ...line })
     else {
       const handles = fd.getAll(`vendor_${i}`).map(String)
+      const find = fd.get(`find_${i}`) === "1"
       values[`vendor_${i}`] = handles.join(",")
-      if (!handles.length) fieldErrors[`vendor_${i}`] = "pickSupplier"
+      values[`find_${i}`] = find ? "1" : ""
+      if (!handles.length && !find) fieldErrors[`vendor_${i}`] = "pickSupplier"
+      if (find) items.push({ title: d.title, unit: d.unit, find_suppliers: true, ...line })
       for (const h of handles) {
         const v = await vendorByHandle(h)
         if (v) items.push({ title: d.title, unit: d.unit, vendor_id: v.vendor.id, ...line })
