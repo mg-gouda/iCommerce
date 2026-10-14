@@ -33,7 +33,7 @@ export const channelOf = async (scope: MedusaContainer, sales_channel_id?: strin
 
 /** Σ non-fee line subtotals (unit_price × quantity), cents. */
 export const subtotalCents = (items: Row[]) =>
-  items.filter((i) => !isFeeLine(i)).reduce((s, i) => s + cents(Number(i.unit_price) * Number(i.quantity)), 0)
+  items.filter((i) => !isFeeLine(i)).reduce((s, i) => s + cents(Number(i.unit_price) * Number(i.quantity ?? i.detail?.quantity)), 0)
 
 /**
  * Buyer's volume this calendar month (UTC), cents: Σ subtotals of parent orders created this month, not canceled/draft.
@@ -49,7 +49,7 @@ export async function monthlyVolumeCents(scope: MedusaContainer, channel: Channe
   }
   const { data } = await scope.resolve(ContainerRegistrationKeys.QUERY).graph({
     entity: "order",
-    fields: ["id", "items.unit_price", "items.quantity", "items.metadata"],
+    fields: ["id", "items.id", "items.unit_price", "items.quantity", "items.detail.quantity", "items.metadata"],
     filters: {
       customer_id: ids,
       created_at: { $gte: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)) },

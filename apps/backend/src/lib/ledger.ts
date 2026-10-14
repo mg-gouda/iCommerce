@@ -105,10 +105,10 @@ export async function vendorSummary(scope: MedusaContainer, vendor_id: string) {
 export async function shapeBatches(scope: MedusaContainer, batches: Row[]) {
   if (!batches.length) return []
   const vendors = await (scope.resolve(VENDOR_MODULE) as VendorModuleService).listVendors({ id: [...new Set(batches.map((b) => b.vendor_id))] }, { select: ["id", "name", "handle"] })
-  const entries = await payoutSvc(scope).listLedgerEntries({ batch_id: batches.map((b) => b.id) }, { select: ["id", "batch_id", "type"] })
+  const entries = await payoutSvc(scope).listLedgerEntries({ batch_id: batches.map((b) => b.id) }, { select: ["id", "batch_id", "type", "vendor_order_id"] })
   return batches.map((b) => ({
     id: b.id, vendor_id: b.vendor_id, vendor: vendors.find((v) => v.id === b.vendor_id) ?? null, amount: Number(b.amount), currency_code: b.currency_code,
-    status: b.status, reference: b.reference, paid_at: b.paid_at, entry_count: entries.filter((e) => e.batch_id === b.id && e.type !== "payout").length,
+    status: b.status, reference: b.reference, paid_at: b.paid_at, entry_count: entries.filter((e) => e.batch_id === b.id && !(e.type === "payout" && !e.vendor_order_id)).length,
     created_at: b.created_at,
   }))
 }
