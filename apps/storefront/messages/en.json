@@ -567,7 +567,8 @@
     "findForMeHelp": "Our team picks suitable suppliers and sends them your request.",
     "sourcing": "iCommerce sourcing",
     "routingBody": "We're finding suppliers for these items. Their quotes will appear in your quotes list, and we'll email you.",
-    "rfqRouting": "iCommerce will find suppliers for {n, plural, one {# item} other {# items}}."
+    "rfqRouting": "iCommerce will find suppliers for {n, plural, one {# item} other {# items}}.",
+    "totalDue": "Total due (incl. platform fee)"
   },
   "track": {
     "title": "Track your order",
@@ -582,5 +583,11 @@
     "expired": "We couldn't load that order again. Enter its number and email once more.",
     "haveAccount": "Have an account?",
     "signIn": "Sign in to see all your orders"
+  },
+  "fee": {
+    "orderTotal": "{percent}% of the order subtotal",
+    "volume": "{percent}% · your volume this month incl. this order {volume} (tier from {tier})",
+    "min": "minimum {amount}",
+    "max": "capped at {amount}"
   }
 }

@@ -68,7 +68,15 @@ export async function placeOrder(_: FormState, fd: FormData): Promise<FormState>
   const cart = await openCart()
   if (!cart) return { message: "cartGone" }
   const res = await sdk.store.cart.complete(cart.id, {}, await auth()).catch((e: Error) => ({ type: "cart" as const, error: e }))
-  if (res.type !== "order") return { message: res.error?.message || "placeFailed" }
+  if (res.type !== "order") {
+    // P4: the fee moved since the payment session (monthly volume) → any cart update re-syncs it and resets the
+    // payment session; the buyer reviews the new total and picks payment again.
+    if (res.error?.message?.startsWith("Platform fee changed")) {
+      await sdk.store.cart.update(cart.id, {}, { fields: "id" }, await auth())
+      return back(fd)
+    }
+    return { message: res.error?.message || "placeFailed" }
+  }
   await clearCookie(CART_COOKIE)
   redirect(`/${routeLocale(fd)}/order/${res.order.id}`)
 }

@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers"
 import { sdk } from "@icommerce/sdk"
+import { productLines } from "./fee"
 
 // Server-only session: cart id + customer JWT live in httpOnly cookies, never in the browser's JS.
 // Every call passes its own auth header; the shared sdk instance never stores a token.
@@ -73,7 +74,7 @@ export async function getCart(): Promise<Cart | null> {
 }
 
 /** Distinct products (lines), not units: 1 product × 1000 units = 1. */
-export const countOf = (cart: Pick<Cart, "items"> | null) => cart?.items?.length ?? 0
+export const countOf = (cart: Pick<Cart, "items"> | null) => productLines(cart?.items).length // fee line is no product
 
 export async function getCustomer(): Promise<Customer | null> {
   if (!(await token())) return null

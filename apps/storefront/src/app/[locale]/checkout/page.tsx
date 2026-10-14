@@ -11,6 +11,8 @@ import { AddressLines } from "@/components/AddressLines"
 import { netTerms } from "@/lib/p3/terms"
 import { getCart, getCustomer } from "@/lib/session"
 import { byVendor, productsById } from "@/lib/store"
+import { FeeRow } from "@/components/FeeRow"
+import { feeOf } from "@/lib/fee"
 
 const STEPS = ["email", "address", "shipping", "payment", "review"] as const
 type Step = (typeof STEPS)[number]
@@ -36,6 +38,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const NET = "pp_net-terms_net-terms"
   const offered = [...providers.filter((id) => payKind(id) !== "net" || net), ...(net?.refusal && !providers.includes(NET) ? [NET] : [])]
   const currency = c.currency_code.toUpperCase()
+  const fee = feeOf(c.items)
   const a = c.shipping_address
   const session = c.payment_collection?.payment_sessions?.[0]
 
@@ -89,6 +92,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
     review: (
       <div className="flex flex-col gap-4">
         <VendorLines groups={byVendor(c.items!, products)} currency={currency} />
+        {fee && (
+          <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 border-t border-line pt-3 text-[14px] tabular-nums">
+            <FeeRow fee={fee} currency={currency} />
+          </dl>
+        )}
         <PlaceOrderForm label={t("place", { total: bidi(money(c.total, currency)) })} />
       </div>
     ),
@@ -136,9 +144,10 @@ export default async function CheckoutPage({ searchParams }: Props) {
           <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("summary")}</h2>
           <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2.5 text-[14px] tabular-nums">
             <dt className="text-ink-muted">{t("subtotal")}</dt>
-            <dd className="m-0"><bdi>{money(c.item_subtotal ?? 0, currency)}</bdi></dd>
+            <dd className="m-0"><bdi>{money((c.item_subtotal ?? 0) - (fee?.amount ?? 0), currency)}</bdi></dd>
             <dt className="text-ink-muted">{t("shipping")}</dt>
             <dd className="m-0">{done.shipping ? <bdi>{money(c.shipping_total ?? 0, currency)}</bdi> : t("nextStep")}</dd>
+            {fee && <FeeRow fee={fee} currency={currency} />}
           </dl>
           <div className="flex items-baseline justify-between border-t border-line pt-3.5">
             <span className="font-semibold">{t("total")}</span>

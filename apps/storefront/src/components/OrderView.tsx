@@ -7,6 +7,8 @@ import { AddressLines } from "./AddressLines"
 import type { Order } from "@/lib/session"
 import { ProofForm, ReturnForm } from "./OrderForms"
 import { VendorLines } from "./VendorLines"
+import { FeeRow } from "./FeeRow"
+import { feeOf, productLines } from "@/lib/fee"
 
 type T = Awaited<ReturnType<typeof getTranslations<"order">>>
 const STATUS_BADGE = { pending: "neutral", shipped: "neutral", delivered: "success", canceled: "danger" } as const
@@ -38,6 +40,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
   )
   const returnable = (order.items ?? []).filter((i) => open.has(i.id))
   const fallback = orderPayment(order)
+  const fee = feeOf(order.items)
 
   return (
     <div className="flex flex-wrap items-start gap-6">
@@ -49,7 +52,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
         ) : (
           // Split not visible yet (or lookup rate-limited): plain lines.
           <div className="rounded-lg border border-line bg-surface p-4 md:p-6">
-            <VendorLines groups={[{ vendor: null, items: order.items ?? [] }]} currency={currency} />
+            <VendorLines groups={[{ vendor: null, items: productLines(order.items) }]} currency={currency} />
           </div>
         )}
 
@@ -79,9 +82,10 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
           <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("summary")}</h2>
           <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-[14px] tabular-nums">
             <dt className="text-ink-muted">{t("subtotal")}</dt>
-            <dd className="m-0"><bdi>{money(order.item_subtotal ?? 0, currency)}</bdi></dd>
+            <dd className="m-0"><bdi>{money((order.item_subtotal ?? 0) - (fee?.amount ?? 0), currency)}</bdi></dd>
             <dt className="text-ink-muted">{t("shipping")}</dt>
             <dd className="m-0"><bdi>{money(order.shipping_total ?? 0, currency)}</bdi></dd>
+            {fee && <FeeRow fee={fee} currency={currency} />}
             <dt className="font-semibold">{t("total")}</dt>
             <dd className="m-0 font-semibold"><bdi>{money(order.total, currency)}</bdi></dd>
           </dl>
