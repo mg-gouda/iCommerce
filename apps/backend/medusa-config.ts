@@ -52,7 +52,7 @@ module.exports = defineConfig({
             // ponytail: local disk in dev; swap for file-s3 (R2, private bucket) before staging.
             resolve: "@medusajs/medusa/file-local",
             id: "local",
-            options: { private_upload_dir: "uploads/private" },
+            options: { private_upload_dir: "uploads/private", backend_url: `${process.env.BACKEND_URL || "http://localhost:9000"}/static` },
           },
         ],
       },
