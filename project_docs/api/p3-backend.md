@@ -108,7 +108,7 @@ Retail carts are not checked server-side (storefront snaps). Cart quantities are
   "id": "quo_01...", "rfq_id": "rfq_01...", "status": "offered",
   "currency_code": "usd",
   "company": { "id": "comp_01...", "name": "Delta Imports", "country": "EG", "city": "Cairo" },
-  "vendor": { "id": "ven_01...", "name": "Helwan Metalworks", "handle": "helwan-metal" },
+  "vendor": { "id": "ven_01...", "name": "Helwan Metalworks", "handle": "helwan-metal" } | null,   // null while routing / routed
   "requester": { "id": "cmem_01...", "email": "buyer@delta.test", "first_name": "Sara", "last_name": "N." },
   "notes": "Need export packing" | null,          // buyer's RFQ notes
   "incoterm": "FOB" | null,                       // set by buyer at RFQ or vendor at offer
@@ -122,7 +122,7 @@ Retail carts are not checked server-side (storefront snaps). Cart quantities are
     "target_price": 10.5 | null,                  // buyer's target / counter price per unit
     "offered_unit_price": 11.1 | null, "lead_time_days": 21 | null
   } ],
-  "messages": [ { "id": "quomsg_01...", "author": "buyer" | "vendor" | "system", "author_name": "Sara N." | null, "body": "...", "created_at": "..." } ],
+  "messages": [ { "id": "quomsg_01...", "author": "buyer" | "vendor" | "system" | "platform", "author_name": "Sara N." | null, "body": "...", "created_at": "..." } ],
   "created_at": "...", "updated_at": "..."
 }
 ```
@@ -130,6 +130,8 @@ Lists omit `messages`. Vendors see `company` (name/country/city) + `requester` b
 
 ### State machine
 ```
+routing ──staff route to 1..N vendors──▶ routed   (+ one new `requested` quote per vendor, same rfq_id)
+routing ──staff close "no supplier found"──▶ rejected
 requested ──vendor opens──▶ vendor_review
 requested | vendor_review | negotiating ──vendor offer──▶ offered
 offered ──buyer counter──▶ negotiating
@@ -141,7 +143,8 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
 ```
 - `accepted` is momentary: the same request creates the order and the quote ends `ordered` (if order creation fails, e.g. credit limit, the request fails with 400 and the status is unchanged).
 - Accepting needs `validity_until` in the future (400 `Offer expired.`).
-- Every transition appends a `system` message whose `body` is an **event code** (translate it client-side): `requested`, `viewed` (vendor opened), `offered`, `countered`, `pending_approval`, `ordered`, `rejected`, `expired`. Buyer/vendor notes (offer note, counter message, reject reason) are separate `buyer`/`vendor` messages. Each transition also emails the other party (EN/AR by the recipient customer's `metadata.locale`; vendors EN).
+- Every transition appends a `system` message whose `body` is an **event code** (translate it client-side): `requested`, `viewed` (vendor opened), `offered`, `countered`, `pending_approval`, `ordered`, `rejected`, `expired`, `routing`, `routed`, `no_supplier`. `platform` messages = iCommerce staff notes (`author_name` "iCommerce").
+- **`routing`** (decision 16): free-text lines the buyer sent with `find_suppliers: true` → one vendor-less quote per RFQ (`vendor: null`), invisible to vendors; buyer can't message/act on it. Staff route it (§3 Admin) or close it. `routed` quotes are terminal and hidden from the buyer's default list. Buyer/vendor notes (offer note, counter message, reject reason) are separate `buyer`/`vendor` messages. Each transition also emails the other party (EN/AR by the recipient customer's `metadata.locale`; vendors EN).
 
 ### Store (customer token, member of a **verified** company for create; any member for the rest; other company's quote = 404)
 - `POST /store/quotes` — create RFQ
@@ -149,14 +152,15 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
   {
     "items": [
       { "variant_id": "variant_01...", "quantity": 800.5, "target_price": 10.5 },          // catalog item (vendor from product)
-      { "title": "Custom aluminum tray 50×40", "vendor_id": "ven_01...", "quantity": 1000, "unit": "piece" }  // free text: vendor_id required
+      { "title": "Custom aluminum tray 50×40", "vendor_id": "ven_01...", "quantity": 1000, "unit": "piece" },  // free text → that vendor
+      { "title": "Jute sacks", "find_suppliers": true, "quantity": 1000 }  // free text → iCommerce finds suppliers
     ],
     "notes": "optional", "incoterm": "FOB" | null
   }
   ```
-  `quantity` > 0, ≤3 decimals. `product_id` may be sent instead of `variant_id` (first variant used). Title/unit default from product. Items are grouped per vendor → **one quote per vendor**, all sharing `rfq_id`.
+  `quantity` > 0, ≤3 decimals. `product_id` may be sent instead of `variant_id` (first variant used). Title/unit default from product. Free-text items need **exactly one** of `vendor_id` (approved vendor) / `find_suppliers: true`. Items are grouped per vendor → **one quote per vendor**, all sharing `rfq_id`; all `find_suppliers` items → **one `routing` quote** (`vendor: null`, no vendor email).
   → `201 { rfq_id, quotes: [Quote] }`. 400 `Company must be verified to request quotes.` · 400 unknown product/vendor.
-- `GET /store/quotes?status=&rfq_id=&limit=20&offset=0` → `{ quotes: [Quote], count, limit, offset }` (company's quotes, newest first)
+- `GET /store/quotes?status=&rfq_id=&limit=20&offset=0` → `{ quotes: [Quote], count, limit, offset }` (company's quotes, newest first; `routed` excluded unless `status=routed`)
 - `GET /store/quotes/:id` → `{ quote }`
 - `POST /store/quotes/:id/messages` `{ body }` → `{ quote }` (any open status)
 - `POST /store/quotes/:id/counter` `{ message, items?: [{ id, target_price }] }` → `{ quote }` status `negotiating` (from `offered`)
@@ -175,6 +179,13 @@ offered | pending_approval ──validity_until passed (hourly job)──▶ exp
   ```
   → `{ quote }` status `offered`, `total` computed. `validity_until` must be in the future.
 - `POST /vendors/quotes/:id/reject` `{ note }` (required) → `{ quote }` status `rejected`
+
+### Admin — RFQs to route (admin user)
+- `GET /admin/quotes?status=&rfq_id=&limit=20&offset=0` → `{ quotes: [Quote], count, limit, offset }` (all companies; `status=routing` = the queue, oldest first; else newest first)
+- `GET /admin/quotes/:id` → `{ quote }` (with messages)
+- `POST /admin/quotes/:id/route` `{ vendor_ids: ["ven_..."] }` (1–20, all **approved**, else 400) → `{ quote }` status `routed`. Creates one `requested` quote per vendor (same `rfq_id`, notes, incoterm, items copied as free text incl. `target_price`), emails each vendor `quote-requested` and the requester `quote-routed`. Vendor search: `GET /admin/vendors?q=&status=approved`.
+- `POST /admin/quotes/:id/close` `{ note }` (required) → `{ quote }` status `rejected`, thread gets a `platform` message (note) + event `no_supplier`; requester emailed `quote-no-supplier`.
+Both from `routing` only (400 otherwise); serialized by the same `quote-<id>` lock.
 
 ### Quote → order
 On `accepted` the backend creates a **parent order** (Wholesale channel, customer = requester, items at `offered_unit_price`, exact decimal `quantity`, item `metadata { quote_id, quote_item_id, vendor_id, unit }`, order `metadata { quote_id, rfq_id, company_id }`, shipping address = company address, no shipping line) and emits `order.placed` → the P2 split creates the **vendor order** (shows in `GET /vendors/orders`; customer sees the parent in `GET /store/orders` + `GET /store/orders/:id/vendor-orders`) and sends the P2 order emails.
@@ -215,7 +226,9 @@ On `order.placed` with net terms → invoice `open`, `due_date = now + terms_day
 | ordered | vendor owner + requester | `quote-accepted` |
 | rejected (either side) | other party | `quote-rejected` |
 | expired | requester + vendor owner | `quote-expired` |
+| routed by staff ("we found suppliers") | requester | `quote-routed` |
+| closed by staff (no supplier found) | requester | `quote-no-supplier` |
 | invoice overdue | company admins | `invoice-overdue` |
 
 ## 6. Admin UI (Medusa admin extensions, `/app`)
-Sidebar routes **Companies** (list, filter, verify/reject with note, KYC download, payment mode, credit account), **Invoices** (filter, mark paid), **Vendors** (approve/reject/suspend, KYC download).
+Sidebar routes **RFQs to route** (queue of `routing` quotes: items, buyer notes, searchable approved-vendor picker → route; close with note), **Companies** (list, filter, verify/reject with note, KYC download, payment mode, credit account), **Invoices** (filter, mark paid), **Vendors** (approve/reject/suspend, KYC download).

@@ -350,6 +350,88 @@ medusaIntegrationTestRunner({
       expect(await expireQuotes(getContainer())).toBe(0)
     })
 
+    it("RFQ with find_suppliers lines → routing quote → admin routes to 2 vendors / closes; isolation", async () => {
+      const v1 = await vendor("Gamma", [{ price: 7 }])
+      const v2 = await vendor("Delta", [])
+      const v3 = await vendor("Epsilon", [])
+      const co = await company("omega")
+      const other = await company("sigma")
+      const buyer = co.members.admin
+      const named = (qs: { vendor: { id: string } | null }[], id: string | null) => qs.find((q) => (q.vendor?.id ?? null) === id)!
+
+      await expect(api.post("/store/quotes", { items: [{ title: "x", quantity: 1, vendor_id: v2.id, find_suppliers: true }] }, auth(buyer.token))).rejects.toMatchObject(status(400))
+      const rfq = (await api.post("/store/quotes", {
+        notes: "Sea freight",
+        items: [
+          { variant_id: v1.products[0].variant_id, quantity: 50 },
+          { title: "Brass hinges", vendor_id: v2.id, quantity: 200, unit: "piece" },
+          { title: "Olive-wood boards 40cm", find_suppliers: true, quantity: 300.5, unit: "piece", target_price: 4 },
+          { title: "Jute sacks", find_suppliers: true, quantity: 1000 },
+        ],
+      }, auth(buyer.token))).data
+      expect(rfq.quotes).toHaveLength(3)
+      expect(named(rfq.quotes, v1.id).status).toBe("requested")
+      expect(named(rfq.quotes, v2.id).status).toBe("requested")
+      const routing = named(rfq.quotes, null)
+      expect(routing).toMatchObject({ status: "routing", vendor: null, notes: "Sea freight" })
+      expect(routing.items.map((i: { title: string }) => i.title)).toEqual(["Olive-wood boards 40cm", "Jute sacks"])
+      expect(routing.messages.map((m: { body: string }) => m.body)).toEqual(["routing"])
+      // Buyer can't act on it yet; no vendor sees it.
+      await expect(api.post(`/store/quotes/${routing.id}/messages`, { body: "hi" }, auth(buyer.token))).rejects.toMatchObject(status(400))
+      for (const v of [v1, v2, v3]) {
+        expect((await api.get("/vendors/quotes", auth(v.token))).data.quotes.map((q: { id: string }) => q.id)).not.toContain(routing.id)
+        await expect(api.get(`/vendors/quotes/${routing.id}`, auth(v.token))).rejects.toMatchObject(status(404))
+      }
+      await expect(api.get(`/store/quotes/${routing.id}`, auth(other.members.admin.token))).rejects.toMatchObject(status(404))
+      // Admin-only routes.
+      await expect(api.get("/admin/quotes?status=routing", auth(buyer.token))).rejects.toMatchObject(status(401))
+      await expect(api.post(`/admin/quotes/${routing.id}/route`, { vendor_ids: [v2.id] }, auth(buyer.token))).rejects.toMatchObject(status(401))
+      const queue = (await api.get("/admin/quotes?status=routing", auth(admin))).data
+      expect(queue.quotes.map((q: { id: string }) => q.id)).toEqual([routing.id])
+      expect(queue.quotes[0].company).toMatchObject({ name: "omega Imports" })
+
+      // Route to 2 vendors (one pending → refused) → 2 new requested quotes, same rfq_id, items copied.
+      const pendingVendor = (await api.post("/vendors", { name: "Pending", country: "EG" }, auth((await api.post("/auth/vendor/emailpass/register", { email: "pending@vendor.test", password: PASSWORD })).data.token))).data.vendor
+      await expect(api.post(`/admin/quotes/${routing.id}/route`, { vendor_ids: [v2.id, pendingVendor.id] }, auth(admin))).rejects.toMatchObject(status(400))
+      await expect(api.post(`/admin/quotes/${routing.id}/route`, { vendor_ids: [] }, auth(admin))).rejects.toMatchObject(status(400))
+      const routed = (await api.post(`/admin/quotes/${routing.id}/route`, { vendor_ids: [v2.id, v3.id] }, auth(admin))).data.quote
+      expect(routed.status).toBe("routed")
+      await expect(api.post(`/admin/quotes/${routing.id}/route`, { vendor_ids: [v3.id] }, auth(admin))).rejects.toMatchObject(status(400))
+      await expect(api.post(`/admin/quotes/${routing.id}/close`, { note: "x" }, auth(admin))).rejects.toMatchObject(status(400))
+      const all = (await api.get(`/admin/quotes?rfq_id=${rfq.rfq_id}`, auth(admin))).data.quotes
+      expect(all).toHaveLength(5)
+      const mine = (await api.get(`/store/quotes?rfq_id=${rfq.rfq_id}`, auth(buyer.token))).data
+      expect(mine.count).toBe(4) // routed one hidden by default
+      expect(mine.quotes.filter((q: { vendor: { id: string } | null }) => q.vendor?.id === v2.id)).toHaveLength(2)
+      const nq = mine.quotes.find((q: { vendor: { id: string } | null }) => q.vendor?.id === v3.id)
+      expect(nq).toMatchObject({ status: "requested", rfq_id: rfq.rfq_id, notes: "Sea freight" })
+      expect(nq.items).toEqual([
+        expect.objectContaining({ title: "Olive-wood boards 40cm", quantity: 300.5, unit: "piece", target_price: 4, product_id: null }),
+        expect.objectContaining({ title: "Jute sacks", quantity: 1000 }),
+      ])
+      expect((await api.get("/store/quotes?status=routed", auth(buyer.token))).data.count).toBe(1)
+      expect(emails().some((f) => f.includes("quote-requested") && f.includes("epsilon@vendor.test"))).toBe(true)
+      expect(emails().some((f) => f.includes("quote-routed") && f.includes(buyer.email))).toBe(true)
+      // New quote behaves like any other: vendor 3 sees + offers on it; vendor 1 can't.
+      expect((await api.get(`/vendors/quotes/${nq.id}`, auth(v3.token))).data.quote.status).toBe("vendor_review")
+      await expect(api.get(`/vendors/quotes/${nq.id}`, auth(v1.token))).rejects.toMatchObject(status(404))
+
+      // Close flow: note required → rejected + platform note + buyer email.
+      const r2 = (await api.post("/store/quotes", { items: [{ title: "Unobtainium", find_suppliers: true, quantity: 1 }] }, auth(buyer.token))).data
+      expect(r2.quotes).toEqual([expect.objectContaining({ status: "routing" })])
+      const id = r2.quotes[0].id
+      await expect(api.post(`/admin/quotes/${id}/close`, {}, auth(admin))).rejects.toMatchObject(status(400))
+      await expect(api.post(`/admin/quotes/${id}/nope`, {}, auth(admin))).rejects.toMatchObject(status(404))
+      const closed = (await api.post(`/admin/quotes/${id}/close`, { note: "Not produced in the region" }, auth(admin))).data.quote
+      expect(closed.status).toBe("rejected")
+      const seen = (await api.get(`/store/quotes/${id}`, auth(buyer.token))).data.quote
+      expect(seen.messages.map((m: { author: string; body: string }) => [m.author, m.body])).toEqual([
+        ["system", "routing"], ["platform", "Not produced in the region"], ["system", "no_supplier"],
+      ])
+      expect(emails().some((f) => f.includes("quote-no-supplier") && f.includes(buyer.email))).toBe(true)
+      expect((await api.get("/admin/quotes?status=routing", auth(admin))).data.count).toBe(0)
+    })
+
     it("net terms: authorize within limit, over-limit refused, overdue blocks, mark-paid releases; quote on credit", async () => {
       const v = await vendor("Gizeh", [{ price: 100 }])
       const [p] = v.products

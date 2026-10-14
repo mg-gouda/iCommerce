@@ -1,7 +1,8 @@
 import { model } from "@medusajs/framework/utils"
 
+// routing/routed: free-text lines the buyer left to iCommerce (no vendor yet); staff route them to vendors.
 export const QUOTE_STATUSES = [
-  "requested", "vendor_review", "offered", "negotiating", "pending_approval", "accepted", "ordered", "rejected", "expired",
+  "routing", "routed", "requested", "vendor_review", "offered", "negotiating", "pending_approval", "accepted", "ordered", "rejected", "expired",
 ] as const
 export type QuoteStatus = (typeof QUOTE_STATUSES)[number]
 
@@ -12,7 +13,7 @@ export const Quote = model.define("quote", {
   company_id: model.text().index(),
   requester_id: model.text(),
   customer_id: model.text(),
-  vendor_id: model.text().index(),
+  vendor_id: model.text().index().nullable(), // null while routing / routed
   status: model.enum([...QUOTE_STATUSES]).default("requested"),
   currency_code: model.text().default("usd"),
   validity_until: model.dateTime().nullable(),
@@ -40,7 +41,7 @@ export const QuoteItem = model.define("quote_item", {
 
 export const QuoteMessage = model.define("quote_message", {
   id: model.id({ prefix: "quomsg" }).primaryKey(),
-  author: model.enum(["buyer", "vendor", "system"]),
+  author: model.enum(["buyer", "vendor", "system", "platform"]), // platform = iCommerce staff
   author_name: model.text().nullable(),
   body: model.text(),
   quote: model.belongsTo(() => Quote, { mappedBy: "messages" }),

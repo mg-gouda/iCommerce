@@ -16,13 +16,17 @@ const Item = z
     variant_id: z.string().optional(),
     product_id: z.string().optional(),
     vendor_id: z.string().optional(),
+    find_suppliers: z.literal(true).optional(), // free text: iCommerce staff pick the vendors
     title: z.string().trim().min(1).max(300).optional(),
     quantity: qty,
     unit: z.string().trim().max(30).optional(),
     target_price: money.optional(),
   })
   .strict()
-  .refine((i) => i.variant_id || i.product_id || (i.title && i.vendor_id), "each item needs variant_id/product_id, or title + vendor_id")
+  .refine(
+    (i) => i.variant_id || i.product_id || (i.title && !!i.vendor_id !== !!i.find_suppliers),
+    "each item needs variant_id/product_id, or title + one of vendor_id / find_suppliers",
+  )
 const Create = z
   .object({ items: z.array(Item).min(1).max(50), notes: z.string().trim().max(2000).optional(), incoterm: z.string().trim().max(20).optional() })
   .strict()
@@ -32,13 +36,14 @@ export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   const { status, rfq_id, limit, offset } = parse(List, req.query)
   const { company } = await callerMembership(req)
   const [quotes, count] = await quoteSvc(req.scope).listAndCountQuotes(
-    { company_id: company.id, ...(status && { status }), ...(rfq_id && { rfq_id }) },
+    // `routed` = staff already split it into vendor quotes → hidden unless asked for.
+    { company_id: company.id, status: status ?? { $ne: "routed" }, ...(rfq_id && { rfq_id }) },
     { relations: ["items"], order: { created_at: "DESC" }, skip: offset, take: limit },
   )
   res.json({ quotes: await shapeQuotes(req.scope, quotes), count, limit, offset })
 }
 
-// RFQ: items grouped by vendor → one quote per vendor, sharing rfq_id.
+// RFQ: items grouped by vendor → one quote per vendor, sharing rfq_id. `find_suppliers` lines → one vendor-less `routing` quote.
 export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
   const body = parse(Create, req.body)
   const { company, member } = await callerMembership(req)
@@ -72,6 +77,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
       const title = i.title ?? [v.product?.title, v.title !== "Default" ? v.title : null].filter(Boolean).join(" · ")
       return { vendor_id: vendorOf.get(v.product_id)!, item: { product_id: v.product_id, variant_id: v.id, title, quantity: i.quantity, unit: i.unit ?? v.product?.product_extra?.unit ?? null, target_price: i.target_price ?? null } }
     }
+    if (i.find_suppliers) return { vendor_id: null, item: { product_id: null, variant_id: null, title: i.title!, quantity: i.quantity, unit: i.unit ?? null, target_price: i.target_price ?? null } }
     if (!vendors.has(i.vendor_id!)) throw bad(`Unknown vendor ${i.vendor_id}.`)
     return { vendor_id: i.vendor_id!, item: { product_id: null, variant_id: null, title: i.title!, quantity: i.quantity, unit: i.unit ?? null, target_price: i.target_price ?? null } }
   })
@@ -82,12 +88,12 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   for (const vendor_id of [...new Set(lines.map((l) => l.vendor_id))]) {
     const q = await svc.createQuotes({
       rfq_id, company_id: company.id, requester_id: member.id, customer_id: member.customer_id, vendor_id,
-      notes: body.notes ?? null, incoterm: body.incoterm ?? null,
+      status: vendor_id ? "requested" : "routing", notes: body.notes ?? null, incoterm: body.incoterm ?? null,
     })
     await svc.createQuoteItems(lines.filter((l) => l.vendor_id === vendor_id).map((l) => ({ ...l.item, quote_id: q.id })))
-    await svc.createQuoteMessages({ quote_id: q.id, author: "system", body: "requested" })
+    await svc.createQuoteMessages({ quote_id: q.id, author: "system", body: vendor_id ? "requested" : "routing" })
     ids.push(q.id)
-    await notify(req.scope, q, "quote-requested", ["vendor"], { body: body.notes })
+    if (vendor_id) await notify(req.scope, q, "quote-requested", ["vendor"], { body: body.notes })
   }
   const quotes = await svc.listQuotes({ id: ids }, { relations: ["items", "messages"] })
   res.status(201).json({ rfq_id, quotes: await shapeQuotes(req.scope, quotes, true) })
