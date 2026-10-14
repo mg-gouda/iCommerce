@@ -194,7 +194,7 @@ medusaIntegrationTestRunner({
       expect(order.total).toBe(95 + 10 + 1.9)
       expect((await captures(order.id)).length).toBe(0)
       const { data: [pc] } = await getContainer().resolve("query").graph({ entity: "order", fields: ["payment_collections.amount"], filters: { id: order.id } })
-      expect(Number(pc.payment_collections[0].amount)).toBe(106.9)
+      expect(Number(pc.payment_collections?.[0]?.amount)).toBe(106.9)
       const kids = await childIds(order.id)
       // Fee stays on the parent; vendor orders sum to total − fee; shares split pro rata (60 / 35 of 1.90).
       const [oa, ob] = [await childOf(a, kids), await childOf(b, kids)]
