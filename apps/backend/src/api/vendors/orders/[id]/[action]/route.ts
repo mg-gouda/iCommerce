@@ -19,6 +19,8 @@ import {
   type VendorOrder,
   type VendorOrderStatus,
 } from "../../../../../lib/vendor-orders"
+import { postDelivery } from "../../../../../lib/ledger"
+import { round2 } from "../../../../../lib/money"
 import { BANK_PROVIDER, COD_PROVIDER } from "../../../../../modules/offline-payment/service"
 import { getCaller } from "../../../helpers"
 import { PostCancel, PostFulfill, PostReturnDecision } from "../../validators"
@@ -73,11 +75,13 @@ const ACTIONS: Record<string, (c: Ctx) => Promise<VendorOrderStatus | void>> = {
     await markOrderFulfillmentAsDeliveredWorkflow(scope).run({ input: { orderId: order.id, fulfillmentId: order.fulfillment!.id } })
     if (order.payment.provider_id === COD_PROVIDER && order.payment.status !== "paid") {
       const payment = (await parentPayments(scope, [order.parent_order_id])).get(order.parent_order_id)?.payment
-      // Cash collected by the vendor's courier → capture this vendor's share of the parent's single payment.
-      await capturePaymentWorkflow(scope).run({ input: { payment_id: payment.id, amount: order.total } })
+      // Cash collected by the vendor's courier → capture this vendor's share of the parent's single payment
+      // (its goods + its pro-rata share of the platform fee, P4).
+      await capturePaymentWorkflow(scope).run({ input: { payment_id: payment.id, amount: round2(Number(order.total) + order.fee_share) } })
       await patchOrderMetadata(scope, order.id, { paid_at: new Date().toISOString() })
     }
     await setVendorOrderStatus(scope, vendor.id, order.id, "delivered")
+    await postDelivery(scope, order)
     await emailBuyer(scope, order, "order-delivered", vendor.name)
   },
 

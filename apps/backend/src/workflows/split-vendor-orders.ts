@@ -3,6 +3,10 @@ import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { createStep, createWorkflow, StepResponse, transform, WorkflowResponse } from "@medusajs/framework/workflows-sdk"
 import type { CreateOrderDTO, LinkDefinition } from "@medusajs/framework/types"
 import VendorProductLink from "../links/vendor-product"
+import { commissionFor, commissionSvc, resolveRule } from "../lib/commission"
+import { channelOf, isFeeLine } from "../lib/fees"
+import { allocate, cents, major } from "../lib/money"
+import { planIdsFor } from "../lib/plans"
 import { VENDOR_MODULE } from "../modules/vendor"
 
 type Row = Record<string, unknown>
@@ -32,7 +36,7 @@ const planVendorOrdersStep = createStep("plan-vendor-orders", async ({ order_id 
   } = await query.graph({
     entity: "order",
     fields: [
-      "id", "metadata", "region_id", "customer_id", "sales_channel_id", "email", "currency_code",
+      "id", "metadata", "created_at", "region_id", "customer_id", "sales_channel_id", "email", "currency_code",
       "shipping_address.*", "billing_address.*",
       "items.*", "items.tax_lines.*", "items.adjustments.*",
       "shipping_methods.*", "shipping_methods.tax_lines.*", "shipping_methods.adjustments.*",
@@ -68,19 +72,37 @@ const planVendorOrdersStep = createStep("plan-vendor-orders", async ({ order_id 
     shipping_address: pick(o.shipping_address as Row, ADDRESS),
     billing_address: pick(o.billing_address as Row, ADDRESS),
   }
-  const orders = vendorIds.map((vendor_id) => ({
-    vendor_id,
-    input: {
-      ...base,
-      metadata: { parent_order_id: o.id, vendor_id },
-      items: items
-        .filter((i) => vendorFor(i) === vendor_id)
-        .map((i) => ({ ...pick(i, ITEM), ...copyLines(i), metadata: { ...(i.metadata as Row), parent_item_id: i.id } })),
-      shipping_methods: methods
-        .filter((m) => optionVendor.get(m.shipping_option_id as string) === vendor_id)
-        .map((m) => ({ ...pick(m, ["name", "description", "amount", "is_tax_inclusive", "shipping_option_id", "data", "metadata"]), ...copyLines(m) })),
-    } as unknown as CreateOrderDTO,
-  }))
+  // P4: commission snapshot per line (rule active at placement) + this vendor's pro-rata share of the parent's platform fee.
+  const channel = await channelOf(container, o.sales_channel_id as string)
+  const rules = await commissionSvc(container).listCommissionRules({})
+  const planOf = await planIdsFor(container, vendorIds)
+  const { data: products } = await query.graph({
+    entity: "product", fields: ["id", "categories.id"], filters: { id: items.map((i) => i.product_id as string).filter(Boolean) },
+  })
+  const catsOf = new Map((products as Row[]).map((p) => [p.id, ((p.categories ?? []) as Row[]).map((c) => c.id as string)]))
+  const at = new Date(o.created_at as string)
+  const lineCents = (i: Row) => cents(Number(i.unit_price) * Number(i.quantity))
+  const itemsOf = (vendor_id: string) => items.filter((i) => vendorFor(i) === vendor_id)
+  const feeShares = allocate(cents(items.filter(isFeeLine).reduce((s, i) => s + Number(i.unit_price) * Number(i.quantity), 0)),
+    vendorIds.map((v) => itemsOf(v).reduce((s, i) => s + lineCents(i), 0)))
+  const orders = vendorIds.map((vendor_id, k) => {
+    const lines = itemsOf(vendor_id).map((i) => {
+      const rule = resolveRule(rules as Row[], { vendor_id, plan_id: planOf.get(vendor_id), category_ids: catsOf.get(i.product_id) ?? [], channel, at })
+      return { i, commission: commissionFor(rule, lineCents(i)) }
+    })
+    const commission_total = major(lines.reduce((s, l) => s + cents(l.commission.amount), 0))
+    return {
+      vendor_id,
+      input: {
+        ...base,
+        metadata: { parent_order_id: o.id, vendor_id, fee_share: major(feeShares[k]), commission_total },
+        items: lines.map(({ i, commission }) => ({ ...pick(i, ITEM), ...copyLines(i), metadata: { ...(i.metadata as Row), parent_item_id: i.id, commission } })),
+        shipping_methods: methods
+          .filter((m) => optionVendor.get(m.shipping_option_id as string) === vendor_id)
+          .map((m) => ({ ...pick(m, ["name", "description", "amount", "is_tax_inclusive", "shipping_option_id", "data", "metadata"]), ...copyLines(m) })),
+      } as unknown as CreateOrderDTO,
+    }
+  })
   return new StepResponse<Plan>({ parent_id: o.id, orders })
 })
 

@@ -6,6 +6,7 @@ import { createProductCategoriesWorkflow, uploadFilesWorkflow } from "@medusajs/
 import { companySvc, syncCompanyGroups } from "../lib/company"
 import { syncProduct } from "../lib/search"
 import { setTiers } from "../lib/wholesale"
+import { planSvc } from "../lib/plans"
 import { createVendorOption, ensureVendorShipping, listVendorOptions } from "../lib/vendor-shipping"
 import { salesChannelsFor } from "../api/vendors/products/helpers"
 import { VENDOR_MODULE } from "../modules/vendor"
@@ -89,6 +90,11 @@ export default async function seedDemo({ container }: ExecArgs) {
         status: "approved",
         kyc_status: "verified",
       })
+    }
+    // P4: demo vendors sell B2B → Business plan, no period end (never past due).
+    const [business] = await planSvc(container).listPlans({ handle: "business" })
+    if (business && !(await planSvc(container).listVendorSubscriptions({ vendor_id: vendor.id })).length) {
+      await planSvc(container).createVendorSubscriptions({ vendor_id: vendor.id, plan_id: business.id, status: "active", current_period_start: new Date() })
     }
     // One flat option per demo vendor so checkout works end to end.
     const { shipping_profile_id } = await ensureVendorShipping(container, vendor)

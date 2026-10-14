@@ -3,6 +3,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { z } from "@medusajs/framework/zod"
 import { money, parse, qty } from "../../../../../lib/parse"
 import { getTiers, setTiers } from "../../../../../lib/wholesale"
+import { assertCanB2b } from "../../../../../lib/plans"
 import { getCaller } from "../../../helpers"
 import { vendorProductIds } from "../../helpers"
 
@@ -16,6 +17,7 @@ async function ownedOr404(req: AuthenticatedMedusaRequest) {
   const { vendor } = await getCaller(req)
   const [owned] = await vendorProductIds(req.scope, vendor.id, req.params.id)
   if (!owned) throw new MedusaError(MedusaError.Types.NOT_FOUND, `Product with id "${req.params.id}" not found`)
+  return vendor
 }
 
 export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
@@ -26,7 +28,8 @@ export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 // Replaces all tiers (same tiers on every variant). [] clears.
 export async function PUT(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
   const { tiers } = parse(Tiers, req.body)
-  await ownedOr404(req)
+  const vendor = await ownedOr404(req)
+  if (tiers.length) await assertCanB2b(req.scope, vendor.id) // P4: Starter has no B2B; clearing is always allowed
   await setTiers(req.scope, req.params.id, tiers)
   res.json({ tiers: await getTiers(req.scope, req.params.id) })
 }

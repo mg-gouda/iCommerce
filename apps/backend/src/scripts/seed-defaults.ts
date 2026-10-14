@@ -10,6 +10,9 @@ import {
 } from "@medusajs/medusa/core-flows"
 import { B2B_GROUP, ensureGroup } from "../lib/company"
 import { BANK_PROVIDER, COD_PROVIDER, NET_TERMS_PROVIDER } from "../modules/offline-payment/service"
+import { commissionSvc } from "../lib/commission"
+import { feeSvc } from "../lib/fees"
+import { planSvc } from "../lib/plans"
 
 const CHANNELS = ["Retail", "Wholesale"]
 // Gateway parked → v1 checkout = cash on delivery + bank transfer; net terms for verified companies with credit.
@@ -74,4 +77,31 @@ export default async function seedDefaults({ container }: ExecArgs) {
   }
   logger.info(`seed-defaults: Storefront (Retail + Wholesale) publishable_key=${await ensureKey("Storefront", have.map((c) => c.id))}`)
   await ensureGroup(container, B2B_GROUP)
+  await seedMoney(container)
+}
+
+// P4 money defaults — idempotent: fee tiers by channel + min_amount, global commission rule, plans by handle.
+const B2B_FEE = { channel: "b2b" as const, basis: "monthly_volume" as const, min_fee: 250, max_fee: 6000, label_en: "Platform fee", label_ar: "رسوم المنصة" }
+// Decision: below the first WP tier (10k) = first tier → the 0 row.
+const FEE_TIERS = [
+  ...[[0, 6], [10000, 6], [20000, 5], [30000, 4], [40000, 3]].map(([min_amount, percent]) => ({ ...B2B_FEE, min_amount, percent })),
+  { channel: "b2c" as const, basis: "order_total" as const, min_amount: 0, percent: 2, min_fee: null, max_fee: null, label_en: "Service fee", label_ar: "رسوم الخدمة" },
+]
+const PLANS = [
+  { handle: "starter", name_en: "Starter", name_ar: "المبتدئة", price_usd: 0, product_limit: 50, staff_limit: 1, featured_slots: 0, can_b2b: false, analytics_level: "basic" as const },
+  { handle: "business", name_en: "Business", name_ar: "الأعمال", price_usd: 49, product_limit: 1000, staff_limit: 5, featured_slots: 0, can_b2b: true, analytics_level: "full" as const },
+  { handle: "enterprise", name_en: "Enterprise", name_ar: "المؤسسات", price_usd: 199, product_limit: null, staff_limit: null, featured_slots: 5, can_b2b: true, analytics_level: "full" as const },
+]
+
+async function seedMoney(container: ExecArgs["container"]) {
+  const fees = feeSvc(container)
+  const have = await fees.listFeeTiers({})
+  const missing = FEE_TIERS.filter((t) => !have.some((h) => h.channel === t.channel && Number(h.min_amount) === t.min_amount))
+  if (missing.length) await fees.createFeeTiers(missing)
+  const rules = commissionSvc(container)
+  if (!(await rules.listCommissionRules({ scope: "global" })).length) await rules.createCommissionRules({ scope: "global", channel: "all", percent: 10 })
+  const plans = planSvc(container)
+  const existing = await plans.listPlans({ handle: PLANS.map((p) => p.handle) })
+  const newPlans = PLANS.filter((p) => !existing.some((e) => e.handle === p.handle))
+  if (newPlans.length) await plans.createPlans(newPlans.map((p) => ({ ...p, interval: "monthly" as const })))
 }

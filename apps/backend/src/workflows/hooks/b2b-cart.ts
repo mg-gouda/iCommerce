@@ -2,7 +2,9 @@ import type { MedusaContainer } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
 import { addToCartWorkflow, completeCartWorkflow, createCartWorkflow, updateCartWorkflow, updateLineItemInCartWorkflow } from "@medusajs/medusa/core-flows"
 import { isB2bVerified, wholesaleChannelId } from "../../lib/company"
+import { assertCartFeeCurrent } from "../../lib/fees"
 import { assertNetTerms } from "../../lib/net-terms"
+import { hiddenProductIds } from "../../lib/plans"
 import { NET_TERMS_PROVIDER } from "../../modules/offline-payment/service"
 
 type Row = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -53,6 +55,14 @@ async function assertWholesaleBuyer(container: MedusaContainer, sales_channel_id
   }
 }
 
+/** P4: products of read-only vendors (past due beyond grace) can't be bought. */
+async function assertNotHidden(container: MedusaContainer, variant_ids: string[]) {
+  const hidden = variant_ids.length ? await hiddenProductIds(container) : []
+  if (!hidden.length) return
+  const { data } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({ entity: "product_variant", fields: ["id", "product_id"], filters: { id: variant_ids } })
+  if ((data as Row[]).some((v) => hidden.includes(v.product_id))) throw bad("This product is currently unavailable.")
+}
+
 createCartWorkflow.hooks.validate(async ({ cart }, { container }) => {
   const c = cart as Row
   await assertWholesaleBuyer(container, c.sales_channel_id, c.customer_id)
@@ -67,6 +77,7 @@ updateCartWorkflow.hooks.validate(async ({ input, cart }, { container }) => {
 addToCartWorkflow.hooks.validate(async ({ input }, { container }) => {
   const cart = await loadCart(container, input.cart_id, ["id", "sales_channel_id", "customer_id"])
   await assertWholesaleBuyer(container, cart?.sales_channel_id, cart?.customer_id)
+  await assertNotHidden(container, (input.items ?? []).map((i) => i.variant_id).filter(Boolean) as string[])
   await assertMoq(container, input.cart_id, (input.items ?? []).map((i) => ({ variant_id: i.variant_id ?? undefined, quantity: Number(i.quantity) })))
 })
 
@@ -75,8 +86,10 @@ updateLineItemInCartWorkflow.hooks.validate(async ({ input }, { container }) => 
   await assertMoq(container, input.cart_id, [{ item_id: input.item_id, quantity: Number(input.update.quantity) }])
 })
 
-// Net terms: the provider can't see companies, so eligibility + credit limit are enforced here, before authorization.
+// Platform fee must be current (P4). Net terms: the provider can't see companies, so eligibility + credit limit are
+// enforced here, before authorization. One handler per hook → both live here.
 completeCartWorkflow.hooks.validate(async ({ cart: c }, { container }) => {
+  await assertCartFeeCurrent(container, (c as Row).id)
   const cart = await loadCart(container, (c as Row).id, ["id", "customer_id", "total", "payment_collection.payment_sessions.provider_id"])
   const net = (cart?.payment_collection?.payment_sessions ?? []).some((s: Row) => s?.provider_id === NET_TERMS_PROVIDER)
   if (net) await assertNetTerms(container, cart.customer_id, Number(cart.total))

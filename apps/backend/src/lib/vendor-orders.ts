@@ -52,12 +52,16 @@ export function shapeVendorOrder(o: Row, status: VendorOrderStatus, provider_id?
     items: ((o.items ?? []) as Row[]).map((i) => ({
       id: i.id, parent_item_id: i.metadata?.parent_item_id ?? null, title: i.title, variant_title: i.variant_title,
       thumbnail: i.thumbnail, quantity: i.quantity, unit_price: i.unit_price, total: i.total,
+      commission: Number(i.metadata?.commission?.amount ?? 0),
     })),
     shipping_method: o.shipping_methods?.[0] ? { name: o.shipping_methods[0].name, amount: o.shipping_methods[0].amount } : null,
     item_total: o.item_total,
     shipping_total: o.shipping_total,
     tax_total: o.tax_total,
     total: o.total,
+    // P4: platform commission (snapshot) + this order's share of the buyer's platform fee (COD: collected with the order).
+    commission_total: Number(o.metadata?.commission_total ?? 0),
+    fee_share: Number(o.metadata?.fee_share ?? 0),
     payment: {
       provider_id: provider_id ?? null,
       status: status === "canceled" ? "canceled" : o.metadata?.paid_at ? "paid" : "awaiting",

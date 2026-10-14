@@ -6,6 +6,7 @@ import { callerMembership, companySvc, requireRole } from "../../../../../lib/co
 import { money, parse } from "../../../../../lib/parse"
 import { acceptAndOrder, getQuoteOr404, need, notify, quoteSvc, shapeQuotes, transition } from "../../../../../lib/quotes"
 import type { QuoteStatus } from "../../../../../modules/quote/models/quote"
+import { withQuoteFees } from "../../../../../lib/quote-fees"
 
 type Row = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 type Ctx = { scope: MedusaContainer; q: Row; member: Row; body: unknown; name: string }
@@ -83,5 +84,5 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
     { timeout: 30 },
   )
   const fresh = await getQuoteOr404(req.scope, req.params.id, { company_id: company.id })
-  res.json({ quote: (await shapeQuotes(req.scope, [fresh], true))[0] })
+  res.json({ quote: (await withQuoteFees(req.scope, [fresh], await shapeQuotes(req.scope, [fresh], true)))[0] })
 }

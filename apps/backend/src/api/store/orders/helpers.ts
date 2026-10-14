@@ -26,12 +26,15 @@ export async function guestParentOr404(scope: MedusaContainer, display_id: unkno
   if (!Number.isSafeInteger(n) || n <= 0 || !e) throw miss
   const { data: [o] } = await scope.resolve(ContainerRegistrationKeys.QUERY).graph({
     entity: "order",
-    fields: ["id", "display_id", "created_at", "currency_code", "total"],
+    fields: ["id", "display_id", "created_at", "currency_code", "total", "items.metadata"],
     filters: { display_id: String(n) },
   })
   const parent = o && (await parentPayments(scope, [o.id])).get(o.id)
   if (!parent || parent.metadata?.parent_order_id || String(parent.email ?? "").toLowerCase() !== e) throw miss
-  return Object.assign(parent as Parent & typeof parent, { order: { display_id: Number(o.display_id), created_at: o.created_at, currency_code: o.currency_code, total: Number(o.total) } })
+  const fee = (o.items ?? []).find((i: { metadata?: Record<string, unknown> | null } | null) => i?.metadata?.platform_fee)?.metadata?.platform_fee ?? null
+  return Object.assign(parent as Parent & typeof parent, {
+    order: { display_id: Number(o.display_id), created_at: o.created_at, currency_code: o.currency_code, total: Number(o.total), fee },
+  })
 }
 
 export async function childOrders(scope: MedusaContainer, parent: { metadata: Record<string, unknown> | null }) {
@@ -49,8 +52,10 @@ export async function orderStatusView(scope: MedusaContainer, parent: Parent) {
   const p = parent.payment
   const captured = (p?.captures ?? []).reduce((s: number, c: { amount: number }) => s + Number(c.amount), 0)
   return {
-    vendor_orders: children.map(({ email, buyer, shipping_address, vendor_id, ...c }) => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
+    // Vendor-side money (commission, fee share) never reaches buyers.
+    vendor_orders: children.map(({ email, buyer, shipping_address, vendor_id, commission_total, fee_share, ...c }) => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
       ...c,
+      items: c.items.map(({ commission, ...i }) => i), // eslint-disable-line @typescript-eslint/no-unused-vars
       vendor: vendors.find((v) => v.id === vendor_id) ?? null,
     })),
     payment: p

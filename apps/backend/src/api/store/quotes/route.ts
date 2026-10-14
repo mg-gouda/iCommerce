@@ -8,6 +8,8 @@ import { bad, notify, quoteSvc, shapeQuotes } from "../../../lib/quotes"
 import { QUOTE_STATUSES } from "../../../modules/quote/models/quote"
 import { VENDOR_MODULE } from "../../../modules/vendor"
 import type VendorModuleService from "../../../modules/vendor/service"
+import { withQuoteFees } from "../../../lib/quote-fees"
+import { vendorCanB2b } from "../../../lib/plans"
 
 type Row = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -35,7 +37,7 @@ export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     { company_id: company.id, ...(status && { status }), ...(rfq_id && { rfq_id }) },
     { relations: ["items"], order: { created_at: "DESC" }, skip: offset, take: limit },
   )
-  res.json({ quotes: await shapeQuotes(req.scope, quotes), count, limit, offset })
+  res.json({ quotes: await withQuoteFees(req.scope, quotes, await shapeQuotes(req.scope, quotes)), count, limit, offset })
 }
 
 // RFQ: items grouped by vendor → one quote per vendor, sharing rfq_id.
@@ -76,6 +78,10 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
     return { vendor_id: i.vendor_id!, item: { product_id: null, variant_id: null, title: i.title!, quantity: i.quantity, unit: i.unit ?? null, target_price: i.target_price ?? null } }
   })
 
+  // P4: suppliers on a plan without B2B take no RFQs.
+  for (const vendor_id of new Set(lines.map((l) => l.vendor_id))) {
+    if (!(await vendorCanB2b(req.scope, vendor_id))) throw bad(`${(await vendorSvc.retrieveVendor(vendor_id)).name} does not accept quote requests.`)
+  }
   const rfq_id = generateEntityId("", "rfq")
   const svc = quoteSvc(req.scope)
   const ids: string[] = []
