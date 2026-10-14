@@ -11,6 +11,7 @@ import { companyRecipients, companySvc, customerLocale, wholesaleChannelId } fro
 import { sendEmail } from "./emails"
 import type { B2bTemplate } from "./emails-b2b"
 import { feeOrderLine, resolveFee } from "./fees"
+import { vendorCanB2b } from "./plans"
 import { cents } from "./money"
 import { assertNetTerms } from "./net-terms"
 import { ensureVendorShipping, listVendorOptions } from "./vendor-shipping"
@@ -190,6 +191,8 @@ export async function routeQuote(scope: MedusaContainer, q: Row, vendor_ids: str
   const ids = [...new Set(vendor_ids)]
   const vendors = await (scope.resolve(VENDOR_MODULE) as VendorModuleService).listVendors({ id: ids, status: "approved" })
   if (vendors.length !== ids.length) throw bad("Every vendor must exist and be approved.")
+  // P4: vendors on a plan without B2B take no RFQs.
+  for (const v of vendors) if (!(await vendorCanB2b(scope, v.id))) throw bad(`${v.name} does not accept quote requests (plan without B2B).`)
   const svc = quoteSvc(scope)
   for (const vendor_id of ids) {
     const n = await svc.createQuotes({

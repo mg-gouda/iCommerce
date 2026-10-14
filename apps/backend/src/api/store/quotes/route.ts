@@ -85,7 +85,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   })
 
   // P4: suppliers on a plan without B2B take no RFQs.
-  for (const vendor_id of new Set(lines.map((l) => l.vendor_id))) {
+  for (const vendor_id of new Set(lines.map((l) => l.vendor_id).filter((v): v is string => !!v))) { // vendorless = platform-routed
     if (!(await vendorCanB2b(req.scope, vendor_id))) throw bad(`${(await vendorSvc.retrieveVendor(vendor_id)).name} does not accept quote requests.`)
   }
   const rfq_id = generateEntityId("", "rfq")
