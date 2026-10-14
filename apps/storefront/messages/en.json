@@ -586,7 +586,8 @@
   },
   "fee": {
     "orderTotal": "{percent}% of the order subtotal",
-    "volume": "{percent}% · your volume this month incl. this order {volume} (tier from {tier})",
+    "volume": "{percent}% · this month's volume incl. this order: {volume}",
+    "volumeTier": "{percent}% · this month's volume incl. this order: {volume}, tier from {tier}",
     "min": "minimum {amount}",
     "max": "capped at {amount}"
   }

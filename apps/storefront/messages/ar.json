@@ -590,7 +590,8 @@
   },
   "fee": {
     "orderTotal": "{percent}٪ من إجمالي المنتجات",
-    "volume": "{percent}٪ · حجم مشترياتك هذا الشهر شاملًا هذا الطلب {volume} (الشريحة من {tier})",
+    "volume": "{percent}٪ · مشتريات هذا الشهر شاملة هذا الطلب: {volume}",
+    "volumeTier": "{percent}٪ · مشتريات هذا الشهر شاملة هذا الطلب: {volume}، شريحة من {tier}",
     "min": "بحد أدنى {amount}",
     "max": "بحد أقصى {amount}"
   }

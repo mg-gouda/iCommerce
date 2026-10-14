@@ -15,7 +15,7 @@ export function FeeRow({ fee, currency }: { fee: PlatformFee; currency: string }
       : null
   const note = [
     fee.basis === "monthly_volume"
-      ? t("volume", { percent: fee.percent, volume: m(fee.base), tier: m(fee.min_amount) })
+      ? t(fee.min_amount > 0 ? "volumeTier" : "volume", { percent: fee.percent, volume: m(fee.base), tier: m(fee.min_amount) })
       : t("orderTotal", { percent: fee.percent }),
     clamp,
   ].filter(Boolean).join(" · ")
