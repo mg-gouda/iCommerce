@@ -7,13 +7,15 @@ import { cx } from "./cx"
 
 export type CartLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string
-  /** Accessible name; `{count}` is replaced with the real count, e.g. "Cart, {count} products". */
-  label: string
+  /** Accessible name; `{count}` is replaced with the real count, e.g. "Cart, {count} products".
+   *  Or plural forms keyed by `Intl.PluralRules` category of `lang` (`other` required). */
+  label: string | ({ other: string } & Partial<Record<Intl.LDMLPluralRule, string>>)
+  lang?: string
   /** Server-rendered count of distinct products (cart lines); AddToCartButton landings update it until the next render. Badge caps at "99+". */
   count?: number
 }
 
-export function CartLink({ label, count: server = 0, className, ...props }: CartLinkProps) {
+export function CartLink({ label, lang, count: server = 0, className, ...props }: CartLinkProps) {
   const [count, setCount] = useState(server)
   const [seen, setSeen] = useState(server)
   if (server !== seen) {
@@ -29,7 +31,7 @@ export function CartLink({ label, count: server = 0, className, ...props }: Cart
     return () => window.removeEventListener(CART_ADD_EVENT, onAdd)
   }, [])
   return (
-    <a {...props} className={cx("ic-cart", className)} data-cart-target aria-label={label.replace("{count}", String(count))}>
+    <a {...props} className={cx("ic-cart", className)} data-cart-target aria-label={(typeof label === "string" ? label : (label[new Intl.PluralRules(lang).select(count)] ?? label.other)).replace("{count}", String(count))}>
       <ShoppingCart aria-hidden className="rtl:-scale-x-100" />
       {count > 0 && <span className="ic-cart__count" aria-hidden dir="ltr">{count > 99 ? "99+" : count}</span>}
     </a>
