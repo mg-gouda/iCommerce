@@ -88,6 +88,17 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                   <th scope="row" colSpan={3} className="px-4 pt-2 pb-3 text-end font-semibold">{t("total")}</th>
                   <td className="px-4 pt-2 pb-3 text-end text-[16px] font-semibold whitespace-nowrap tabular-nums"><bdi>{money(o.total, cur)}</bdi></td>
                 </tr>
+                {/* P4: cash to collect (COD adds this order's share of the buyer's platform fee) + earnings after commission. */}
+                {([
+                  ...(method === "cod" && o.fee_share ? [["feeShare", o.fee_share], ["collect", o.total + o.fee_share]] as const : []),
+                  ["commission", -o.commission_total],
+                  ["earnings", o.total - o.commission_total],
+                ] as const).map(([k, n]) => (
+                  <tr key={k} className={k === "collect" || k === "earnings" ? "font-semibold" : "text-ink-muted"}>
+                    <th scope="row" colSpan={3} className="px-4 pt-1 text-end font-[inherit]">{t(`money.${k}`)}</th>
+                    <td className="px-4 pt-1 text-end whitespace-nowrap tabular-nums"><bdi>{n < 0 ? "−" : ""}{money(Math.abs(n), cur)}</bdi></td>
+                  </tr>
+                ))}
               </tfoot>
             </table>
           </section>

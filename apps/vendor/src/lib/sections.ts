@@ -1,5 +1,5 @@
 import {
-  ChartColumn, FileText, LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, Wallet, type LucideIcon,
+  ChartColumn, FileText, Gem, LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, Wallet, type LucideIcon,
 } from "lucide-react"
 
 /** Sidebar order. "dashboard" is the index route; the rest are /dashboard/<id>. */
@@ -11,6 +11,7 @@ export const sections = [
   ["messages", MessageSquare],
   ["reports", ChartColumn],
   ["payouts", Wallet],
+  ["plan", Gem],
   ["settings", Settings],
 ] as const satisfies readonly (readonly [string, LucideIcon])[]
 

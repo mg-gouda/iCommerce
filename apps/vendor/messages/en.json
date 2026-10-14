@@ -21,7 +21,8 @@
     "reports": "Reports",
     "payouts": "Payouts",
     "settings": "Store settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "plan": "Plan"
   },
   "sections": {
     "dashboard": {
@@ -63,6 +64,11 @@
       "title": "Store settings",
       "emptyTitle": "Store settings",
       "emptyBody": "Store profile, staff, shipping options and KYC documents are managed here."
+    },
+    "plan": {
+      "title": "Plan",
+      "emptyTitle": "Your plan",
+      "emptyBody": "Your membership plan and limits."
     }
   },
   "signup": {
@@ -141,6 +147,17 @@
     "suspended": {
       "title": "Store suspended",
       "body": "Your store is hidden from buyers. Edits you make wait for review. Contact iCommerce support to restore selling."
+    },
+    "plan": {
+      "cta": "View plan and billing",
+      "pastDue": {
+        "title": "Plan payment overdue",
+        "body": "Your plan period ended and the payment hasn't been recorded yet. Your products stay visible during the grace period; contact iCommerce to pay."
+      },
+      "readOnly": {
+        "title": "Store hidden: plan payment overdue",
+        "body": "Your products are hidden from buyers and product editing is paused until the plan is paid. Orders, quotes and payouts keep working."
+      }
     }
   },
   "settings": {
@@ -454,7 +471,13 @@
     "approveReturn": "Approve return",
     "rejectReturn": "Reject",
     "yourNote": "Your note",
-    "refundManual": "iCommerce refunds the buyer once the items are back."
+    "refundManual": "iCommerce refunds the buyer once the items are back.",
+    "money": {
+      "feeShare": "Platform fee to collect (cash on delivery)",
+      "collect": "Collect from buyer",
+      "commission": "iCommerce commission",
+      "earnings": "Your earnings"
+    }
   },
   "shipping": {
     "title": "Shipping",
@@ -608,5 +631,111 @@
     "saved": "Tiers saved.",
     "help": "Quantities go up row by row; prices can't rise as quantity grows. Empty rows are ignored.",
     "units": "units"
+  },
+  "payouts": {
+    "title": "Payouts",
+    "sub": "What iCommerce owes you after commission, and what you owe for cash-on-delivery orders. Amounts become available 7 days after delivery once the order is paid.",
+    "summary": "Balance summary",
+    "cards": {
+      "available": "Available",
+      "availableHint": "Ready for the next payout.",
+      "pending": "Pending",
+      "pendingHint": "Delivered orders still in the holding period or awaiting payment.",
+      "owed": "You owe iCommerce",
+      "owedHint": "Commission and fees on cash-on-delivery orders. Deducted from your next payouts.",
+      "paid": "Paid out",
+      "paidHint": "Total paid to you so far."
+    },
+    "ledger": "Ledger",
+    "typeFilter": "Type",
+    "allTypes": "All types",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "apply": "Apply",
+    "type": {
+      "sale": "Sale",
+      "commission": "Commission",
+      "fee_collected": "Platform fee collected (COD)",
+      "refund": "Refund",
+      "payout": "Payout",
+      "adjustment": "Adjustment",
+      "cod_cash": "Cash collected on delivery"
+    },
+    "status": {
+      "pending": "Pending",
+      "available": "Available",
+      "paid": "Settled"
+    },
+    "col": {
+      "date": "Date",
+      "order": "Order",
+      "type": "Entry",
+      "amount": "Amount",
+      "status": "Status",
+      "availableAt": "Available on"
+    },
+    "caption": "Ledger entries, {count} in total",
+    "emptyTitle": "No entries yet",
+    "emptyBody": "Entries appear when you mark an order delivered: the sale, iCommerce's commission and, for cash on delivery, the cash you collected.",
+    "noMatchTitle": "No matching entries",
+    "noMatchBody": "Try another type or status.",
+    "pagination": "Ledger pages",
+    "pageOf": "Page {page} of {pages} · {count} entries",
+    "prev": "Previous",
+    "next": "Next",
+    "history": "Payout history",
+    "noPayouts": "No payouts yet.",
+    "batch": {
+      "created": "Created",
+      "amount": "Amount",
+      "status": "Status",
+      "reference": "Bank reference",
+      "paidAt": "Paid on",
+      "open": "Processing",
+      "paid": "Paid"
+    }
+  },
+  "plan": {
+    "title": "Plan",
+    "sub": "Your membership plan, what it includes and how much of it you use.",
+    "current": "Current plan",
+    "usage": "Usage",
+    "products": "Products",
+    "staff": "Team members",
+    "unlimited": "unlimited",
+    "status": {
+      "trial": "Trial",
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "cancelled": "Cancelled"
+    },
+    "price": "{amount} / {interval}",
+    "free": "Free",
+    "interval": {
+      "monthly": "month",
+      "yearly": "year"
+    },
+    "trialEnds": "Trial ends {date}",
+    "periodEnds": "Current period ends {date}",
+    "graceUntil": "Pay by {date} to keep your products visible.",
+    "readOnly": "Products hidden since {date}. Pay to restore them.",
+    "pending": "Upgrade to {plan} requested. iCommerce will contact you to confirm payment.",
+    "compare": "Plans",
+    "yourPlan": "Your current plan",
+    "requestSent": "Request sent",
+    "request": "Request {plan}",
+    "requested": "Request sent. iCommerce will contact you to arrange payment; your plan changes once it is recorded.",
+    "notIncluded": "{feature} (not included)",
+    "feature": {
+      "products": "{count, plural, =-1 {Unlimited products} one {Up to # product} other {Up to # products}}",
+      "staff": "{count, plural, =-1 {Unlimited team members} one {# team member} other {Up to # team members}}",
+      "b2b": "Wholesale prices and quote requests (B2B)",
+      "featured": "{count, plural, =0 {Featured listings} one {# featured listing} other {# featured listings}}",
+      "analytics": {
+        "basic": "Basic reports",
+        "full": "Full reports"
+      }
+    },
+    "billingNote": "Billing is handled by iCommerce: after you request a plan, our team sends payment details and switches your plan once the payment is recorded."
   }
 }

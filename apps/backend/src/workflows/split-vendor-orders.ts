@@ -111,7 +111,8 @@ const createVendorOrdersStep = createStep(
   async (plan: Plan, { container }) => {
     if (!plan.orders.length) return new StepResponse([], [])
     const created = await container.resolve(Modules.ORDER).createOrders(plan.orders.map((p) => p.input))
-    const out = created.map((c, i) => ({ id: c.id, vendor_id: plan.orders[i].vendor_id }))
+    // createOrders does not guarantee input order → map back by the vendor_id stamped in metadata (was index-based: links could swap).
+    const out = created.map((c) => ({ id: c.id, vendor_id: (c.metadata as Row).vendor_id as string }))
     return new StepResponse(out, out.map((c) => c.id))
   },
   async (ids, { container }) => {
