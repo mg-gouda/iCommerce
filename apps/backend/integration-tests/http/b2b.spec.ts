@@ -357,7 +357,8 @@ medusaIntegrationTestRunner({
       const co = await company("omega")
       const other = await company("sigma")
       const buyer = co.members.admin
-      const named = (qs: { vendor: { id: string } | null }[], id: string | null) => qs.find((q) => (q.vendor?.id ?? null) === id)!
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const named = (qs: any[], id: string | null) => qs.find((q) => (q.vendor?.id ?? null) === id)
 
       await expect(api.post("/store/quotes", { items: [{ title: "x", quantity: 1, vendor_id: v2.id, find_suppliers: true }] }, auth(buyer.token))).rejects.toMatchObject(status(400))
       const rfq = (await api.post("/store/quotes", {
