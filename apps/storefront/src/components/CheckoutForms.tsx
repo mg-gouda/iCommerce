@@ -3,7 +3,7 @@
 import { CircleAlert } from "lucide-react"
 import { useActionState, type ReactNode } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Button, Field, money } from "@icommerce/ui"
+import { bidi, Button, Field, money } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
 import { placeOrder, saveAddress, saveEmail, savePayment, saveShipping } from "@/lib/checkout-actions"
 import type { PayKind, ShipGroup } from "@/lib/checkout"
@@ -89,7 +89,7 @@ export function ShippingForm({ groups, currency }: { groups: ShipGroup[]; curren
                     <span className="font-medium">{o.name}</span>
                     {o.kind === "pickup" && <span className="block text-[13px] text-ink-muted">{t("pickupHelp")}</span>}
                     {o.kind === "free_over" && o.free_over != null && (
-                      <span className="block text-[13px] text-ink-muted">{t("freeOver", { price: money(o.free_over, currency) })}</span>
+                      <span className="block text-[13px] text-ink-muted">{t("freeOver", { price: bidi(money(o.free_over, currency)) })}</span>
                     )}
                   </span>
                   <bdi className="font-semibold tabular-nums">{o.amount ? money(o.amount, currency) : t("free")}</bdi>

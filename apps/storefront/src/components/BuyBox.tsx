@@ -3,7 +3,7 @@
 import { CircleAlert } from "lucide-react"
 import { useId, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Button, money, PriceTiers, qtyUnit } from "@icommerce/ui"
+import { bidi, Button, money, PriceTiers, qtyUnit } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
 import { addToRfq } from "@/lib/p3/actions"
 import { tierPrice, tierRows } from "@/lib/p3/tiers"
@@ -105,7 +105,7 @@ export function BuyBox({ productId, price, unit, min, step, max, retail, tiers, 
         </div>
         {unitPrice != null && showValid && !gate && (
           <div className="flex flex-[1_1_220px] flex-col gap-0.5 pb-[22px]" aria-live="polite">
-            <span className="text-[13px] text-ink-muted">{t("subtotalAt", { price: money(unitPrice, "USD"), unit: u })}</span>
+            <span className="text-[13px] text-ink-muted">{t("subtotalAt", { price: bidi(money(unitPrice, "USD")), unit: u })}</span>
             <bdi className="text-[24px] leading-[30px] font-semibold tabular-nums">{money(subtotal, "USD")}</bdi>
           </div>
         )}

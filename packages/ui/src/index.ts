@@ -5,7 +5,7 @@ export { Select, Textarea, type SelectProps, type TextareaProps } from "./Select
 export { LoginCard, type LoginCardProps } from "./LoginCard"
 export { PriceTiers, type PriceTiersProps, type Tier } from "./PriceTiers"
 export { ProductCard, type ProductCardProps } from "./ProductCard"
-export { money } from "./money"
+export { bidi, money } from "./money"
 export { AddToCartButton, CART_ADD_EVENT, type AddToCartButtonProps, type CartAddDetail } from "./AddToCartButton"
 export { CartLink, type CartLinkProps } from "./CartLink"
 export { CheckoutButton, type CheckoutButtonProps } from "./CheckoutButton"

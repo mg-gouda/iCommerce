@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { CircleCheck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
-import { money, qtyUnit } from "@icommerce/ui"
+import { bidi, money, qtyUnit } from "@icommerce/ui"
 import { AcceptForm, ApproveForm, CounterForm, MessageForm, RejectForm } from "@/components/QuoteForms"
 import { QuoteBadge } from "@/components/QuoteStatus"
 import { Link } from "@/i18n/navigation"
@@ -115,7 +115,7 @@ export default async function QuotePage({ params }: Props) {
       {q.status === "offered" && (
         <section aria-labelledby="decide" className="flex flex-col gap-4 rounded-lg border border-line-strong bg-surface p-4 md:p-6">
           <h3 id="decide" className="m-0 text-[16px] leading-[22px] font-semibold">{t("decide")}</h3>
-          <AcceptForm quote={q.id} label={t("accept", { total: money(q.total ?? 0, cur) })} help={role === "buyer" ? t("acceptHelpBuyer") : t("acceptHelp")} />
+          <AcceptForm quote={q.id} label={t("accept", { total: bidi(money(q.total ?? 0, cur)) })} help={role === "buyer" ? t("acceptHelpBuyer") : t("acceptHelp")} />
           <details className="flex flex-col gap-3 border-t border-line pt-4">
             <summary className="cursor-pointer font-semibold">{t("counter")}</summary>
             <div className="mt-3"><CounterForm quote={q.id} items={q.items} currency={cur} /></div>
@@ -131,7 +131,7 @@ export default async function QuotePage({ params }: Props) {
             <p className="m-0 text-[14px] text-ink-muted">{t("waitingApproval")}</p>
           ) : (
             <>
-              <p className="m-0 text-[14px] text-ink-muted">{t("approveHelp", { total: money(q.total ?? 0, cur) })}</p>
+              <p className="m-0 text-[14px] text-ink-muted">{t("approveHelp", { total: bidi(money(q.total ?? 0, cur)) })}</p>
               <ApproveForm quote={q.id} />
               <RejectForm quote={q.id} label={t("rejectOffer")} />
             </>
