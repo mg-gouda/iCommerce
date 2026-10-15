@@ -1,9 +1,11 @@
 "use client"
 
 import Image from "next/image"
+import { Lock } from "lucide-react"
 import { useActionState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Button, Field } from "@icommerce/ui"
+import { Link } from "@/i18n/navigation"
 import { saveProduct } from "@/lib/product-actions"
 import type { FormState, VendorProduct } from "@/lib/types"
 import { Checkbox, Select, Textarea } from "./controls"
@@ -11,7 +13,12 @@ import { FormMessage, useFieldError } from "./FormMessage"
 import { panel } from "./PageHeader"
 import { FileField, Saved } from "./StoreForms"
 
-type Props = { product?: VendorProduct; categories: { id: string; name: string }[]; approved: boolean }
+type Props = {
+  product?: VendorProduct
+  categories: { id: string; name: string }[]
+  approved: boolean
+  canB2b: boolean
+}
 
 const fromProduct = (p?: VendorProduct): Record<string, string> => {
   const e = p?.product_extra
@@ -43,7 +50,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-export function ProductForm({ product, categories, approved }: Props) {
+export function ProductForm({ product, categories, approved, canB2b }: Props) {
   const t = useTranslations("product")
   const locale = useLocale()
   const [state, action, pending] = useActionState(saveProduct.bind(null, product?.id ?? ""), {} as FormState)
@@ -72,7 +79,35 @@ export function ProductForm({ product, categories, approved }: Props) {
       </Section>
 
       <Section title={t("pricing")}>
-        <Field label={t("price")} name="price" inputMode="decimal" dir="ltr" unit="USD" required defaultValue={v.price} error={err("price")} />
+        <Field label={t("price")} name="price" inputMode="decimal" dir="ltr" unit="USD" required defaultValue={v.price} help={t("priceHelp")} error={err("price")} />
+        {!product && canB2b && (
+          <>
+            <input type="hidden" name="wholesale_price_editable" value="1" />
+            <Field
+              label={t("wholesalePrice")}
+              name="wholesale_price"
+              inputMode="decimal"
+              dir="ltr"
+              unit="USD"
+              defaultValue={v.wholesale_price}
+              help={t("wholesalePriceHelp")}
+              error={err("wholesale_price")}
+            />
+          </>
+        )}
+        {!product && !canB2b && (
+          <div className="ic-field">
+            <span className="ic-label">{t("wholesalePrice")}</span>
+            <div className="ic-input-group">
+              <input className="ic-input" disabled dir="ltr" value="" readOnly />
+              <span className="ic-addon">USD</span>
+            </div>
+            <p className="ic-help m-0 flex items-center gap-1.5">
+              <Lock size={14} aria-hidden className="flex-none" />
+              {t("wholesalePriceLocked")} <Link href="/dashboard/plan" className="font-semibold text-brand-ink">{t("wholesalePriceUpgrade")}</Link>
+            </p>
+          </div>
+        )}
         <Field label={t("compareAt")} name="compare_at" inputMode="decimal" dir="ltr" unit="USD" defaultValue={v.compare_at} help={t("compareAtHelp")} error={err("compare_at")} />
         <Field label={t("costPrice")} name="cost_price" inputMode="decimal" dir="ltr" unit="USD" defaultValue={v.cost_price} help={t("costPriceHelp")} error={err("cost_price")} />
         <Field label={t("unit")} name="unit" placeholder={t("unitPlaceholder")} defaultValue={v.unit} help={t("unitHelp")} />

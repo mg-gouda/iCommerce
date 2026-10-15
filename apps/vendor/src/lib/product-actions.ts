@@ -6,7 +6,7 @@ import { api, ApiError, filesOf, routeLocale, uploadImages } from "./api"
 import type { FormState, VendorProduct } from "./types"
 
 const MB = 1024 * 1024
-const TEXT = ["title", "description", "category_id", "price", "compare_at", "unit", "min_qty", "qty_step", "max_qty", "hs_code", "cost_price", "status"]
+const TEXT = ["title", "description", "category_id", "price", "wholesale_price", "compare_at", "unit", "min_qty", "qty_step", "max_qty", "hs_code", "cost_price", "status"]
 const QTYS = ["min_qty", "qty_step", "max_qty"] as const
 // Same rule as the backend: > 0, at most 3 decimals.
 const QTY = /^\d+(\.\d{1,3})?$/
@@ -17,6 +17,7 @@ function validate(v: Record<string, string>, files: File[]) {
   const e: Record<string, string> = {}
   if (!v.title) e.title = "titleRequired"
   if (v.price === "" || !(Number(v.price) >= 0)) e.price = "price"
+  if (v.wholesale_price !== "" && !(Number(v.wholesale_price) >= 0)) e.wholesale_price = "price"
   if (v.compare_at !== "" && !(Number(v.compare_at) > Number(v.price))) e.compare_at = "compareAt"
   if (v.cost_price !== "" && !(Number(v.cost_price) >= 0)) e.cost_price = "costPrice"
   for (const k of QTYS) if (v[k] !== "" && !(QTY.test(v[k]) && Number(v[k]) > 0)) e[k] = "positiveQty"
@@ -65,7 +66,12 @@ export async function saveProduct(id: string, _prev: FormState, fd: FormData): P
             variants: [{ title: "Default", options: { Default: "Default" }, prices: [price], manage_inventory: false }],
           }),
     }
-    await api(existing ? `/vendors/products/${id}` : "/vendors/products", { method: "POST", body: JSON.stringify(body) })
+    const saved = await api<{ product: VendorProduct }>(existing ? `/vendors/products/${id}` : "/vendors/products", { method: "POST", body: JSON.stringify(body) })
+    // Single-price wholesale editing (quantity-tier pricing is a separate screen, left untouched when hidden here).
+    if (fd.get("wholesale_price_editable")) {
+      const tiers = v.wholesale_price === "" ? [] : [{ min_qty: num(v.min_qty) ?? 1, unit_price_usd: Number(v.wholesale_price) }]
+      await api(`/vendors/products/${saved.product.id}/wholesale-tiers`, { method: "PUT", body: JSON.stringify({ tiers }) })
+    }
   } catch (e) {
     if (!(e instanceof ApiError)) throw e
     if (/handle/i.test(e.message) && /exists/i.test(e.message)) return { values, fieldErrors: { title: "handleTaken" } }
