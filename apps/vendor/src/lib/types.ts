@@ -174,5 +174,5 @@ export type Subscription = {
 /** `plan` on GET /vendors/me (banners). */
 export type PlanState = {
   handle: string | null; name_en: string | null; name_ar: string | null; status: SubscriptionStatus
-  current_period_end: string | null; read_only: boolean; past_due: boolean
+  current_period_end: string | null; read_only: boolean; past_due: boolean; can_b2b: boolean
 }

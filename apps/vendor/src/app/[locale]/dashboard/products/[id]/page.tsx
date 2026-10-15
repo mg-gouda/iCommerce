@@ -14,7 +14,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const t = await getTranslations("product")
   const ts = await getTranslations("status")
   const tt = await getTranslations("tiers")
-  const [{ vendor }, categories, product, { tiers }] = await Promise.all([
+  const [{ vendor, plan }, categories, product, { tiers }] = await Promise.all([
     getMe(),
     getCategories(),
     vendorApi<{ product: VendorProduct }>(`/vendors/products/${encodeURIComponent(id)}`).then(
@@ -29,7 +29,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         <Link href="/dashboard/products" className="text-brand-ink underline underline-offset-2">{t("back")}</Link>
       </nav>
       <PageHeader title={product.title} actions={<Badge variant={productBadge(product.status)}>{ts(product.status)}</Badge>} />
-      <ProductForm key={product.updated_at} product={product} categories={categories} approved={vendor.status === "approved"} />
+      <ProductForm key={product.updated_at} product={product} categories={categories} approved={vendor.status === "approved"} canB2b={plan.can_b2b} />
       <section aria-labelledby="tiers" className={`${panel} mt-6`}>
         <h2 id="tiers" className="m-0 text-[16px] leading-[22px] font-semibold">{tt("title")}</h2>
         <p className="m-0 mt-1 mb-4 max-w-[65ch] text-[13px] text-ink-muted">{tt("sub")}</p>

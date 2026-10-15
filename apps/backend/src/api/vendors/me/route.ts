@@ -12,6 +12,7 @@ async function me(req: AuthenticatedMedusaRequest) {
   const plan = {
     handle: s.plan?.handle ?? null, name_en: s.plan?.name_en ?? null, name_ar: s.plan?.name_ar ?? null,
     status: s.status, current_period_end: s.current_period_end, read_only: s.read_only, past_due: s.status === "past_due",
+    can_b2b: s.plan?.can_b2b ?? true,
   }
   return { ...caller, plan }
 }
