@@ -82,6 +82,7 @@ Custom:
 | `sales_org` | `branch`, `sales_rep` (type: `branch_manager`/`account_manager`/`broker`) | assignment on company/customer; attribution copied onto order |
 | `erp_sync` | `erp_connection`, `erp_link`, `erp_outbox` | see ERP section |
 | `reports` | SQL views / rollup tables | vendor + platform stats |
+| `content` | `page`, `post` | CMS: pages + blog posts, EN/AR title/body, SEO meta (title/description/OG image) per locale, draft/published, images via existing `file` module |
 
 Product extras (fields on product/variant via module link): `unit` (ton, m², piece…), `min_qty`, `max_qty`, `qty_step`, `hs_code`, `cost_price`, `b2b_only`, `b2c_enabled`, `origin_country`.
 
@@ -284,6 +285,7 @@ Envs: `dev` → `staging` → `prod`, GitHub Actions CI.
 | 14 | Vendor cancels → buyer emailed; all vendor orders cancelled → parent order cancelled |
 | 15 | One "Storefront" publishable key (Retail + Wholesale); cart channel = Retail for consumers, Wholesale for verified company members |
 | 16 | Free-text RFQ lines: buyer picks suppliers OR "Let iCommerce find suppliers" (staff route from admin) |
+| 17 | CMS (pages, blog, SEO) added to v1 scope, new `content` module — admin-authored, not WP-migrated (WP backup had no extractable Pages/blog data, `01-wp-audit.md` covers catalog only) |
 
 ## Open questions
 1. Payment gateway (parked).

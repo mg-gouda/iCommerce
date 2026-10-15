@@ -13,7 +13,8 @@ Based on [02-architecture.md](02-architecture.md). **Team = Claude + subagents**
 | P5 | Chat + reports | 3 | vendor dashboard complete |
 | P6 | ERP (BC + Odoo) | 3 (parallel P4–P5) | **M5** — orders appear in BC + Odoo |
 | P7 | Hardening + launch | 3 | **GO-LIVE** |
-| | **Total** | **~23 weeks (~5.5 months)** — agent parallelism can compress P1–P6 to ~14–16 wks if owner reviews keep pace | |
+| P8 | CMS: pages, blog, SEO | 2 | admin can publish pages/posts, storefront renders + indexes them |
+| | **Total** | **~25 weeks (~6 months)** — agent parallelism can compress P1–P6 to ~14–16 wks if owner reviews keep pace | |
 
 ```mermaid
 gantt
@@ -28,6 +29,7 @@ gantt
   P4 Money                 :p4, after p3, 3w
   P5 Chat+Reports          :p5, after p4, 3w
   P7 Hardening+Launch      :p7, after p5, 3w
+  P8 CMS Pages+Blog+SEO    :p8, after p7, 2w
   section Parallel
   Design system + UX       :d1, 2026-10-19, 6w
   P6 ERP BC+Odoo           :p6, after p3, 6w
@@ -115,6 +117,15 @@ Start date placeholder: 2026-10-19 → go-live ≈ **end Mar 2027**.
 
 **Done when:** go-live checklist green, 1 week stable on prod.
 
+## P8 — CMS: pages, blog, SEO (2 wks)
+- `content` module: `page` (slug, title/body EN+AR, draft/published) and `post` (same + author, tags, excerpt, featured image, published_at).
+- SEO fields per page/post (meta title, meta description, OG image, canonical) + site-wide defaults (title template, default OG image); sitemap (`next-sitemap`, already the planned WP-Sitemap replacement) includes published pages/posts alongside products/vendors.
+- Admin UI: Pages + Blog list/editor screens, same list + inline-expand-detail pattern as Companies/Vendors; Markdown body v1 (no rich-text/WYSIWYG dependency — upgrade later if vendors/staff ask).
+- Storefront: `/[locale]/pages/[slug]`, `/[locale]/blog` index + `/[locale]/blog/[slug]`, EN/AR, WCAG 2.2 AA, logical CSS/RTL per design principles. Images via the existing `file` module, no new storage.
+- **Not a WP migration item**: `01-wp-audit.md`'s extraction was catalog-only (vendors/products/categories/media) — the WP backup has no Pages/blog content to carry over. This phase is new content, authored fresh in the new admin.
+
+**Done when:** admin publishes one page and one blog post in EN/AR; both render on storefront with correct `<title>`/meta tags and appear in the sitemap.
+
 ---
 
 ## Blocking decisions & deadlines
@@ -131,7 +142,7 @@ Start date placeholder: 2026-10-19 → go-live ≈ **end Mar 2027**.
 | Medusa v2 learning curve (team knows Prisma/tRPC) | P0 spike: build 1 custom module end-to-end first |
 | Multi-vendor order split + refunds edge cases | M4 test matrix, ledger never computed on the fly (snapshots) |
 | Vendors don't come back (WP had 1.2k signed up, inactive since 2022; contact data 4 yrs old) | re-onboarding campaign in P7; migration keeps their catalog → low effort for them |
-| Buyers never came on WP | v1 scope must include marketing basics: SEO, landing pages, email capture — not just features |
+| Buyers never came on WP | v1 scope must include marketing basics: SEO, landing pages, email capture — not just features. CMS lands in P8; if a landing/SEO page is needed for go-live itself, pull a minimal slice (page + global SEO, no blog) into P7 |
 | ERP mapping disputes with finance | mapping doc signed off before P6 dev |
 | Arabic content gap (catalog ~100% EN) | AR UI v1; product AR translation via vendor portal + optional AI translate post-v1 |
 
