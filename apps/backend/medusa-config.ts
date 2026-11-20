@@ -44,6 +44,7 @@ module.exports = defineConfig({
     { resolve: "./src/modules/commission" },
     { resolve: "./src/modules/payout" },
     { resolve: "./src/modules/vendor-plan" },
+    { resolve: "./src/modules/sales-org" },
     {
       resolve: "@medusajs/medusa/file",
       options: {

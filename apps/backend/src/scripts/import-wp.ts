@@ -16,6 +16,8 @@ import { PRODUCT_EXTRA_MODULE } from "../modules/product-extra"
 import type ProductExtraModuleService from "../modules/product-extra/service"
 import type { ProductExtraInput } from "../workflows/vendor-products"
 import { isQty } from "../api/vendors/validators"
+import { companySvc } from "../lib/company"
+import { deriveAttribution, salesOrgSvc } from "../lib/sales-org"
 
 // Stage 2 of the WP migration: loads tools/migrate-wp/out/*.json (stage-1 output, see its README) into Medusa.
 // medusa exec ./src/scripts/import-wp.ts [out-dir] -- [--limit N] [--only vendors|products]   (out-dir defaults to $WP_OUT)
@@ -187,6 +189,7 @@ export default async function importWp({ container, args }: ExecArgs) {
     products: { created: 0, updated: 0, unchanged: 0, skipped: {} as Counts, failed: {} as Counts, notes: {} as Counts },
     images: { referenced: 0, unique: 0, uploaded: 0, already_uploaded: 0, missing: 0 },
     description_images: { with_images: 0, rewritten: 0, removed: 0 } as DescStats,
+    sales_org: {} as Counts,
   }
 
   // 1. Seeds (both idempotent).
@@ -271,11 +274,11 @@ export default async function importWp({ container, args }: ExecArgs) {
   // 3–4. Products.
   if (only !== "vendors") await importProducts(container, dir, products, imageUrl, report.products, report.description_images, logger)
 
-  // 6. ponytail: sales org + fee tiers have no modules yet → counted only, imported when those modules land.
-  const org = load<{ branches: unknown[]; reps: unknown[]; assignments: unknown[] }>("sales_org.json")
+  // 6. Sales org (P5). ponytail: WP fee tiers are counted only; P4 seeds its own tier table.
+  if (!only) report.sales_org = await importSalesOrg(container, load<WpSalesOrg>("sales_org.json"))
   const tiers = load<unknown[]>("fee_tiers.json")
-  const notImported = `branches ${org.branches.length}, reps ${org.reps.length}, assignments ${org.assignments.length}, fee tiers ${tiers.length}`
-  logger.info(`import-wp: NOT imported (no module yet): ${notImported}`)
+  const notImported = `fee tiers ${tiers.length}`
+  logger.info(`import-wp: NOT imported: ${notImported}`)
 
   // 7. Search.
   const indexed = process.env.MEILI_HOST ? await reindexAll(container) : null
@@ -479,12 +482,102 @@ async function importProducts(
   }
 }
 
+type WpSalesOrg = {
+  branches: { legacy_id: number; code: string; name: string }[]
+  reps: { type: "branch_manager" | "account_manager" | "broker"; legacy_id: number; code: string; name: string; branch_code: string | null; manager_code: string | null }[]
+  assignments: { user_legacy_id: number; is_vendor: boolean; branch_code: string | null; branch_manager_code: string | null; account_manager_code: string | null; broker_code: string | null }[]
+}
+
+/**
+ * Branches → reps (branch_code / manager_code resolved) → assignments (user → company if the imported customer has one,
+ * else customer; vendor when is_vendor). Idempotent by legacy_id / target. Unknown codes are counted, never fatal.
+ */
+async function importSalesOrg(container: MedusaContainer, org: WpSalesOrg) {
+  const c: Counts = {}
+  const svc = salesOrgSvc(container)
+  // Branches.
+  const branches = new Map((await svc.listBranches({}, { take: null })).map((b) => [b.legacy_id ?? `code:${b.code}`, b]))
+  const branchByCode = new Map([...branches.values()].map((b) => [b.code, b.id]))
+  for (const b of org.branches) {
+    const prev = branches.get(String(b.legacy_id))
+    const taken = branchByCode.get(b.code)
+    if (taken && taken !== prev?.id) {
+      bump(c, "branches skipped: duplicate code")
+      continue
+    }
+    if (!prev) branchByCode.set(b.code, (await svc.createBranches({ code: b.code, name: b.name, legacy_id: String(b.legacy_id) })).id)
+    else if (prev.name !== b.name || prev.code !== b.code) await svc.updateBranches({ id: prev.id, code: b.code, name: b.name })
+    bump(c, prev ? "branches updated/unchanged" : "branches created")
+  }
+  // Reps: branch managers first so account managers / brokers can resolve manager_code.
+  const reps = await svc.listSalesReps({}, { take: null })
+  const key = (type: string, v: string) => `${type}:${v}`
+  const byLegacy = new Map(reps.filter((r) => r.legacy_id).map((r) => [key(r.type, r.legacy_id!), r]))
+  const byCode = new Map(reps.map((r) => [key(r.type, r.code), r]))
+  const order = ["branch_manager", "account_manager", "broker"]
+  for (const r of [...org.reps].sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type))) {
+    const prev = byLegacy.get(key(r.type, String(r.legacy_id)))
+    const taken = byCode.get(key(r.type, r.code))
+    if (taken && taken.id !== prev?.id) {
+      bump(c, "reps skipped: duplicate code")
+      continue
+    }
+    const manager = r.manager_code ? byCode.get(key("branch_manager", r.manager_code)) : undefined
+    if (r.manager_code && !manager) bump(c, "reps: unknown manager_code")
+    const branch_id = r.branch_code ? branchByCode.get(r.branch_code) : manager?.branch_id
+    if (r.branch_code && !branch_id) bump(c, "reps: unknown branch_code")
+    const data = { type: r.type, code: r.code, name: r.name, branch_id: branch_id ?? null, manager_id: manager?.id ?? null, legacy_id: String(r.legacy_id) }
+    const row = prev ? await svc.updateSalesReps({ id: prev.id, ...data }) : await svc.createSalesReps(data)
+    byCode.set(key(r.type, r.code), row)
+    bump(c, prev ? "reps updated" : "reps created")
+  }
+  // Assignments.
+  const legacyIds = org.assignments.map((a) => String(a.user_legacy_id))
+  const vendors = await container.resolve<VendorModuleService>(VENDOR_MODULE).listVendors({ legacy_id: legacyIds }, { select: ["id", "legacy_id"], take: null })
+  const vendorOf = new Map(vendors.map((v) => [v.legacy_id, v.id]))
+  const pg = container.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+  const customers: { id: string; legacy_id: string }[] = await pg("customer")
+    .select("id", pg.raw("metadata->>'legacy_id' as legacy_id"))
+    .whereNull("deleted_at")
+    .whereRaw("metadata->>'legacy_id' = any(?)", [legacyIds])
+  const customerOf = new Map(customers.map((x) => [x.legacy_id, x.id]))
+  const members = customers.length ? await companySvc(container).listCompanyMembers({ customer_id: customers.map((x) => x.id) }, { relations: ["company"] }) : []
+  const companyOf = new Map(members.map((m) => [m.customer_id, (m as unknown as { company: { id: string } }).company.id]))
+  const rep = (type: string, code: string | null) => {
+    const id = code ? byCode.get(key(type, code))?.id : null
+    if (code && !id) bump(c, `assignments: unknown ${type} code`)
+    return id ?? null
+  }
+  for (const a of org.assignments) {
+    const uid = String(a.user_legacy_id)
+    const customer = customerOf.get(uid)
+    const [target_type, target_id] = a.is_vendor
+      ? (["vendor", vendorOf.get(uid)] as const)
+      : customer && companyOf.get(customer) ? (["company", companyOf.get(customer)] as const) : (["customer", customer] as const)
+    if (!target_id) {
+      bump(c, `assignments skipped: ${target_type} not imported`)
+      continue
+    }
+    const branch_id = a.branch_code ? (branchByCode.get(a.branch_code) ?? null) : null
+    if (a.branch_code && !branch_id) bump(c, "assignments: unknown branch code")
+    const attr = await deriveAttribution(container, {
+      branch_id, branch_manager_id: rep("branch_manager", a.branch_manager_code), account_manager_id: rep("account_manager", a.account_manager_code), broker_id: rep("broker", a.broker_code),
+    })
+    const [prev] = await svc.listAssignments({ target_type, target_id })
+    if (prev) await svc.updateAssignments({ id: prev.id, ...attr })
+    else await svc.createAssignments({ target_type, target_id, ...attr })
+    bump(c, `assignments ${target_type} ${prev ? "updated" : "created"}`)
+  }
+  return c
+}
+
 function renderReport(
   r: {
     vendors: Record<string, number | Counts>
     products: Record<string, number | Counts>
     images: Record<string, number>
     description_images: DescStats
+    sales_org: Counts
   },
   run: { limit?: number; only?: string; secs: number; indexed: number | null; notImported: string },
 ) {
@@ -509,6 +602,7 @@ function renderReport(
     section("Products", r.products),
     section("Images", r.images),
     section("Description images", r.description_images),
-    `## Not imported (no module yet)\n${run.notImported}\n`,
+    section("Sales org", r.sales_org),
+    `## Not imported\n${run.notImported}\n`,
   ].join("\n")
 }
