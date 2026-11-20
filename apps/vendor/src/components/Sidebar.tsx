@@ -7,8 +7,9 @@ import { signOut } from "@/lib/auth-actions"
 import { sections } from "@/lib/sections"
 import { LocaleSwitch } from "./LocaleSwitch"
 
-export function Sidebar({ store }: { store: string }) {
+export function Sidebar({ store, unread }: { store: string; unread: number }) {
   const t = useTranslations("nav")
+  const tc = useTranslations("chat")
   const locale = useLocale()
   const pathname = usePathname()
   return (
@@ -21,7 +22,8 @@ export function Sidebar({ store }: { store: string }) {
       </div>
       <nav aria-label={t("label")} className="-mx-1 overflow-x-auto md:mx-0 md:overflow-visible">
         <ul className="m-0 flex list-none gap-1 p-0 md:flex-col">
-          {sections.map(([id, Icon]) => {
+          {/* P5b: Messages hides while chat is off (no TalkJS app id). */}
+          {sections.filter(([id]) => id !== "messages" || process.env.NEXT_PUBLIC_TALKJS_APP_ID).map(([id, Icon]) => {
             const href = id === "dashboard" ? "/dashboard" : `/dashboard/${id}`
             const active = id === "dashboard" ? pathname === href : pathname.startsWith(href)
             return (
@@ -33,6 +35,12 @@ export function Sidebar({ store }: { store: string }) {
                 >
                   <Icon size={20} aria-hidden />
                   {t(id)}
+                  {id === "messages" && unread > 0 && (
+                    <span className="ms-auto inline-flex min-w-5 justify-center rounded-full bg-accent px-1.5 text-[12px] leading-5 font-semibold text-on-accent tabular-nums">
+                      <span aria-hidden>{unread > 99 ? "99+" : unread}</span>
+                      <span className="sr-only">{tc("unread", { n: unread })}</span>
+                    </span>
+                  )}
                 </Link>
               </li>
             )
