@@ -10,6 +10,7 @@ import { channelOf } from "./fees"
 import { cents, major } from "./money"
 import { parse } from "./parse"
 import { quoteSvc } from "./quotes"
+import { unread } from "./chat"
 import { ATTR_KEYS, salesOrgSvc } from "./sales-org"
 import { vendorOrderLinks } from "./vendor-orders"
 
@@ -235,12 +236,15 @@ export async function summaryHandler(scope: MedusaContainer, res: MedusaResponse
   if (p.format === "csv") return sendCsv(res, `icommerce-summary-${f.from}-${f.to}.csv`, ["period", "revenue", "orders"], s.map((r) => [r.period, r.revenue, r.orders]))
   const range = { from: f.from, to: f.to }
   if (vendor_id) {
-    const [, open_quotes] = await quoteSvc(scope).listAndCountQuotes({ vendor_id, status: OPEN_QUOTES as never }, { select: ["id"], take: 1 })
+    const [[, open_quotes], unread_chats] = await Promise.all([
+      quoteSvc(scope).listAndCountQuotes({ vendor_id, status: OPEN_QUOTES as never }, { select: ["id"], take: 1 }),
+      unread(`v_${vendor_id}`).then((r) => r.count, () => null), // chat disabled/down → null, report still renders
+    ])
     return res.json({
       range,
       kpis: {
         revenue: cur.revenue, orders: cur.orders, aov: cur.aov, units: cur.units, commission: cur.commission, fee_share: cur.fees,
-        net: major(cents(cur.revenue) - cents(cur.commission) - cents(cur.fees)), open_quotes, unread_chats: null,
+        net: major(cents(cur.revenue) - cents(cur.commission) - cents(cur.fees)), open_quotes, unread_chats,
       },
       previous: { revenue: prev.revenue, orders: prev.orders, aov: prev.aov, units: prev.units },
       series: s,

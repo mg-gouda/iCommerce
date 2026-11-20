@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { Header } from "@/components/Header"
 import { Link, redirect } from "@/i18n/navigation"
 import { signOut } from "@/lib/account-actions"
+import { unreadChats } from "@/lib/chat"
 import { getMembership } from "@/lib/p3/api"
 import { getCustomer } from "@/lib/session"
 
@@ -11,12 +12,15 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const locale = await getLocale()
   const customer = await getCustomer()
   if (!customer) redirect({ href: "/login?next=/account", locale })
-  const [t, tb, membership] = await Promise.all([getTranslations("account"), getTranslations("b2b"), getMembership()])
+  const [t, tb, tc, membership, unread] = await Promise.all([
+    getTranslations("account"), getTranslations("b2b"), getTranslations("chat"), getMembership(), unreadChats(),
+  ])
   const links: [string, string][] = [
     ["/account", t("orders")],
     ["/account/addresses", t("addresses")],
     ["/account/company", tb("company")],
     ...(membership ? ([["/account/quotes", tb("quotes")], ["/account/credit", tb("credit")]] as [string, string][]) : []),
+    ...(process.env.NEXT_PUBLIC_TALKJS_APP_ID ? ([["/account/messages", tc("messages")]] as [string, string][]) : []),
   ]
   return (
     <>
@@ -32,7 +36,15 @@ export default async function AccountLayout({ children }: { children: ReactNode 
           </div>
           <nav aria-label={t("title")} className="flex flex-wrap items-center gap-2">
             {links.map(([href, label]) => (
-              <Link key={href} href={href} className="ic-btn ic-btn--ghost ic-btn--sm no-underline">{label}</Link>
+              <Link key={href} href={href} className="ic-btn ic-btn--ghost ic-btn--sm no-underline">
+                {label}
+                {href === "/account/messages" && unread > 0 && (
+                  <span className="ms-1.5 inline-flex min-w-5 justify-center rounded-full bg-accent px-1.5 text-[12px] leading-5 font-semibold text-on-accent tabular-nums">
+                    <span aria-hidden>{unread > 99 ? "99+" : unread}</span>
+                    <span className="sr-only">{tc("unread", { n: unread })}</span>
+                  </span>
+                )}
+              </Link>
             ))}
             <form action={signOut}>
               <input type="hidden" name="locale" value={locale} />

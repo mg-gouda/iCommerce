@@ -809,5 +809,13 @@
     "prev": "Previous",
     "next": "Next",
     "pagination": "Report pages"
+  },
+  "chat": {
+    "intro": "Buyer questions about your products, orders and quotes.",
+    "messageBuyer": "Message buyer",
+    "loading": "Loading conversations…",
+    "error": "Chat couldn’t load. Check your connection and try again.",
+    "retry": "Try again",
+    "unread": "{n, plural, one {# unread conversation} other {# unread conversations}}"
   }
 }

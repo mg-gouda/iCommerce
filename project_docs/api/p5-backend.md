@@ -101,7 +101,7 @@ Filters on every report: `from`, `to` (inclusive UTC days; default = last 30 day
   "previous": { "revenue": …, "orders": …, "aov": …, "units": … },          // same-length range immediately before
   "series": [ { "period": "2026-10-01", "revenue": 410, "orders": 2 }, … ] }  // every period present, zero-filled
 ```
-`interval` defaults to day for ranges of 62 days or less, otherwise month. Week starts Monday. `unread_chats` stays `null` until P5b.
+`interval` defaults to day for ranges of 62 days or less, otherwise month. Week starts Monday. `unread_chats` = unread TalkJS conversations for the vendor; `null` when chat is disabled or TalkJS is unreachable.
 
 `GET /vendors/reports/breakdown?by=product|category|country|channel|buyer&from&to&channel&paid&limit=50&offset=0`
 ```json

@@ -1,4 +1,4 @@
-import { CircleCheck, ExternalLink, Package, Truck } from "lucide-react"
+import { CircleCheck, ExternalLink, MessageSquare, Package, Truck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { Badge, bidi, money } from "@icommerce/ui"
 import { Link } from "@/i18n/navigation"
@@ -27,7 +27,7 @@ async function loadStatus(order: Order) {
 
 /** Order page body (confirmation + account detail): per-vendor shipments, payment instructions, totals. */
 export async function OrderView({ order, signedIn }: { order: Order; signedIn: boolean }) {
-  const [t, locale, status] = await Promise.all([getTranslations("order"), getLocale(), loadStatus(order)])
+  const [t, tc, locale, status] = await Promise.all([getTranslations("order"), getTranslations("chat"), getLocale(), loadStatus(order)])
   const currency = order.currency_code.toUpperCase()
   const a = order.shipping_address
   // Returns are customer-only: delivered vendor orders with no open request (one open request per vendor order).
@@ -48,7 +48,7 @@ export async function OrderView({ order, signedIn }: { order: Order; signedIn: b
         <h2 className="m-0 text-[20px] leading-[26px] font-semibold">{t("shipments")}</h2>
         <p className="m-0 text-[14px] text-ink-muted">{t("shipNote")}</p>
         {status?.vendor_orders.length ? (
-          <Shipments status={status} t={t} />
+          <Shipments status={status} t={t} chat={signedIn ? tc("messageVendor") : undefined} />
         ) : (
           // Split not visible yet (or lookup rate-limited): plain lines.
           <div className="rounded-lg border border-line bg-surface p-4 md:p-6">
@@ -146,12 +146,13 @@ export function PaymentPanel({ t, n, email, total, payment, fallback }: {
   )
 }
 
-export function Shipments({ status, t }: { status: OrderStatus; t: T }) {
+/** `chat` = "Message vendor" label (signed-in buyers); guests get no chat link. */
+export function Shipments({ status, t, chat }: { status: OrderStatus; t: T; chat?: string }) {
   const currency = status.order.currency_code.toUpperCase()
-  return status.vendor_orders.map((v) => <Shipment key={v.id} v={v} currency={currency} t={t} />)
+  return status.vendor_orders.map((v) => <Shipment key={v.id} v={v} currency={currency} t={t} chat={chat} />)
 }
 
-function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: T }) {
+function Shipment({ v, currency, t, chat }: { v: VendorOrder; currency: string; t: T; chat?: string }) {
   const Icon = STATUS_ICON[v.status]
   const f = v.fulfillment
   return (
@@ -192,6 +193,11 @@ function Shipment({ v, currency, t }: { v: VendorOrder; currency: string; t: T }
           </p>
         )}
         {v.return_request && <p className="m-0 text-ink-muted">{t(`return.${v.return_request.status}`)}</p>}
+        {chat && process.env.NEXT_PUBLIC_TALKJS_APP_ID && (
+          <Link href={`/account/messages?kind=order&ref=${encodeURIComponent(v.id)}`} className="ic-btn ic-btn--sm self-start no-underline">
+            <MessageSquare size={16} aria-hidden /> {chat}
+          </Link>
+        )}
       </div>
     </section>
   )

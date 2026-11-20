@@ -112,6 +112,8 @@ export default defineMiddlewares({
     { matcher: "/store/companies*", middlewares: [customerAuth] },
     { matcher: "/store/companies/me/kyc", method: ["POST"], middlewares: [kycUpload.array("files", 10)] },
     { matcher: "/store/quotes*", middlewares: [customerAuth] },
+    // P5b chat: signed-in buyers only (guests → 401).
+    { matcher: "/store/chat*", middlewares: [customerAuth] },
     ...["/store/payment-providers*", "/store/regions*", "/store/carts*"].map((matcher) => ({ matcher, middlewares: [optionalCustomer, hideNetTerms] })),
     ...["/store/products/:id/wholesale-tiers", "/store/products/wholesale-tiers"].map((matcher) => ({
       matcher,

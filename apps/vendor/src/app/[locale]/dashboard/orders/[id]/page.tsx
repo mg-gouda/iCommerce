@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ExternalLink } from "lucide-react"
 import { getFormatter, getLocale, getTranslations } from "next-intl/server"
 import { Badge, money } from "@icommerce/ui"
+import { MessageBuyer } from "@/components/MessageBuyer"
 import { CancelForm, DeliverButton, FulfilForm, ReturnDecision } from "@/components/OrderActions"
 import { PageHeader, panel } from "@/components/PageHeader"
 import { Link } from "@/i18n/navigation"
@@ -37,7 +38,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       <PageHeader
         title={t("orderTitle", { id: o.display_id })}
         sub={t("placed", { date: date(o.created_at) })}
-        actions={<Badge variant={orderBadge(o.status)}>{t(`status.${o.status}`)}</Badge>}
+        actions={<><MessageBuyer kind="order" id={o.id} /><Badge variant={orderBadge(o.status)}>{t(`status.${o.status}`)}</Badge></>}
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { ShieldCheck } from "lucide-react"
+import { MessageSquare, ShieldCheck } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { Badge, bidi, money, qtyUnit } from "@icommerce/ui"
 import { BuyBox } from "@/components/BuyBox"
@@ -11,6 +11,7 @@ import { Link } from "@/i18n/navigation"
 import { descriptionHtml, descriptionText } from "@/lib/html"
 import { getTiers } from "@/lib/p3/api"
 import { buyingMode } from "@/lib/p3/mode"
+import { token } from "@/lib/session"
 import { compareAtOf, getProduct, isRetail, isVerified, priceOf } from "@/lib/store"
 
 type Props = { params: Promise<{ handle: string }> }
@@ -23,9 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const p = await getProduct((await params).handle)
   if (!p) notFound()
-  const [t, tu, tb, { mode, wholesale, membership, verified: member }] = await Promise.all([
-    getTranslations("product"), getTranslations("units"), getTranslations("b2b"), buyingMode(),
+  const [t, tu, tb, tc, signedIn, { mode, wholesale, membership, verified: member }] = await Promise.all([
+    getTranslations("product"), getTranslations("units"), getTranslations("b2b"), getTranslations("chat"), token(), buyingMode(),
   ])
+  // P5b: signed-out buyers sign in first, then land in the conversation.
+  const chat = `/account/messages?kind=product&ref=${encodeURIComponent(p.id)}`
+  const chatHref = process.env.NEXT_PUBLIC_TALKJS_APP_ID ? (signedIn ? chat : `/login?next=${encodeURIComponent(chat)}`) : null
   const tiers = wholesale ? ((await getTiers(p.id)) ?? []) : null
   const region = new Intl.DisplayNames([await getLocale()], { type: "region" })
   const e = p.product_extra
@@ -139,7 +143,12 @@ export default async function ProductPage({ params }: Props) {
                 </div>
               </div>
               {verified && <div className="ic-row"><Badge variant="verified">{t("verified")}</Badge></div>}
-              <Link href={`/v/${v.handle}`} className="ic-btn ic-btn--block no-underline">{t("visitStore")}</Link>
+              {chatHref && (
+                <Link href={chatHref} className="ic-btn ic-btn--block no-underline">
+                  <MessageSquare size={16} aria-hidden /> {tc("messageSupplier")}
+                </Link>
+              )}
+              <Link href={`/v/${v.handle}`} className="ic-btn ic-btn--ghost ic-btn--block no-underline">{t("visitStore")}</Link>
             </aside>
           )}
         </section>

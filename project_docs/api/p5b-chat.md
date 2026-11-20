@@ -46,14 +46,17 @@ Company members other than the requester are added as participants on first open
 ## 3. Routes
 | Method | Path | Auth | Body / query | Response |
 |---|---|---|---|---|
-| GET | `/store/chat/session` | customer | – | `{ app_id, user_id, token }` |
-| POST | `/store/chat/conversations` | customer | `{ kind: "product"\|"order"\|"quote", ref_id }` | `{ app_id, user_id, token, conversation_id }` |
-| GET | `/vendors/chat/session` | vendor | – | same as store |
-| POST | `/vendors/chat/conversations` | vendor | `{ kind: "order"\|"quote", ref_id }` (vendors can't start product chats) | same |
+| GET | `/store/chat/session` | customer | `lang?` | `{ app_id, user_id, token }` |
+| POST | `/store/chat/conversations` | customer | `{ kind: "product"\|"order"\|"quote", ref_id, lang? }` | `{ app_id, user_id, token, conversation_id }` |
+| GET | `/store/chat/unread` | customer | – | `{ count }` (account-nav badge) |
+| GET | `/vendors/chat/session` | vendor | `lang?` | same as store |
+| POST | `/vendors/chat/conversations` | vendor | `{ kind: "order"\|"quote", ref_id, lang? }` (vendors can't start product chats → 400) | same |
 | GET | `/vendors/chat/unread` | vendor | – | `{ count }`: unread conversations for `v_<vendor_id>` via REST; also fills `kpis.unread_chats` in `/vendors/reports/summary` once P5a lands |
 | GET | `/admin/chat/conversations` | admin | `kind`, `vendor_id`, `customer_id`, `limit`, `offset` | list from TalkJS REST (`custom` filter), newest first |
 | GET | `/admin/chat/conversations/:id/messages` | admin | `limit`, `startingAfter` | read-only messages (disputes) |
 | POST | `/admin/chat/conversations/:id/join` | admin | – | adds `ops` as participant + returns an ops session `{ app_id, user_id, token }` |
+
+`lang` (`en`|`ar`, optional) = the page locale; it is written to the **caller's** TalkJS user `locale`, which is what drives the TalkJS UI language and RTL (TalkJS has no per-session locale). Omitted → the profile locale of §1. The other party is upserted without `locale`, so theirs is kept. It is named `lang` because Medusa strips `?locale=` from `req.query` (its translation middleware).
 
 Errors:
 - `ref_id` not found, or the caller isn't allowed to open it → **404** (never reveal existence).
@@ -65,11 +68,11 @@ Errors:
   - **"Message supplier"** on the product page (signed-out → login with `next`)
   - **"Message vendor"** on each vendor block of order detail and quote detail
   - **Messages** page (`/account/messages`): TalkJS Inbox
-  - unread badge on the account link (TalkJS `unreadsChange`)
+  - unread badge on the account-area **Messages** link, rendered server-side from `GET /store/chat/unread` (the header renders on every page, and loading the SDK there would break "SDK only on chat surfaces")
 - **Vendor portal**:
-  - **Messages** page (Inbox), with an unread badge in the nav
+  - **Messages** page (Inbox), with an unread badge in the nav (server-side, `GET /vendors/chat/unread`)
   - **"Message buyer"** on order detail and quote detail
-- **Admin**: a "Conversations" page with filters and a read-only transcript, plus "Join as support".
+- **Admin**: a "Conversations" page with filters and a read-only transcript, plus "Join as support". `// ponytail:` the admin has no TalkJS UI; after joining, `ops` gets TalkJS email notifications and replies from the TalkJS dashboard (the join session token is returned for a future UI).
 - **Shared**: load the TalkJS SDK (`talkjs` npm or `@talkjs/react`, one dep) only on chat surfaces. Locale = page locale (`ar` → RTL). Chat failing to load shows an inline error with retry, never a blank box.
 
 ## 5. Tests (`p5b-chat.spec.ts`, TalkJS stubbed via `TALKJS_API_URL`)

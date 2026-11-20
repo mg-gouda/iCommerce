@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { CircleCheck } from "lucide-react"
+import { CircleCheck, MessageSquare } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { bidi, money, qtyUnit } from "@icommerce/ui"
 import { AcceptForm, ApproveForm, CounterForm, MessageForm, RejectForm } from "@/components/QuoteForms"
@@ -13,7 +13,9 @@ type Props = { params: Promise<{ id: string }> }
 const OPEN = ["requested", "vendor_review", "offered", "negotiating", "pending_approval"]
 
 export default async function QuotePage({ params }: Props) {
-  const [res, m, t, tu, locale] = await Promise.all([getQuote((await params).id), getMembership(), getTranslations("b2b"), getTranslations("units"), getLocale()])
+  const [res, m, t, tu, tc, locale] = await Promise.all([
+    getQuote((await params).id), getMembership(), getTranslations("b2b"), getTranslations("units"), getTranslations("chat"), getLocale(),
+  ])
   if (!res || !m) notFound()
   const q = res.quote
   const cur = q.currency_code.toUpperCase()
@@ -25,6 +27,8 @@ export default async function QuotePage({ params }: Props) {
   const terms = net ? (await getCredit().catch(() => null))?.credit_account?.terms_days : undefined
   const offered = q.items.some((i) => i.offered_unit_price != null)
   const qty = (n: number, unit: string | null) => (unit ? qtyUnit(tu, n, unit) : String(n))
+  // P5b: the requester + company approvers/admins chat with the quote's vendor (backend 404s anyone else).
+  const chat = process.env.NEXT_PUBLIC_TALKJS_APP_ID && q.vendor && (role !== "buyer" || q.requester?.id === m.member.id)
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,7 +42,14 @@ export default async function QuotePage({ params }: Props) {
             {q.requester && <> · {t("by", { name: [q.requester.first_name, q.requester.last_name].filter(Boolean).join(" ") || q.requester.email })}</>}
           </p>
         </div>
-        <Link href="/account/quotes" className="text-[14px] text-brand-ink underline underline-offset-2">{t("allQuotes")}</Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {chat && (
+            <Link href={`/account/messages?kind=quote&ref=${encodeURIComponent(q.id)}`} className="ic-btn ic-btn--sm no-underline">
+              <MessageSquare size={16} aria-hidden /> {tc("messageVendor")}
+            </Link>
+          )}
+          <Link href="/account/quotes" className="text-[14px] text-brand-ink underline underline-offset-2">{t("allQuotes")}</Link>
+        </div>
       </div>
 
       {q.order_id && (

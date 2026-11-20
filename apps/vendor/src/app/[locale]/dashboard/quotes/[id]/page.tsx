@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { getFormatter, getLocale, getTranslations } from "next-intl/server"
 import { Badge, money } from "@icommerce/ui"
+import { MessageBuyer } from "@/components/MessageBuyer"
 import { PageHeader, panel } from "@/components/PageHeader"
 import { MessageForm, OfferForm, RejectQuoteForm } from "@/components/QuoteActions"
 import { Link } from "@/i18n/navigation"
@@ -35,7 +36,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
       <PageHeader
         title={<>{t("quoteTitle")} <bdi dir="ltr" className="font-mono">{quoteRef(q.id)}</bdi></>}
         sub={t("received", { date: date(q.created_at) })}
-        actions={<Badge variant={quoteBadge(q.status)}>{t(`status.${q.status}`)}</Badge>}
+        actions={<><MessageBuyer kind="quote" id={q.id} /><Badge variant={quoteBadge(q.status)}>{t(`status.${q.status}`)}</Badge></>}
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
