@@ -2,6 +2,7 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Input, Table, Text } from "@medusajs/ui"
 import { Fragment, useState } from "react"
 import { act, api, selectCls, useGet } from "../../lib"
+import { AssignmentEditor } from "../../sales-org"
 
 type Member = { id: string; email: string; role: string }
 type KycFile = { id: string; filename: string }
@@ -31,6 +32,7 @@ function Detail({ c, reload }: { c: Company; reload: () => void }) {
         {!c.kyc_files?.length && "none"}
       </Text>
       <Text size="small">Members: {c.members.map((m) => `${m.email} (${m.role})`).join(", ")}</Text>
+      <AssignmentEditor target_type="company" target_id={c.id} />
       {c.kyc_note && <Text size="small">Note: {c.kyc_note}</Text>}
       <div className="flex gap-2 items-center flex-wrap">
         <Input size="small" placeholder="Note (required to reject)" value={note} onChange={(e) => setNote(e.target.value)} className="w-72" />
