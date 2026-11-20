@@ -34,7 +34,7 @@ export async function KpiTiles({ summary, label }: { summary: ReportSummary; lab
         return (
           <div key={k} className="flex min-w-0 flex-col gap-1 rounded-lg border border-line bg-surface p-4">
             <h3 className="m-0 text-[13px] leading-[18px] font-medium text-ink-muted">{t(k)}</h3>
-            <p className="m-0 truncate text-[22px] leading-[30px] font-semibold tabular-nums"><bdi>{shown}</bdi></p>
+            <p className="m-0 text-[18px] leading-[26px] font-semibold tabular-nums break-words sm:text-[22px] sm:leading-[30px]"><bdi>{shown}</bdi></p>
             <p className={`m-0 flex items-start gap-1 text-[12px] leading-4 ${tone}`}>
               <Icon size={14} aria-hidden className="mt-px flex-none" />
               {pct != null && pct !== 0 && <span className="sr-only">{t(pct > 0 ? "up" : "down")}</span>}
@@ -65,7 +65,7 @@ export async function RevenueChart({ series, from, to }: { series: SeriesPoint[]
     <figure className="m-0 flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 md:p-6">
       <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="m-0 text-[16px] leading-[22px] font-semibold">{t("chartTitle", { interval })}</h2>
-        <span className="text-[13px] text-ink-muted tabular-nums"><bdi>{usd(max)}</bdi></span>
+        <span className="text-[13px] text-ink-muted">{t("peak", { value: bidi(usd(max)) })}</span>
       </figcaption>
       {max === 0 ? (
         <p className="m-0 py-8 text-center text-ink-muted">{t("chartEmpty")}</p>
@@ -142,7 +142,7 @@ export async function BreakdownTable({ rows, caption, by }: { rows: BreakdownRow
         <tbody>
           {rows.map((r) => (
             <tr key={r.key ?? "-"} className="border-b border-line last:border-b-0">
-              <th scope="row" className={`${td} max-w-[28ch] text-start font-medium ${r.key == null ? "text-ink-muted" : ""}`}><bdi>{name(r)}</bdi></th>
+              <th scope="row" className={`${td} min-w-44 max-w-[28ch] text-start font-medium ${r.key == null ? "text-ink-muted" : ""}`}><bdi>{name(r)}</bdi></th>
               <td className={`${td} text-end font-semibold whitespace-nowrap tabular-nums`}><bdi>{usd(r.revenue)}</bdi></td>
               <td className={`${td} text-end tabular-nums`}>{count(r.orders)}</td>
               <td className={`${td} text-end tabular-nums`}>{count(r.units)}</td>
