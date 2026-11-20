@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 // ponytail: plain fetch on the admin session cookie (same origin) instead of the JS SDK + react-query.
-export async function api<T = Record<string, unknown>>(path: string, body?: unknown, method?: "DELETE"): Promise<T> {
+export async function api<T = Record<string, unknown>>(path: string, body?: unknown, method?: "DELETE" | "PUT"): Promise<T> {
   const res = await fetch(path, {
     method: method ?? (body === undefined ? "GET" : "POST"),
     credentials: "include",

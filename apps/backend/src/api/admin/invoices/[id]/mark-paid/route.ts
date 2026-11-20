@@ -3,6 +3,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { capturePaymentWorkflow } from "@medusajs/medusa/core-flows"
 import { companySvc } from "../../../../../lib/company"
 import { shapeInvoice } from "../../../../../lib/net-terms"
+import { rebuildOrderFacts } from "../../../../../lib/reports"
 import { parentPayments, patchOrderMetadata } from "../../../../../lib/vendor-orders"
 
 // Money received → capture the net-terms payment, invoice paid, vendor orders paid; releases credit.
@@ -20,6 +21,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   }
   const paid_at = new Date()
   for (const id of (o?.metadata?.vendor_order_ids ?? []) as string[]) await patchOrderMetadata(req.scope, id, { paid_at: paid_at.toISOString() })
+  if (o) await rebuildOrderFacts(req.scope, o.id)
   const invoice = await svc.updateInvoices({ id: inv.id, status: "paid", paid_at })
   const overdue = await svc.listInvoices({ company_id: inv.company_id, status: "overdue" })
   const [account] = await svc.listCreditAccounts({ company_id: inv.company_id })

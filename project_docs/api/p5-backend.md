@@ -134,6 +134,18 @@ Deferred (ponytail): rep logins scoped to their branch, and refunds in reports (
 
 ---
 
+## 4b. Implementation notes (as built)
+- `report_line` lives in the `sales_org` module. `day` is stored as text `YYYY-MM-DD`; money/quantity columns are `numeric` (plus Medusa's `raw_*` jsonb).
+- Facts are rebuilt after **every** vendor order action (fulfill, deliver, cancel, return-request), admin confirm-transfer, invoice mark-paid, `order.placed` and `order.canceled`. A parent id rebuilds all its children.
+- Admin summary: `previous` is `{ gmv, orders, aov, units }` (keys match `kpis`). `series` uses `revenue` (= GMV) on both vendor and admin.
+- Null keys: `key: null, label: "Unassigned"` on vendor breakdowns too (the portal shows its own translated label).
+- `by=buyer` key = company id, else customer id, else `buyer_label` (guests).
+- `share` is rounded to 4 decimals. `limit` max 500.
+- `open_quotes` = vendor quotes in `requested | vendor_review | offered | negotiating | pending_approval`.
+- `locale` is accepted but ignored: categories have no translations yet (ponytail).
+- Vendor CSV downloads go through the portal route `/api/reports/csv` (the vendor JWT is an httpOnly cookie).
+- WP import: a non-vendor `user_legacy_id` is matched to a customer via `customer.metadata.legacy_id`. Customers aren't imported yet, so those rows are counted as `assignments skipped: customer not imported`.
+
 ## 5. Tests (integration, `p5-reports.spec.ts`)
 - A seeded month with a hand-computed expected table covering:
   - 2 vendors, B2B and B2C

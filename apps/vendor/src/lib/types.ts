@@ -176,3 +176,14 @@ export type PlanState = {
   handle: string | null; name_en: string | null; name_ar: string | null; status: SubscriptionStatus
   current_period_end: string | null; read_only: boolean; past_due: boolean; can_b2b: boolean
 }
+
+// P5 reports (project_docs/api/p5-backend.md §3).
+export type SeriesPoint = { period: string; revenue: number; orders: number }
+export type ReportSummary = {
+  range: { from: string; to: string }
+  kpis: { revenue: number; orders: number; aov: number; units: number; commission: number; fee_share: number; net: number; open_quotes: number; unread_chats: number | null }
+  previous: { revenue: number; orders: number; aov: number; units: number }
+  series: SeriesPoint[]
+}
+export type BreakdownRow = { key: string | null; label: string; revenue: number; orders: number; units: number; share: number }
+export type Breakdown = { by: string; rows: BreakdownRow[]; count: number; total: { revenue: number; orders: number; units: number } }
