@@ -41,11 +41,15 @@ design-screens/   Claude Design screen sources
 | P2 B2C (cart, checkout, order split, shipping, COD, bank transfer, emails, accounts) | ✅ merged |
 | P3 B2B (companies, KYC, wholesale tiers, RFQ/quotes, approvals, net terms, platform-routed RFQs) | ✅ merged |
 | **P4 Money** (platform fee, commission, payout ledger, vendor plans) | ✅ merged (`3df4d89`) |
-| P5 Chat + reports + sales org | ⬜ |
+| P5 Reports + sales org (P5a), TalkJS chat (P5b) | ✅ merged (`c70362c`) |
 | P6 ERP (Business Central + Odoo) | ⬜ |
 | P7 Hardening + launch | ⬜ |
 
-## 4. Resume here: start P5
+## 4. Resume here: start P6 (needs BC + Odoo sandbox creds) or P7
+
+P5 merged 2026-11-20: contracts `api/p5-backend.md`, `api/p5b-chat.md`. 31/31 integration tests. TalkJS test app keys live only in gitignored env files; before go-live see p5b-chat.md §0. Light palette changed 2026-11-20 (owner): 60/30/10 `#F7F2EA` / `#1C2B5A` / `#FF7A1A`, see `design-system/README.md`. Main checkout env files now point to DB `icommerce_p5b` on :9000/:3000/:3001.
+
+### Older: P4 close-out
 
 P4 merged to `main` and pushed 2026-10-14 (`3df4d89`). The worktree `.claude/worktrees/agent-aeba1892c972e16f0` (branch `worktree-agent-aeba1892c972e16f0`) is still on disk — not deleted, in case its dev servers (backend :9104, storefront :3104, vendor :3105, DB `icommerce_p4`) are still in use; safe to remove once nobody needs it.
 
