@@ -122,7 +122,8 @@ async function resolveConversation(scope: MedusaContainer, caller: Caller, kind:
   if (kind === "order") {
     const [link] = await vendorOrderLinks(scope, { order_id: ref_id })
     const { data: [o] } = link ? await query(scope).graph({ entity: "order", fields: ["id", "metadata"], filters: { id: ref_id } }) : { data: [] }
-    const parent = o?.metadata?.parent_order_id ? (await parentPayments(scope, [o.metadata.parent_order_id])).get(o.metadata.parent_order_id) : null
+    const pid = o?.metadata?.parent_order_id as string | undefined
+    const parent = pid ? (await parentPayments(scope, [pid])).get(pid) : null
     if (!link || !parent || (me ? parent.customer_id !== me : link.vendor_id !== (caller as { vendor_id: string }).vendor_id)) return notFound(kind, ref_id)
     return { id: `ord_${ref_id}`, customer_id: parent.customer_id as string, vendor_id: link.vendor_id, subject: `Order #${parent.display_id}`, photoUrl: null }
   }
