@@ -221,7 +221,7 @@ export function sendCsv(res: MedusaResponse, filename: string, header: string[],
   }
   res.setHeader("content-type", "text/csv; charset=utf-8")
   res.setHeader("content-disposition", `attachment; filename="${filename}"`)
-  res.send(`﻿${[header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n")}\r\n`)
+  res.send(`\uFEFF${[header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n")}\r\n`)
 }
 
 // ---------- route handlers (vendor_id = scope to one vendor; null = admin) ----------

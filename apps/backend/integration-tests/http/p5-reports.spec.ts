@@ -23,7 +23,7 @@ const COD = "pp_cod_cod"
 const BANK = "pp_bank-transfer_bank-transfer"
 const MONTH = "from=2026-10-01&to=2026-10-31"
 /** CSV body → rows of cells (no quoted commas in this data). */
-const csv = (s: string) => s.replace(/^﻿/, "").trim().split("\r\n").map((l) => l.split(","))
+const csv = (s: string) => s.replace(/^\uFEFF/, "").trim().split("\r\n").map((l) => l.split(","))
 const sumCol = (rows: string[][], col: string) => Math.round(rows.slice(1).reduce((s, r) => s + Number(r[rows[0].indexOf(col)]) * 100, 0)) / 100
 
 medusaIntegrationTestRunner({
@@ -118,7 +118,7 @@ medusaIntegrationTestRunner({
       const res = await api.post(`/store/carts/${id}/complete`, {}, auth(token, key))
       expect(res.data.type).toBe("order")
       const order = res.data.order as Row
-      await waitFor(async () => (await knex()("report_line").where({ parent_order_id: order.id }).count("* as n"))[0].n > 0)
+      await waitFor(async () => Number((await knex()("report_line").where({ parent_order_id: order.id }).count("* as n"))[0].n) > 0)
       const { metadata } = await getContainer().resolve(Modules.ORDER).retrieveOrder(order.id, { select: ["metadata"] })
       return { order, children: metadata!.vendor_order_ids as string[], attribution: metadata!.sales_attribution as Row | undefined }
     }
@@ -375,7 +375,7 @@ medusaIntegrationTestRunner({
       expect(b1).toMatchObject({ name: "Fixture Cairo Branch", legacy_id: "1" })
       expect((reps as Row[]).find((r) => r.code === "A1")).toMatchObject({ manager_id: id("07"), branch_id: b1.id, legacy_id: "21" })
       expect((reps as Row[]).find((r) => r.code === "A2")).toMatchObject({ manager_id: null, branch_id: null })
-      const vendor = (await getContainer().resolve(VENDOR_MODULE).listVendors({ legacy_id: "101" }))[0]
+      const vendor = (await getContainer().resolve<{ listVendors: (f: Row) => Promise<Row[]> }>(VENDOR_MODULE).listVendors({ legacy_id: "101" }))[0]
       const assignment = async (t: string, tid: string) => (await list(`assignments?target_type=${t}&target_id=${tid}`)).assignments[0]
       expect(await assignment("vendor", vendor.id)).toMatchObject({ broker_id: id("K1"), branch_manager_id: id("07"), branch_id: b1.id })
       expect(await assignment("customer", plain.id)).toMatchObject({ account_manager_id: id("A1"), branch_manager_id: id("07"), branch_id: b1.id })
