@@ -71,37 +71,37 @@ export function render(template: Template, d: EmailData, l: Locale) {
   const row = (k: string, v: string) => `<p style="margin:4px 0"><b>${esc(k)}:</b> <bdi>${v}</bdi></p>`
   const table = d.items?.length
     ? `<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">
-<tr style="background:#f3f5f9"><th style="padding:8px;text-align:start">${s.item}</th><th style="padding:8px">${s.qty}</th><th style="padding:8px;text-align:end">${s.total}</th></tr>
-${d.items.map((i) => `<tr><td style="padding:8px;border-top:1px solid #e3e7ee">${esc(i.title)}</td><td style="padding:8px;border-top:1px solid #e3e7ee;text-align:center">${i.quantity}</td><td style="padding:8px;border-top:1px solid #e3e7ee;text-align:end"><bdi>${money(i.total, d.currency_code, l)}</bdi></td></tr>`).join("\n")}
+<tr style="background:#f7f2ea"><th style="padding:8px;text-align:start">${s.item}</th><th style="padding:8px">${s.qty}</th><th style="padding:8px;text-align:end">${s.total}</th></tr>
+${d.items.map((i) => `<tr><td style="padding:8px;border-top:1px solid #e5ddd0">${esc(i.title)}</td><td style="padding:8px;border-top:1px solid #e5ddd0;text-align:center">${i.quantity}</td><td style="padding:8px;border-top:1px solid #e5ddd0;text-align:end"><bdi>${money(i.total, d.currency_code, l)}</bdi></td></tr>`).join("\n")}
 </table>`
     : ""
   const body = [
     d.vendor_name && row(s.seller, esc(d.vendor_name)),
     table,
     d.total != null && row(s.total, money(d.total, d.currency_code, l)),
-    d.bank_details && `${row(s.amount, money(d.total, d.currency_code, l))}<p style="margin:12px 0 4px"><b>${s.bank}:</b></p><pre style="white-space:pre-wrap;background:#f3f5f9;padding:12px;border-radius:6px;font-family:inherit" dir="ltr">${esc(d.bank_details)}</pre>`,
+    d.bank_details && `${row(s.amount, money(d.total, d.currency_code, l))}<p style="margin:12px 0 4px"><b>${s.bank}:</b></p><pre style="white-space:pre-wrap;background:#f7f2ea;padding:12px;border-radius:6px;font-family:inherit" dir="ltr">${esc(d.bank_details)}</pre>`,
     d.reason && row(s.reason, esc(d.reason)),
     d.refund && `<p style="margin:16px 0 0">${s.refund[d.refund]}</p>`,
     d.carrier && row(s.carrier, esc(d.carrier)),
     d.tracking_number && row(s.tracking, esc(d.tracking_number)),
-    d.tracking_url && `<p style="margin:16px 0"><a href="${esc(d.tracking_url)}" style="background:#2a74ba;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${s.track}</a></p>`,
+    d.tracking_url && `<p style="margin:16px 0"><a href="${esc(d.tracking_url)}" style="background:#ff7a1a;color:#1c2b5a;font-weight:bold;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${s.track}</a></p>`,
     d.company_name && row(s.company, esc(d.company_name)),
-    d.body && `<p style="margin:12px 0 4px"><b>${s.message}:</b></p><blockquote style="margin:0;white-space:pre-wrap;background:#f3f5f9;padding:12px;border-radius:6px">${esc(d.body)}</blockquote>`,
+    d.body && `<p style="margin:12px 0 4px"><b>${s.message}:</b></p><blockquote style="margin:0;white-space:pre-wrap;background:#f7f2ea;padding:12px;border-radius:6px">${esc(d.body)}</blockquote>`,
     d.note && row(s.note, esc(d.note)),
     d.due_date && row(s.due, esc(d.due_date)),
-    d.url && `<p style="margin:16px 0"><a href="${esc(d.url)}" style="background:#2a74ba;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${template === "company-invite" ? s.accept : s.open}</a></p>`,
+    d.url && `<p style="margin:16px 0"><a href="${esc(d.url)}" style="background:#ff7a1a;color:#1c2b5a;font-weight:bold;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">${template === "company-invite" ? s.accept : s.open}</a></p>`,
     // Buyer emails link to the order tracking page (works for guests: order number + email). Needs STOREFRONT_URL.
     // B2B templates (quote-/company-/invoice-) carry their own links.
     (template.startsWith("order-") || template === "bank-transfer") && process.env.STOREFRONT_URL &&
-      `<p style="margin:16px 0"><a href="${esc(`${process.env.STOREFRONT_URL.replace(/\/$/, "")}/${l}/track`)}" style="color:#22609c">${s.view}</a></p>`,
+      `<p style="margin:16px 0"><a href="${esc(`${process.env.STOREFRONT_URL.replace(/\/$/, "")}/${l}/track`)}" style="color:#a84b08">${s.view}</a></p>`,
   ]
     .filter(Boolean)
     .join("\n")
   const t = s[template]
   const html = `<!doctype html><html lang="${l}" dir="${l === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${esc(t.subject(d))}</title></head>
-<body style="margin:0;background:#f3f5f9;font-family:Arial,Helvetica,sans-serif;color:#1c1952">
+<body style="margin:0;background:#f7f2ea;font-family:Arial,Helvetica,sans-serif;color:#141f42">
 <div style="max-width:560px;margin:0 auto;padding:24px 16px">
-<div style="background:#1c1952;color:#fff;padding:16px 24px;border-radius:8px 8px 0 0;font-size:20px;font-weight:bold">iCommerce</div>
+<div style="background:#1c2b5a;color:#fff;padding:16px 24px;border-radius:8px 8px 0 0;font-size:20px;font-weight:bold">iCommerce</div>
 <div style="background:#fff;padding:24px;border-radius:0 0 8px 8px;line-height:1.5">
 <h1 style="font-size:20px;margin:0 0 12px">${esc(t.subject(d))}</h1>
 <p style="margin:0 0 8px">${s.hello}</p><p style="margin:0 0 16px">${t.intro}</p>

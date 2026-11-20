@@ -1,4 +1,4 @@
-iCommerce is a multi-vendor marketplace for B2B export trade and B2C retail from one catalog: Egyptian manufacturers selling to company buyers worldwide and to retail shoppers. The system carries the Gosoor palette (blue `brand`, navy `navy`, red `accent`) into a calm, dense product UI that reads as **trusted, global, efficient**.
+iCommerce is a multi-vendor marketplace for B2B export trade and B2C retail from one catalog: Egyptian manufacturers selling to company buyers worldwide and to retail shoppers. Light theme is 60/30/10: `ground` #F7F2EA (main), `navy` #1C2B5A (secondary), orange `brand` #FF7A1A (loud: primary actions only, navy text on it; links use `brand-ink`). Red `accent` stays for sale badges. It carries this into a calm, dense product UI that reads as **trusted, global, efficient**.
 
 ## Content fundamentals
 
