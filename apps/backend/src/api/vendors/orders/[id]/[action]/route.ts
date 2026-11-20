@@ -20,6 +20,7 @@ import {
   type VendorOrderStatus,
 } from "../../../../../lib/vendor-orders"
 import { postDelivery } from "../../../../../lib/ledger"
+import { rebuildOrderFacts } from "../../../../../lib/reports"
 import { round2 } from "../../../../../lib/money"
 import { BANK_PROVIDER, COD_PROVIDER } from "../../../../../modules/offline-payment/service"
 import { getCaller } from "../../../helpers"
@@ -116,5 +117,6 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const { vendor } = await getCaller(req)
   const order = await getVendorOrderOr404(req.scope, vendor.id, req.params.id)
   await run({ scope: req.scope, order, vendor, body: req.body })
+  await rebuildOrderFacts(req.scope, order.id)
   res.json({ order: await getVendorOrderOr404(req.scope, vendor.id, req.params.id) })
 }

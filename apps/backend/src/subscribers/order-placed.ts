@@ -1,6 +1,8 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { sendEmail } from "../lib/emails"
+import { rebuildOrderFacts } from "../lib/reports"
+import { attributeOrder } from "../lib/sales-org"
 import { loadVendorOrders } from "../lib/vendor-orders"
 import { BANK_PROVIDER } from "../modules/offline-payment/service"
 import { VENDOR_MODULE } from "../modules/vendor"
@@ -15,13 +17,16 @@ export default async function orderPlaced({ event, container }: SubscriberArgs<{
   const { data: [o] } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({
     entity: "order",
     fields: [
-      "id", "display_id", "email", "currency_code", "total", "metadata",
+      "id", "display_id", "email", "currency_code", "total", "metadata", "customer_id",
       "items.title", "items.quantity", "items.total",
       "customer.metadata", "payment_collections.payments.provider_id", "payment_collections.payments.data",
     ],
     filters: { id: event.data.id },
   })
   if (!o || o.metadata?.parent_order_id) return
+  // P5: sales attribution, then report facts (both before emails so a mail failure can't skip them).
+  await attributeOrder(container, o)
+  await rebuildOrderFacts(container, o.id)
   const locale = o.customer?.metadata?.locale
   const data = { display_id: o.display_id ?? "", currency_code: o.currency_code, total: Number(o.total) }
   const items = (o.items ?? []).map((i) => ({ title: i?.title ?? "", quantity: Number(i?.quantity), total: Number(i?.total) }))
