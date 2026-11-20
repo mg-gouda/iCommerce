@@ -590,5 +590,15 @@
     "volumeTier": "{percent}% · this month's volume incl. this order: {volume}, tier from {tier}",
     "min": "minimum {amount}",
     "max": "capped at {amount}"
+  },
+  "chat": {
+    "messages": "Messages",
+    "intro": "Conversations with suppliers about products, orders and quotes.",
+    "messageSupplier": "Message supplier",
+    "messageVendor": "Message vendor",
+    "loading": "Loading conversations…",
+    "error": "Chat couldn’t load. Check your connection and try again.",
+    "retry": "Try again",
+    "unread": "{n, plural, one {# unread conversation} other {# unread conversations}}"
   }
 }
