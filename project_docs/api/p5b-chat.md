@@ -72,7 +72,7 @@ Errors:
 - **Vendor portal**:
   - **Messages** page (Inbox), with an unread badge in the nav (server-side, `GET /vendors/chat/unread`)
   - **"Message buyer"** on order detail and quote detail
-- **Admin**: a "Conversations" page with filters and a read-only transcript, plus "Join as support". `// ponytail:` the admin has no TalkJS UI; after joining, `ops` replies by email notification or from the TalkJS dashboard.
+- **Admin**: a "Conversations" page with filters and a read-only transcript, plus "Join as support". `// ponytail:` the admin has no TalkJS UI; after joining, `ops` gets TalkJS email notifications and replies from the TalkJS dashboard (the join session token is returned for a future UI).
 - **Shared**: load the TalkJS SDK (`talkjs` npm or `@talkjs/react`, one dep) only on chat surfaces. Locale = page locale (`ar` → RTL). Chat failing to load shows an inline error with retry, never a blank box.
 
 ## 5. Tests (`p5b-chat.spec.ts`, TalkJS stubbed via `TALKJS_API_URL`)
