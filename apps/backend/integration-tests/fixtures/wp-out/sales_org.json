@@ -1,1 +1,19 @@
-{ "branches": [], "reps": [], "assignments": [] }
+{
+  "branches": [
+    { "legacy_id": 1, "code": "FX-B1", "name": "Fixture Cairo Branch" },
+    { "legacy_id": 2, "code": "FX-B2", "name": "Fixture Alex Branch" },
+    { "legacy_id": 3, "code": "FX-B1", "name": "Fixture Duplicate Branch" }
+  ],
+  "reps": [
+    { "type": "branch_manager", "legacy_id": 11, "code": "07", "name": "Fixture Manager", "branch_code": "FX-B1", "manager_code": null },
+    { "type": "account_manager", "legacy_id": 21, "code": "A1", "name": "Fixture Account", "branch_code": null, "manager_code": "07" },
+    { "type": "account_manager", "legacy_id": 22, "code": "A2", "name": "Fixture Orphan", "branch_code": null, "manager_code": "99" },
+    { "type": "broker", "legacy_id": 31, "code": "K1", "name": "Fixture Broker", "branch_code": null, "manager_code": "07" }
+  ],
+  "assignments": [
+    { "user_legacy_id": 101, "is_vendor": true, "branch_code": null, "branch_manager_code": null, "account_manager_code": null, "broker_code": "K1" },
+    { "user_legacy_id": 201, "is_vendor": false, "branch_code": null, "branch_manager_code": null, "account_manager_code": "A1", "broker_code": null },
+    { "user_legacy_id": 202, "is_vendor": false, "branch_code": "FX-B2", "branch_manager_code": null, "account_manager_code": null, "broker_code": "ZZ" },
+    { "user_legacy_id": 299, "is_vendor": false, "branch_code": "FX-B2", "branch_manager_code": null, "account_manager_code": null, "broker_code": null }
+  ]
+}
